@@ -216,6 +216,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/guest-codes/redeem/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Redime el código y emite la entrada de cortesía (sin pasarela).
+         *
+         *     Exige sesión de comprador (el mismo OTP del checkout): la entrada queda en
+         *     su cuenta y el email de entradas va a su dirección verificada.
+         */
+        post: operations["guest_codes_redeem_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/guest-codes/validate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Público: ¿este código sirve para este evento y qué entrada/zona da?
+         *     No redime nada. Limitado por IP contra la enumeración de códigos.
+         */
+        post: operations["guest_codes_validate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/": {
         parameters: {
             query?: never;
@@ -382,6 +424,30 @@ export interface paths {
         get: operations["org_events_attendees_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/events/{event_pk}/guest-codes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Lista (sin paginar, para poder copiar/compartir todos) y genera en lote
+         *     los códigos de invitado de un evento.
+         */
+        get: operations["org_events_guest_codes_list"];
+        put?: never;
+        /**
+         * @description Lista (sin paginar, para poder copiar/compartir todos) y genera en lote
+         *     los códigos de invitado de un evento.
+         */
+        post: operations["org_events_guest_codes_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -688,6 +754,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/guest-codes/{id}/void/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Anula un código de invitado que todavía no se usó y libera su cupo. */
+        post: operations["org_guest_codes_void_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/org/orders/{code}/mark-refunded/": {
         parameters: {
             query?: never;
@@ -885,7 +968,7 @@ SiteSettings: {
          *     * `CHECKIN_UNDONE` - Checkin Undone
          * @enum {string}
          */
-        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE";
+        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED";
         Announce: {
             subject: string;
             message: string;
@@ -969,6 +1052,8 @@ SiteSettings: {
             order_code: string;
             /** Format: date-time */
             checked_in_at: string;
+            /** @description Entrada de invitado (código de cortesía). */
+            is_guest: boolean;
         };
         CheckoutCreate: {
             /** Format: uuid */
@@ -1076,10 +1161,93 @@ SiteSettings: {
         EventStats: {
             revenue: components["schemas"]["RevenueStats"];
             tickets: components["schemas"]["TicketCountStats"];
+            guest_codes: components["schemas"]["GuestCodeStats"];
             by_ticket_type: components["schemas"]["TicketTypeStats"][];
             last_24h: components["schemas"]["Last24hStats"];
             /** Format: date-time */
             generated_at: string;
+        };
+        /** @description Un código de invitado para el panel: estado y, si se redimió, quién y cuándo. */
+        GuestCode: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly code: string;
+            readonly status: components["schemas"]["GuestCodeStatusEnum"];
+            /** Format: uuid */
+            readonly ticket_type_id: string;
+            readonly ticket_type_name: string;
+            readonly label: string;
+            /** Format: uuid */
+            readonly batch_id: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly redeemed_at: string | null;
+            /** Format: date-time */
+            readonly voided_at: string | null;
+            readonly order_code: string | null;
+            readonly redeemed_by_name: string | null;
+            readonly redeemed_by_email: string | null;
+        };
+        GuestCodeBatch: {
+            /** Format: uuid */
+            batch_id: string;
+            codes: components["schemas"]["GuestCode"][];
+        };
+        GuestCodeEvent: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            min_age: number;
+        };
+        GuestCodeGenerate: {
+            /** Format: uuid */
+            ticket_type_id: string;
+            quantity: number;
+            /** @default  */
+            label: string;
+        };
+        GuestCodeRedeem: {
+            code: string;
+            /** Format: uuid */
+            event_id: string;
+            buyer: components["schemas"]["Buyer"];
+            terms_accepted: boolean;
+        };
+        GuestCodeStats: {
+            total: number;
+            available: number;
+            redeemed: number;
+            voided: number;
+        };
+        /**
+         * @description * `AVAILABLE` - Disponible
+         *     * `REDEEMED` - Redimido
+         *     * `VOIDED` - Anulado
+         * @enum {string}
+         */
+        GuestCodeStatusEnum: "AVAILABLE" | "REDEEMED" | "VOIDED";
+        GuestCodeTicketType: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: string;
+        };
+        GuestCodeValidate: {
+            code: string;
+            /** Format: uuid */
+            event_id: string;
+        };
+        /** @description Lo mínimo para que el invitado sepa qué entrada/zona le toca. */
+        GuestCodeValidateResponse: {
+            code: string;
+            event: components["schemas"]["GuestCodeEvent"];
+            ticket_type: components["schemas"]["GuestCodeTicketType"];
+        };
+        GuestCodeVoid: {
+            /** @default  */
+            reason: string;
         };
         /**
          * @description * `FLYER` - Flyer
@@ -1105,6 +1273,7 @@ SiteSettings: {
         Order: {
             code: string;
             status?: components["schemas"]["Status7d7Enum"];
+            is_guest?: boolean;
             currency?: string;
             /** Format: decimal */
             subtotal: string;
@@ -1137,6 +1306,9 @@ SiteSettings: {
         OrderDetail: {
             code: string;
             status?: components["schemas"]["Status7d7Enum"];
+            is_guest?: boolean;
+            /** @description El código de invitado con el que se emitió (solo órdenes de cortesía). */
+            readonly guest_code: string | null;
             currency?: string;
             /** Format: decimal */
             subtotal: string;
@@ -1484,6 +1656,7 @@ SiteSettings: {
             status?: components["schemas"]["Status282Enum"];
             holder_name?: string;
             readonly ticket_type_name: string;
+            readonly is_guest: boolean;
             readonly order_code: string;
             readonly event_title: string;
             readonly organization_name: string;
@@ -1499,6 +1672,8 @@ SiteSettings: {
         };
         TicketCountStats: {
             sold: number;
+            /** @description Entradas de invitado emitidas (no suman ingresos). */
+            guests: number;
             capacity: number;
             checked_in: number;
         };
@@ -1550,6 +1725,7 @@ SiteSettings: {
             name: string;
             price: string;
             sold: number;
+            guests: number;
             total: number;
             available: number;
             checked_in: number;
@@ -1911,6 +2087,56 @@ site_retrieve: {
             };
         };
     };
+    guest_codes_redeem_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuestCodeRedeem"];
+                "application/x-www-form-urlencoded": components["schemas"]["GuestCodeRedeem"];
+                "multipart/form-data": components["schemas"]["GuestCodeRedeem"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Order"];
+                };
+            };
+        };
+    };
+    guest_codes_validate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuestCodeValidate"];
+                "application/x-www-form-urlencoded": components["schemas"]["GuestCodeValidate"];
+                "multipart/form-data": components["schemas"]["GuestCodeValidate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestCodeValidateResponse"];
+                };
+            };
+        };
+    };
     me_retrieve: {
         parameters: {
             query?: never;
@@ -2237,6 +2463,58 @@ site_retrieve: {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedTicketList"];
+                };
+            };
+        };
+    };
+    org_events_guest_codes_list: {
+        parameters: {
+            query?: {
+                /** @description AVAILABLE, REDEEMED o VOIDED. */
+                status?: string;
+                ticket_type?: string;
+            };
+            header?: never;
+            path: {
+                event_pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestCode"][];
+                };
+            };
+        };
+    };
+    org_events_guest_codes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuestCodeGenerate"];
+                "application/x-www-form-urlencoded": components["schemas"]["GuestCodeGenerate"];
+                "multipart/form-data": components["schemas"]["GuestCodeGenerate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestCodeBatch"];
                 };
             };
         };
@@ -2827,6 +3105,33 @@ site_retrieve: {
                 };
                 content: {
                     "application/json": components["schemas"]["EventOrganizer"];
+                };
+            };
+        };
+    };
+    org_guest_codes_void_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GuestCodeVoid"];
+                "application/x-www-form-urlencoded": components["schemas"]["GuestCodeVoid"];
+                "multipart/form-data": components["schemas"]["GuestCodeVoid"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuestCode"];
                 };
             };
         };
