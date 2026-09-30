@@ -94,10 +94,17 @@ class Membership(TimeStampedModel):
     class Role(models.TextChoices):
         OWNER = "OWNER", "Dueño"
         STAFF = "STAFF", "Personal"
+        # Empleado de puerta: solo entra al escáner (JWT con scope "door").
+        SECURITY = "SECURITY", "Seguridad"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
     role = models.CharField(max_length=16, choices=Role.choices, default=Role.OWNER)
+
+    # Alcance del empleado de seguridad: por defecto todos los eventos de la
+    # organización; si `all_events` es False, solo los de `events`.
+    all_events = models.BooleanField(default=True)
+    events = models.ManyToManyField("events.Event", blank=True, related_name="security_memberships")
 
     class Meta:
         constraints = [
@@ -106,6 +113,13 @@ class Membership(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user.email} @ {self.organization.name} ({self.role})"
+
+    def can_scan_event(self, event) -> bool:
+        if str(event.organization_id) != str(self.organization_id):
+            return False
+        if self.role != self.Role.SECURITY or self.all_events:
+            return True
+        return self.events.filter(pk=event.pk).exists()
 
 
 class LoginCode(TimeStampedModel):
@@ -144,3 +158,18 @@ class PasswordChangeRequest(TimeStampedModel):
 
     def is_usable(self) -> bool:
         return self.consumed_at is None and timezone.now() < self.expires_at
+
+
+class RefreshTokenRotation(models.Model):
+    """Marca de que un refresh token fue rotado (su `jti`), sin guardar el
+    token. Permite una ventana de gracia corta para reusarlo: dos pestañas o
+    peticiones que refrescan a la vez, o una respuesta perdida porque iOS
+    suspendió la PWA a mitad del refresh, no deben cerrar la sesión (ver
+    `apps/accounts/tokens.py`). Se borran al revocar sesiones del usuario."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="refresh_rotations")
+    jti = models.CharField(max_length=255, unique=True)
+    rotated_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    def __str__(self):
+        return f"{self.user_id} {self.jti}"

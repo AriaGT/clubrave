@@ -159,6 +159,31 @@ la marca *Invitado* y S/ 0; **nunca suma al recaudado** ni a "Vendidas" (el
 resumen muestra "+N invitados" aparte) y el CSV tiene la columna `invitado`.
 Si cancelas el evento, los códigos sin usar se anulan solos.
 
+### Empleados de Seguridad (quienes escanean por ti)
+
+En **Ajustes → Empleados** creas una cuenta por cada persona de la puerta:
+nombre, email (es su usuario) y una contraseña inicial de al menos 10
+caracteres que le entregas en persona.
+
+- Entra en **el mismo panel** con su email y contraseña, pero **solo ve el
+  escáner**: no ve ventas, asistentes, eventos ni ajustes (el servidor le
+  rechaza todo lo demás, no solo se esconde en pantalla).
+- **Horario**: solo puede escanear desde 3 horas antes del inicio hasta el
+  fin del evento (si el evento no tiene hora de fin, se toman 8 horas desde
+  el inicio). Antes de eso ve "El escáner se habilita el … a las …". Tú, como
+  organizador, no tienes esa restricción. La ventana se ajusta en el
+  servidor con `CHECKIN_WINDOW_HOURS_BEFORE_START` y
+  `CHECKIN_WINDOW_HOURS_AFTER_END`.
+- **Eventos**: por defecto puede escanear todos tus eventos publicados; en
+  **Editar** puedes apagar "todos los eventos" y marcar solo algunos.
+- No puede **deshacer ingresos**: si hace falta, lo haces tú.
+- **Desactivar** (el interruptor) le cierra la sesión al instante y no lo
+  deja volver a entrar hasta que lo reactives. **Contraseña** le pone una
+  nueva y cierra sus sesiones abiertas. **Eliminar** borra la cuenta.
+- Cada entrada que valida un empleado queda en **Actividad** ("Ingreso
+  validado por seguridad", con su email), igual que las altas, bajas y
+  cambios de empleados.
+
 ## Anular ventas y entradas
 
 **Importante: anular no devuelve el dinero.** Este sistema anula el QR, libera

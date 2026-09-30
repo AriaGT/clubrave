@@ -43,6 +43,14 @@ class AuditLog(models.Model):
         GUEST_CODES_GENERATED = "GUEST_CODES_GENERATED"
         GUEST_CODE_VOIDED = "GUEST_CODE_VOIDED"
         GUEST_CODE_REDEEMED = "GUEST_CODE_REDEEMED"
+        # Empleados de seguridad y lo que escanean.
+        EMPLOYEE_CREATED = "EMPLOYEE_CREATED"
+        EMPLOYEE_UPDATED = "EMPLOYEE_UPDATED"
+        EMPLOYEE_DEACTIVATED = "EMPLOYEE_DEACTIVATED"
+        EMPLOYEE_REACTIVATED = "EMPLOYEE_REACTIVATED"
+        EMPLOYEE_PASSWORD_RESET = "EMPLOYEE_PASSWORD_RESET"
+        EMPLOYEE_DELETED = "EMPLOYEE_DELETED"
+        TICKET_CHECKED_IN = "TICKET_CHECKED_IN"
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now, db_index=True)

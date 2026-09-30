@@ -37,10 +37,12 @@ class OrgLoginView(APIView):
             username=serializer.validated_data["email"].strip().lower(),
             password=serializer.validated_data["password"],
         )
-        if user is None or user.role != User.Role.ORGANIZER:
+        if user is None or user.role not in (User.Role.ORGANIZER, User.Role.STAFF):
             raise DomainError("VALIDATION_ERROR", "Email o contraseña incorrectos.")
 
-        tokens = services.org_tokens_for_user(user)
+        # Mismo login para el organizador (scope "org") y el personal de
+        # seguridad (scope "door", solo escáner).
+        tokens = services.panel_tokens_for_user(user)
         return Response(tokens, status=status.HTTP_200_OK)
 
 

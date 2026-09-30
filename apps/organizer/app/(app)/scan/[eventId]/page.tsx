@@ -9,13 +9,15 @@ import {
   type ConfirmDialogValues,
   type ScanOutcome,
 } from "@repo/ui";
-import { Keyboard, X } from "lucide-react";
+import { Clock, Keyboard, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { scannerClosedMessage, useDoorEvent } from "@/features/checkin/door";
 import { useCheckIn } from "@/features/checkin/hooks";
 import { useScanner } from "@/features/checkin/useScanner";
-import { apiErrorMessage, useEvent, useUndoCheckIn, type UndoCheckInReasonCode } from "@/features/events/hooks";
+import { apiErrorMessage, useUndoCheckIn, type UndoCheckInReasonCode } from "@/features/events/hooks";
+import { useSession } from "@/lib/session";
 
 interface ResultState {
   outcome: ScanOutcome;
@@ -29,6 +31,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   TICKET_ALREADY_USED: "Ya ingresó",
   TICKET_WRONG_EVENT: "Entrada de otro evento",
   TICKET_INVALID: "No válida",
+  SCANNER_CLOSED: "Escáner cerrado",
 };
 
 const UNDO_REASONS: { value: UndoCheckInReasonCode; label: string }[] = [
@@ -40,7 +43,14 @@ const UNDO_REASONS: { value: UndoCheckInReasonCode; label: string }[] = [
 export default function ScannerPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const router = useRouter();
-  const { data: event } = useEvent(eventId);
+  // Endpoint del escáner (no /org/events/): también lo puede leer seguridad.
+  const { data: event, refetch: refetchEvent } = useDoorEvent(eventId);
+  const { role } = useSession();
+  const isSecurity = role === "security";
+  // Seguridad fuera de horario: pantalla de "escáner cerrado", sin cámara.
+  const scannerClosed = isSecurity && !!event && !event.scanner_is_open;
+  // Para seguridad la cámara no arranca hasta confirmar que el escáner está abierto.
+  const cameraAllowed = !isSecurity || !!event?.scanner_is_open;
   const checkIn = useCheckIn();
   const undoCheckIn = useUndoCheckIn();
   const [result, setResult] = useState<ResultState | null>(null);
@@ -79,6 +89,7 @@ export default function ScannerPage() {
           error?: { code?: string; details?: Record<string, string | boolean | null> };
         };
         const code = shape.error?.code ?? "TICKET_INVALID";
+        if (code === "SCANNER_CLOSED") refetchEvent();
         vibrate([100, 50, 100]);
         const details = shape.error?.details ?? {};
         const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : undefined);
@@ -90,7 +101,9 @@ export default function ScannerPage() {
           subtitle:
             alreadyUsed && text("checked_in_at")
               ? `A las ${new Date(text("checked_in_at")!).toLocaleTimeString("es-PE")}`
-              : text("event_title"),
+              : code === "SCANNER_CLOSED"
+                ? (shape as { error?: { message?: string } }).error?.message
+                : text("event_title"),
           tag: alreadyUsed && details.is_guest === true ? "Invitado" : undefined,
           details:
             alreadyUsed && text("ticket_type_name")
@@ -99,7 +112,7 @@ export default function ScannerPage() {
         });
       }
     },
-    [checkIn, eventId]
+    [checkIn, eventId, refetchEvent]
   );
 
   const handleUndo = async (values: ConfirmDialogValues) => {
@@ -124,7 +137,7 @@ export default function ScannerPage() {
   };
 
   const { videoRef, supported, error: cameraError } = useScanner({
-    enabled: !result && !manualOpen,
+    enabled: !result && !manualOpen && cameraAllowed,
     onDetect: (payload) => runCheckIn({ qrPayload: payload }),
   });
 
@@ -134,6 +147,22 @@ export default function ScannerPage() {
     },
     []
   );
+
+  if (scannerClosed && !result) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[var(--color-warning-soft)] p-[var(--space-6)] text-center">
+        <Clock className="h-20 w-20 text-[var(--color-warning)]" aria-hidden />
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-3xl font-bold text-[var(--color-warning)]">Escáner cerrado</h2>
+          <p className="text-lg">{event.title}</p>
+          <p className="text-[var(--color-text-muted)]">{scannerClosedMessage(event)}</p>
+        </div>
+        <Button size="lg" variant="secondary" onClick={() => router.push("/scan")}>
+          Volver a mis eventos
+        </Button>
+      </div>
+    );
+  }
 
   if (result) {
     return (
@@ -148,7 +177,7 @@ export default function ScannerPage() {
             setResult(null);
             setUndoCode(null);
           }}
-          onUndo={undoCode ? () => setUndoOpen(true) : undefined}
+          onUndo={undoCode && !isSecurity ? () => setUndoOpen(true) : undefined}
         />
         <ConfirmDialog
           open={undoOpen}
