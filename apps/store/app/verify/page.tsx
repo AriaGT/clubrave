@@ -42,7 +42,7 @@ function VerifyPageContent() {
 
 export default function VerifyPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-[var(--space-6)] text-center">
+    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-[var(--space-6)] py-16 text-center">
       <Suspense
         fallback={
           <>

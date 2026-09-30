@@ -34,6 +34,7 @@ class AuditLog(models.Model):
         EVENT_SALES_RESUMED = "EVENT_SALES_RESUMED"
         EVENT_ANNOUNCED = "EVENT_ANNOUNCED"
         IMAGE_DELETED = "IMAGE_DELETED"
+        SITE_SETTINGS_UPDATED = "SITE_SETTINGS_UPDATED"
         ORDER_VOIDED = "ORDER_VOIDED"
         ORDER_REFUND_MARKED = "ORDER_REFUND_MARKED"
         TICKETS_RESENT = "TICKETS_RESENT"
@@ -69,3 +70,48 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.action} — {self.target_label} — {self.actor_email}"
+
+
+def site_logo_upload_path(instance, filename) -> str:
+    return f"site/logo-{uuid4().hex}.webp"
+
+
+class SiteSettings(models.Model):
+    """Configuración del sitio público (tienda): logo, contacto y redes.
+
+    Una sola fila para toda la plataforma — la tienda es una marca, no una
+    por organización. Se lee con `SiteSettings.load()`, que la crea vacía la
+    primera vez; los campos en blanco simplemente no se muestran.
+    """
+
+    SINGLETON_ID = 1
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=SINGLETON_ID, editable=False)
+    logo = models.ImageField(upload_to=site_logo_upload_path, blank=True, null=True)
+    tagline = models.CharField(max_length=160, blank=True)
+    contact_phone = models.CharField(max_length=30, blank=True)
+    whatsapp = models.CharField(max_length=30, blank=True)
+    contact_email = models.EmailField(blank=True)
+    address = models.CharField(max_length=200, blank=True)
+    instagram_url = models.URLField(blank=True)
+    tiktok_url = models.URLField(blank=True)
+    facebook_url = models.URLField(blank=True)
+    youtube_url = models.URLField(blank=True)
+    complaints_book_url = models.URLField(blank=True)  # Libro de Reclamaciones (Indecopi)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "configuración del sitio"
+        verbose_name_plural = "configuración del sitio"
+
+    def __str__(self):
+        return "Configuración del sitio"
+
+    def save(self, *args, **kwargs):
+        self.pk = self.SINGLETON_ID
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls) -> "SiteSettings":
+        obj, _ = cls.objects.get_or_create(pk=cls.SINGLETON_ID)
+        return obj

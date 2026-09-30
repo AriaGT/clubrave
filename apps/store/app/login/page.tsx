@@ -103,7 +103,7 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-[var(--space-6)]">
+    <main className="flex flex-1 flex-col items-center justify-center gap-8 p-[var(--space-6)] py-16">
       <Suspense fallback={<Logo size={48} />}>
         <LoginPageContent />
       </Suspense>

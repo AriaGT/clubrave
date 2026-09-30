@@ -243,6 +243,24 @@ reenviar entradas.
 No se puede editar ni borrar. Si alguien de tu equipo anuló algo el viernes,
 aquí está.
 
+## Logo, contacto y redes de la tienda (Sitio web)
+
+En **Ajustes → Sitio web** configuras lo que aparece en la barra superior y
+el pie de todas las páginas de la tienda. Solo el dueño de la organización
+puede cambiarlo.
+
+- **Logo**: se muestra centrado en la barra superior y en el pie. Un PNG con
+  fondo transparente se ve mejor (mínimo 64 px por lado, máximo 4 MB). Si no
+  subes uno, aparece el texto "Club Rave".
+- **Contacto**: teléfono, WhatsApp (con código de país, p. ej. +51), correo y
+  dirección.
+- **Redes sociales**: Instagram, TikTok, Facebook y YouTube. Pega el enlace
+  completo del perfil; el panel te avisa si pegaste el de otra red.
+- **Libro de Reclamaciones**: el enlace a tu libro virtual.
+
+Lo que dejes en blanco no se muestra. Los cambios tardan hasta 5 minutos en
+verse en la tienda.
+
 ## ¿Algo no cuadra?
 
 - **Una venta no aparece**: revisa en **Ventas** filtrando por email; si

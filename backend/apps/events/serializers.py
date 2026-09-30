@@ -68,8 +68,16 @@ class EventPublicListSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             "id", "title", "slug", "starts_at", "ends_at", "city", "venue_name",
-            "min_age", "currency", "cover_image",
+            "min_age", "currency", "cover_image", "price_from",
         ]
+
+    price_from = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True))
+    def get_price_from(self, obj):
+        # En Python para aprovechar el `prefetch_related("ticket_types")`.
+        prices = [tt.price for tt in obj.ticket_types.all() if tt.is_active]
+        return f"{min(prices):.2f}" if prices else None
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_cover_image(self, obj):

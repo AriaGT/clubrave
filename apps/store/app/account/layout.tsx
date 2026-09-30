@@ -24,14 +24,14 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   if (status !== "authenticated") {
     return (
-      <div className="flex min-h-screen items-center justify-center text-[var(--color-text-muted)]">
+      <div className="flex flex-1 items-center justify-center py-16 text-[var(--color-text-muted)]">
         Cargando…
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[var(--container-max)] flex-col">
+    <div className="mx-auto flex w-full flex-1 max-w-[var(--container-max)] flex-col">
       <header className="flex items-center justify-between border-b border-[var(--color-border)] p-[var(--space-4)]">
         <nav className="flex gap-4">
           {TABS.map((tab) => (

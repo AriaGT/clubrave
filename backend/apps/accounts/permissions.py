@@ -61,3 +61,22 @@ class IsCustomerOwner(BasePermission):
             getattr(obj, "order", None), "customer_id", None
         )
         return str(customer_id) == str(request.user.id)
+
+
+class IsOrganizationOwner(IsOrganizer):
+    """Organizador con rol OWNER en la organización del token. Para ajustes
+    que no son de un evento (p. ej. la configuración del sitio público): el
+    personal de puerta no debe poder cambiarlos."""
+
+    message = "Esta acción requiere ser dueño de la organización."
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        from .models import Membership
+
+        return Membership.objects.filter(
+            user=request.user,
+            organization_id=request.auth.get("organization_id"),
+            role=Membership.Role.OWNER,
+        ).exists()
