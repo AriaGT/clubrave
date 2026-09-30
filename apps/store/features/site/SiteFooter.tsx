@@ -1,3 +1,4 @@
+import { Img } from "@repo/ui";
 import { BookOpen, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, ReactNode, SVGProps } from "react";
@@ -52,8 +53,7 @@ export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
       <div className="relative mx-auto grid max-w-[var(--container-max)] gap-10 px-[var(--space-6)] pb-8 pt-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="flex flex-col gap-4">
           {settings?.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logo} alt={BRAND_NAME} className="h-10 w-fit max-w-[200px] object-contain" />
+            <Img src={settings.logo} alt={BRAND_NAME} className="h-10 w-fit max-w-[200px] object-contain" />
           ) : (
             <span className="font-display text-2xl font-extrabold uppercase tracking-[0.18em]">{BRAND_NAME}</span>
           )}

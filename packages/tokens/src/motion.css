@@ -12,6 +12,26 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* lo que se mueve */
 }
 
+/* Estados de carga (ver packages/ui: Img, ActivityBar). */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Barra indeterminada: un tramo que cruza de izquierda a derecha. */
+@keyframes activity-bar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(400%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

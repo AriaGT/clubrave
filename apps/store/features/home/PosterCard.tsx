@@ -1,3 +1,4 @@
+import { Img } from "@repo/ui";
 import Link from "next/link";
 
 import { dayNumber, monthShort, priceLabel, timeLabel, weekdayShort } from "./format";
@@ -13,8 +14,7 @@ export function PosterCard({ event }: { event: EventListItem }) {
       className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-sunken)] transition-[border-color,box-shadow,transform] duration-[var(--duration-base)] ease-[var(--ease-out)] hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--glow-accent)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]"
     >
       {event.cover_image && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Img
           src={event.cover_image}
           alt=""
           loading="lazy"

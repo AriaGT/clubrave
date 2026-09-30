@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, FieldError, Input, Label, Logo } from "@repo/ui";
+import { Button, FieldError, Input, Label, Logo, useAsyncAction } from "@repo/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
@@ -40,15 +40,16 @@ function LoginPageContent() {
     setStep("code");
   }
 
-  async function handleVerify() {
+  // La redirección la hace un solo lugar: el efecto de arriba, al pasar la
+  // sesión a "authenticated". Dos `replace` seguidos al mismo destino se pisan.
+  const verifyCode = useAsyncAction(async () => {
     setError(null);
     try {
       await verify({ email, code });
-      router.replace(nextUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Código inválido.");
     }
-  }
+  });
 
   return (
     <>
@@ -88,7 +89,11 @@ function LoginPageContent() {
               className="text-center font-mono text-lg tracking-[0.3em]"
             />
             <FieldError>{error}</FieldError>
-            <Button onClick={handleVerify} disabled={code.length !== 6}>
+            <Button
+              loading={verifyCode.pending || status === "authenticated"}
+              onClick={() => verifyCode.run()}
+              disabled={code.length !== 6}
+            >
               Verificar
             </Button>
             <button type="button" className="text-sm text-[var(--color-text-muted)]" onClick={() => setStep("email")}>

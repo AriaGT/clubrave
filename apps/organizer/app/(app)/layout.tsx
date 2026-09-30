@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell, AppShellContent, BottomNav } from "@repo/ui";
+import { AppShell, AppShellContent, BottomNav, LoadingState } from "@repo/ui";
 import { Calendar, Home, QrCode, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -20,11 +20,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [status, router]);
 
   if (status !== "authenticated") {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-[var(--color-text-muted)]">
-        Cargando…
-      </div>
-    );
+    return <LoadingState className="min-h-screen" />;
   }
 
   const items = [

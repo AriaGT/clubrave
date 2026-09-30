@@ -55,13 +55,41 @@ export function EventImagesManager({ eventId }: EventImagesManagerProps) {
   const setCover = useSetCoverImage(eventId);
   const reorder = useReorderEventImages(eventId);
   const [error, setError] = useState<string | null>(null);
+  // Subidas en curso por tipo y las imágenes con una acción pendiente: cada
+  // sección muestra casillas "Subiendo…" y bloquea lo que ya se está tocando.
+  const [uploading, setUploading] = useState<Record<EventImageKind, number>>({ FLYER: 0, ZONES: 0, MAP: 0 });
+  const [busyIds, setBusyIds] = useState<string[]>([]);
 
   const images = event?.images ?? [];
+
+  const markBusy = (id: string, busy: boolean) =>
+    setBusyIds((ids) => (busy ? [...ids, id] : ids.filter((x) => x !== id)));
+
+  const handleUpload = (kind: EventImageKind, files: File[]) => {
+    setUploading((u) => ({ ...u, [kind]: u[kind] + files.length }));
+    files.forEach((file) =>
+      upload.mutate(
+        { file, kind },
+        {
+          onError: (err) => setError(apiErrorMessage(err)),
+          onSettled: () => setUploading((u) => ({ ...u, [kind]: Math.max(0, u[kind] - 1) })),
+        }
+      )
+    );
+  };
+
+  const handleSetCover = (id: string) => {
+    markBusy(id, true);
+    setCover.mutate(id, {
+      onError: (err) => setError(apiErrorMessage(err)),
+      onSettled: () => markBusy(id, false),
+    });
+  };
 
   // El orden en el backend es uno solo para todo el evento: se intercambia la
   // imagen con su vecina del mismo tipo y se envía la lista completa.
   const handleMove = (kind: EventImageKind, id: string, direction: "left" | "right") => {
-    if (!event) return;
+    if (!event || reorder.isPending) return;
     const current = [...event.images];
     const sameKind = imagesOfKind(current, kind);
     const kindIndex = sameKind.findIndex((img) => img.id === id);
@@ -77,9 +105,11 @@ export function EventImagesManager({ eventId }: EventImagesManagerProps) {
   };
 
   const handleRemove = (id: string) => {
+    markBusy(id, true);
     remove.mutate(id, {
       onError: (err) => setError(apiErrorMessage(err)),
       onSuccess: () => setError(null),
+      onSettled: () => markBusy(id, false),
     });
   };
 
@@ -104,16 +134,15 @@ export function EventImagesManager({ eventId }: EventImagesManagerProps) {
             </div>
             <ImageUploader
               images={ofKind.map((img) => ({ id: img.id, url: img.image, alt: img.alt, isCover: img.is_cover }))}
-              onAdd={(files) =>
-                files.forEach((file) =>
-                  upload.mutate({ file, kind }, { onError: (err) => setError(apiErrorMessage(err)) })
-                )
-              }
+              onAdd={(files) => handleUpload(kind, files)}
               onRemove={handleRemove}
-              onSetCover={(id) => setCover.mutate(id)}
+              onSetCover={handleSetCover}
               onMove={(id, direction) => handleMove(kind, id, direction)}
               dropLabel={copy.dropLabel}
               selectedLabel={copy.selectedLabel}
+              uploadingCount={uploading[kind]}
+              busyIds={busyIds}
+              reordering={reorder.isPending}
             />
           </section>
         );

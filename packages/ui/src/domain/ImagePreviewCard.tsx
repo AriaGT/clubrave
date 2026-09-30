@@ -1,6 +1,7 @@
 import { Maximize2 } from "lucide-react";
 import * as React from "react";
 
+import { Img } from "../base/Img";
 import { ImageLightbox } from "../composition/ImageLightbox";
 import { cn } from "../lib/cn";
 
@@ -30,8 +31,7 @@ export function ImagePreviewCard({ src, alt, title, className }: ImagePreviewCar
           className
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} className="aspect-video w-full object-cover" />
+        <Img src={src} alt={alt} className="aspect-video w-full object-cover" />
         <span className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 rounded-[var(--radius-full)] bg-[var(--color-bg-elevated)]/90 px-2.5 py-1 text-xs font-medium text-[var(--color-text)]">
           <Maximize2 className="h-3.5 w-3.5" />
           Ampliar

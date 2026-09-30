@@ -1,6 +1,7 @@
 import { Maximize2 } from "lucide-react";
 import * as React from "react";
 
+import { Img } from "../base/Img";
 import { ImageLightbox } from "../composition/ImageLightbox";
 import { cn } from "../lib/cn";
 
@@ -27,8 +28,7 @@ export function EventHero({
   return (
     <div className={cn("relative aspect-[4/5] w-full sm:aspect-video", className)}>
       {coverImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={coverImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <Img src={coverImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <div className="absolute inset-0 bg-[var(--color-surface-sunken)]" />
       )}

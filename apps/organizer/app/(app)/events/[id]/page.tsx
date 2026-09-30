@@ -43,7 +43,7 @@ export default function EventDetailPage() {
   const isDraft = event?.status === "DRAFT";
 
   function handleTogglePause() {
-    if (!event) return;
+    if (!event || pauseSales.isPending) return;
     pauseSales.mutate(!event.sales_paused);
   }
 
@@ -100,7 +100,13 @@ export default function EventDetailPage() {
                     : "Activa: los compradores pueden comprar entrada."}
                 </span>
               </div>
-              <Switch checked={event.sales_paused} onCheckedChange={handleTogglePause} aria-label="Pausar o reanudar la venta" />
+              <Switch
+                checked={pauseSales.isPending ? !!pauseSales.variables : event.sales_paused}
+                disabled={pauseSales.isPending}
+                aria-busy={pauseSales.isPending || undefined}
+                onCheckedChange={handleTogglePause}
+                aria-label="Pausar o reanudar la venta"
+              />
             </div>
             {pauseSales.error && (
               <p className="text-sm text-[var(--color-danger)]">{apiErrorMessage(pauseSales.error)}</p>

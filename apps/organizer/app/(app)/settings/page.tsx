@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardContent, TopBar } from "@repo/ui";
+import { Button, Card, CardContent, TopBar, useAsyncAction } from "@repo/ui";
 import { ChevronRight, Globe } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,10 @@ import { useSession } from "@/lib/session";
 export default function SettingsPage() {
   const { logout, organizationId } = useSession();
   const router = useRouter();
+  const signOut = useAsyncAction(async () => {
+    await logout();
+    router.replace("/login");
+  });
 
   return (
     <>
@@ -38,13 +42,7 @@ export default function SettingsPage() {
           <ChevronRight className="h-5 w-5 text-[var(--color-text-subtle)]" />
         </Link>
 
-        <Button
-          variant="danger"
-          onClick={async () => {
-            await logout();
-            router.replace("/login");
-          }}
-        >
+        <Button variant="danger" loading={signOut.pending} onClick={() => signOut.run()}>
           Cerrar sesión
         </Button>
       </div>

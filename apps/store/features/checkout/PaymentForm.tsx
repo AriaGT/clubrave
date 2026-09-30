@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingState } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 
 import type { StoredPaymentSession } from "./payment-session-storage";
@@ -85,7 +86,7 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
   return (
     <div className="flex flex-col gap-3">
       {status === "loading" && (
-        <p className="text-sm text-[var(--color-text-muted)]">Cargando el formulario de pago…</p>
+        <LoadingState label="Cargando el formulario de pago…" className="py-8" />
       )}
       {status === "error" && (
         <p className="text-sm text-[var(--color-danger)]">

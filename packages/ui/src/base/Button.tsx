@@ -1,9 +1,10 @@
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
+
 import * as React from "react";
 
 import { cn } from "../lib/cn";
+import { Spinner } from "./Spinner";
 
 /**
  * El acento se gana: `primary` es violeta y solo debe haber una acción
@@ -53,7 +54,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading || undefined}
         {...props}
       >
-        {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+        {loading && <Spinner size="sm" />}
         {children}
       </Comp>
     );

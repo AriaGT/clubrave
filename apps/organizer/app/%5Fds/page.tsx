@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ActivityBar,
   ActivityItem,
   AlertDialog,
   AlertDialogContent,
@@ -15,8 +16,11 @@ import {
   Divider,
   FieldError,
   IconButton,
+  ImageUploader,
+  Img,
   Input,
   Label,
+  LoadingState,
   RadioGroup,
   RadioGroupItem,
   Select,
@@ -24,8 +28,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Skeleton,
+  Spinner,
   Switch,
   Textarea,
+  useAsyncAction,
 } from "@repo/ui";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -274,6 +281,8 @@ export default function DesignSystemPage() {
         </DangerZone>
       </Section>
 
+      <LoadingStatesDemo />
+
       <Section title="H14 · Actividad">
         <ol className="flex w-full flex-col gap-2">
           <ActivityItem
@@ -292,5 +301,50 @@ export default function DesignSystemPage() {
         </ol>
       </Section>
     </main>
+  );
+}
+
+
+/** Sistema de estados de carga: cuándo usar cada pieza.
+ * - Botón que dispara la acción → `loading` (spinner + bloqueado).
+ * - Función async que no es una mutación → `useAsyncAction` (ignora el doble clic).
+ * - Contenido con forma conocida → `Skeleton`; sin forma → `LoadingState`.
+ * - Imágenes → `Img` (late mientras carga, fundido al llegar, reemplazo si falla).
+ * - Trabajo fuera de la vista → `ActivityBar` (ya montada por el QueryProvider). */
+function LoadingStatesDemo() {
+  const [barActive, setBarActive] = useState(false);
+  const slowAction = useAsyncAction(() => new Promise((resolve) => setTimeout(resolve, 1500)));
+
+  return (
+    <Section title="Estados de carga">
+      <ActivityBar active={barActive} delayMs={0} />
+      <div className="flex w-full flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button loading={slowAction.pending} onClick={() => slowAction.run()}>
+            Acción de 1.5 s (prueba el doble clic)
+          </Button>
+          <Button variant="secondary" onClick={() => setBarActive((a) => !a)}>
+            {barActive ? "Ocultar" : "Mostrar"} barra de actividad
+          </Button>
+          <Spinner label="Cargando" />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <Img src="/icons/mark.svg" alt="Imagen que carga" className="aspect-[4/5] w-full rounded-[var(--radius-md)] object-cover" />
+          <Img src="/no-existe.png" alt="Imagen que falla" className="aspect-[4/5] w-full rounded-[var(--radius-md)] object-cover" />
+          <Skeleton className="aspect-[4/5] w-full" />
+        </div>
+        <ImageUploader
+          images={[]}
+          onAdd={() => undefined}
+          onRemove={() => undefined}
+          onSetCover={() => undefined}
+          onMove={() => undefined}
+          uploadingCount={2}
+        />
+        <Card>
+          <LoadingState label="Cargando tus entradas…" className="py-8" />
+        </Card>
+      </div>
+    </Section>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@repo/ui";
+import { LoadingState } from "@repo/ui";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useSession } from "@/lib/session";
 
@@ -14,25 +14,27 @@ const TABS = [
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  const { status, logout } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const wasAuthenticated = useRef(false);
 
+  // Sin sesión al entrar → a ingresar y volver aquí. Si la sesión se cierra
+  // estando aquí (menú de la barra) → al inicio: no tiene sentido pedir el
+  // código de nuevo a quien acaba de salir.
   useEffect(() => {
-    if (status === "anonymous") router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (status === "authenticated") wasAuthenticated.current = true;
+    if (status !== "anonymous") return;
+    router.replace(wasAuthenticated.current ? "/" : `/login?next=${encodeURIComponent(pathname)}`);
   }, [status, router, pathname]);
 
   if (status !== "authenticated") {
-    return (
-      <div className="flex flex-1 items-center justify-center py-16 text-[var(--color-text-muted)]">
-        Cargando…
-      </div>
-    );
+    return <LoadingState label="Cargando tu cuenta…" />;
   }
 
   return (
     <div className="mx-auto flex w-full flex-1 max-w-[var(--container-max)] flex-col">
-      <header className="flex items-center justify-between border-b border-[var(--color-border)] p-[var(--space-4)]">
+      <header className="border-b border-[var(--color-border)] p-[var(--space-4)]">
         <nav className="flex gap-4">
           {TABS.map((tab) => (
             <Link
@@ -48,16 +50,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             </Link>
           ))}
         </nav>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={async () => {
-            await logout();
-            router.replace("/");
-          }}
-        >
-          Salir
-        </Button>
       </header>
       <div className="flex-1 p-[var(--space-4)]">{children}</div>
     </div>

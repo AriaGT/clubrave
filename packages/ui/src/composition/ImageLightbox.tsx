@@ -1,6 +1,10 @@
+"use client";
+
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import * as React from "react";
+
+import { Img } from "../base/Img";
 
 export interface ImageLightboxProps {
   src: string;
@@ -49,8 +53,7 @@ export function ImageLightbox({ src, alt, title, children }: ImageLightboxProps)
               if (e.target === e.currentTarget) setOpen(false);
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt={alt} className="max-h-full max-w-full rounded-[var(--radius-md)] object-contain" />
+            <Img src={src} alt={alt} className="max-h-full max-w-full rounded-[var(--radius-md)] object-contain" />
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { Img } from "../base/Img";
 import { Badge } from "../base/Badge";
 import { cn } from "../lib/cn";
 
@@ -42,8 +43,7 @@ export const EventCard = React.forwardRef<HTMLDivElement, EventCardProps>(
         )}
       >
         {coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverImage} alt="" className="h-full w-full object-cover" />
+          <Img src={coverImage} alt="" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center text-[var(--color-text-subtle)]">
             Sin imagen

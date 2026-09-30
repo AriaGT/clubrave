@@ -2,7 +2,7 @@
 
 import { isApiError } from "@repo/api-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Checkbox, FieldError, Input, Label, PriceBreakdown } from "@repo/ui";
+import { Button, Checkbox, FieldError, Input, Label, PriceBreakdown, useAsyncAction } from "@repo/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -89,14 +89,14 @@ export default function CheckoutPage() {
     setStep("code");
   }
 
-  async function handleVerifyCode() {
+  const verifyCode = useAsyncAction(async () => {
     setAuthError(null);
     try {
       await verify({ email, code });
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : "Código inválido.");
     }
-  }
+  });
 
   const onSubmitBuyer = handleSubmit(async (values) => {
     if (!eventId) return;
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
             className="text-center font-mono text-lg tracking-[0.3em]"
           />
           <FieldError>{authError}</FieldError>
-          <Button loading={false} onClick={handleVerifyCode} disabled={code.length !== 6}>
+          <Button loading={verifyCode.pending} onClick={() => verifyCode.run()} disabled={code.length !== 6}>
             Verificar
           </Button>
           <button type="button" className="text-sm text-[var(--color-text-muted)]" onClick={() => setStep("email")}>

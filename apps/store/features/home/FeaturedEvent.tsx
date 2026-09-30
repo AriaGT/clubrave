@@ -1,7 +1,7 @@
 "use client";
 
 import { selectedImageOfKind } from "@repo/api-client";
-import { Badge, Card, ImagePreviewCard, buttonVariants, cn } from "@repo/ui";
+import { Badge, Card, ImagePreviewCard, Img, buttonVariants, cn } from "@repo/ui";
 import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { type PointerEvent, useRef } from "react";
@@ -48,8 +48,7 @@ export function FeaturedEvent({ event, detail }: { event: EventListItem; detail:
           className="absolute -inset-[15%] -z-10 [transform:translate3d(0,var(--parallax,0px),0)]"
         >
           {event.cover_image && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.cover_image} alt="" className="h-full w-full object-cover opacity-55 blur-3xl" />
+            <Img src={event.cover_image} alt="" className="h-full w-full object-cover opacity-55 blur-3xl" />
           )}
         </div>
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[image:var(--gradient-scrim-hero)]" />
@@ -109,8 +108,7 @@ export function FeaturedEvent({ event, detail }: { event: EventListItem; detail:
               className="relative aspect-[4/5] w-[min(68vw,300px)] overflow-hidden rounded-[var(--radius-xl)] border border-white/10 shadow-[var(--glow-accent)] transition-transform duration-[var(--duration-base)] ease-[var(--ease-out)] md:w-full md:max-w-[400px]"
             >
               {event.cover_image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={event.cover_image} alt={`Flyer de ${event.title}`} className="h-full w-full object-cover" />
+                <Img src={event.cover_image} alt={`Flyer de ${event.title}`} className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full bg-[var(--color-surface-sunken)]" />
               )}

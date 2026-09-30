@@ -1,7 +1,7 @@
 "use client";
 
 import { isApiError } from "@repo/api-client";
-import { Button, Card, CardContent, EmptyState, FieldError, Input, Label, Skeleton, TopBar } from "@repo/ui";
+import { Button, Card, CardContent, EmptyState, FieldError, Img, Input, Label, Skeleton, TopBar } from "@repo/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -147,8 +147,7 @@ export default function SiteSettingsPage() {
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex h-20 min-w-40 items-center justify-center rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-bg)] px-4">
                   {data.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={data.logo} alt="Logo actual" className="max-h-12 max-w-[180px] object-contain" />
+                    <Img src={data.logo} alt="Logo actual" className="max-h-12 max-w-[180px] object-contain" />
                   ) : (
                     <span className="font-display text-lg font-extrabold uppercase tracking-[0.18em]">Club Rave</span>
                   )}
@@ -158,14 +157,22 @@ export default function SiteSettingsPage() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    loading={setLogo.isPending}
+                    loading={setLogo.isPending && setLogo.variables !== null}
+                    disabled={setLogo.isPending}
                     onClick={() => fileRef.current?.click()}
                   >
                     <ImagePlus className="h-4 w-4" />
                     {data.logo ? "Cambiar" : "Subir logo"}
                   </Button>
                   {data.logo && (
-                    <Button type="button" variant="danger" size="sm" onClick={() => setLogo.mutate(null)}>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      loading={setLogo.isPending && setLogo.variables === null}
+                      disabled={setLogo.isPending}
+                      onClick={() => setLogo.mutate(null)}
+                    >
                       <Trash2 className="h-4 w-4" />
                       Quitar
                     </Button>

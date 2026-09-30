@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardContent } from "@repo/ui";
+import { Button, Card, CardContent, useAsyncAction } from "@repo/ui";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -35,10 +35,14 @@ export default function PayPage() {
     }
   }, [order?.status, orderCode, router, clearCart]);
 
-  async function handleFakeDecision(approved: boolean) {
+  // Confirmar y releer el estado es una sola espera: el botón sigue ocupado
+  // hasta que la orden refleja el resultado.
+  const [decision, setDecision] = useState<boolean | null>(null);
+  const decide = useAsyncAction(async (approved: boolean) => {
+    setDecision(approved);
     await confirm.mutateAsync({ order_code: orderCode, approved });
     await refetch();
-  }
+  });
 
   async function handleRealSubmit(rawResponse: Record<string, unknown>) {
     setFormError(null);
@@ -80,10 +84,20 @@ export default function PayPage() {
           <p className="text-[var(--color-text-muted)]">
             Entorno de pruebas: simula el resultado del banco.
           </p>
-          <Button size="lg" loading={confirm.isPending} onClick={() => handleFakeDecision(true)}>
+          <Button
+            size="lg"
+            loading={decide.pending && decision === true}
+            disabled={decide.pending}
+            onClick={() => decide.run(true)}
+          >
             Simular pago aprobado
           </Button>
-          <Button variant="secondary" loading={confirm.isPending} onClick={() => handleFakeDecision(false)}>
+          <Button
+            variant="secondary"
+            loading={decide.pending && decision === false}
+            disabled={decide.pending}
+            onClick={() => decide.run(false)}
+          >
             Simular pago rechazado
           </Button>
         </div>

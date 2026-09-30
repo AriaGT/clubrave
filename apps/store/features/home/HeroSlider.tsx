@@ -1,6 +1,6 @@
 "use client";
 
-import { IconButton, buttonVariants, cn } from "@repo/ui";
+import { IconButton, Img, buttonVariants, cn } from "@repo/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -88,8 +88,7 @@ export function HeroSlider({ events }: { events: EventListItem[] }) {
               className="relative h-full w-full shrink-0 snap-center overflow-hidden"
             >
               {event.cover_image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Img
                   src={event.cover_image}
                   alt=""
                   className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl"
@@ -105,8 +104,7 @@ export function HeroSlider({ events }: { events: EventListItem[] }) {
                   className="relative aspect-[4/5] w-[min(56vw,240px)] shrink-0 overflow-hidden rounded-[var(--radius-xl)] border border-white/10 shadow-[var(--glow-accent)] md:w-[340px]"
                 >
                   {event.cover_image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={event.cover_image} alt={`Flyer de ${event.title}`} className="h-full w-full object-cover" />
+                    <Img src={event.cover_image} alt={`Flyer de ${event.title}`} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full bg-[var(--color-surface-sunken)]" />
                   )}

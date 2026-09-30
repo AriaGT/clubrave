@@ -67,10 +67,14 @@ export function TicketsStep({ eventId, onNext }: TicketsStepProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    disabled={tt.quantity_sold > 0}
+                    aria-label={`Eliminar ${tt.name}`}
+                    disabled={tt.quantity_sold > 0 || deleteTicketType.isPending}
+                    loading={deleteTicketType.isPending && deleteTicketType.variables === tt.id}
                     onClick={() => deleteTicketType.mutate(tt.id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {!(deleteTicketType.isPending && deleteTicketType.variables === tt.id) && (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </CardContent>
