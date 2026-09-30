@@ -1,0 +1,23 @@
+/* packages/tokens/src/density.css
+ * Un solo conjunto de tokens, dos expresiones (ver §9.7). La diferencia se
+ * declara en <html data-app="organizer" | "store"> y nunca se codifica a
+ * mano en los componentes: todo lee estas variables.
+ */
+
+/* Panel del organizador: alta densidad, operar rápido y sin errores. */
+[data-app="organizer"] {
+  --density-row: 44px;
+  --density-gap: var(--space-4);
+  --title-size: var(--text-xl);
+  --title-size-lg: var(--text-2xl);
+  --glow-enabled: 0; /* los resplandores están prohibidos en el panel */
+}
+
+/* Tienda del comprador: baja densidad, convencer y convertir. */
+[data-app="store"] {
+  --density-row: 56px;
+  --density-gap: var(--space-6);
+  --title-size: var(--text-3xl);
+  --title-size-lg: var(--text-4xl);
+  --glow-enabled: 1;
+}

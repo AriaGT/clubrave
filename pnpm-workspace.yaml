@@ -1,0 +1,14 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  unrs-resolver: true
+
+# Next.js empaqueta su propio postcss@8.4.31 internamente, con dos CVE de
+# severidad alta (path traversal / lectura de archivos vía sourceMappingURL,
+# ver `pnpm audit`). Nuestro propio postcss (@tailwindcss/postcss) ya
+# resuelve a una versión parcheada; esto fuerza la misma versión para la
+# copia interna de Next hasta que Next la actualice por su cuenta.
+overrides:
+  postcss: ">=8.5.18"

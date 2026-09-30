@@ -1,0 +1,16 @@
+{
+  "name": "ticketera",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma de venta de entradas con QR (MVP) — monorepo",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:organizer": "pnpm --filter @app/organizer dev",
+    "dev:store": "pnpm --filter @app/store dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

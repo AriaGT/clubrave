@@ -1,0 +1,42 @@
+/* packages/tokens/src/index.css
+ * Punto de entrada del design system NOCTA: importa todos los tokens y un
+ * preflight mínimo. Los valores literales (colores, espaciados) están
+ * prohibidos fuera de este paquete — todo el producto lee estas variables.
+ */
+@import "./color.css";
+@import "./type.css";
+@import "./space.css";
+@import "./motion.css";
+@import "./density.css";
+
+html {
+  color-scheme: dark; /* no hay tema claro en el MVP */
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+* {
+  box-sizing: border-box;
+}

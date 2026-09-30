@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ event.title }} fue cancelado</title>
+  </head>
+  <body style="font-family: sans-serif; background:#09090B; color:#F4F4F5; padding:24px;">
+    <h1 style="font-size:20px;">Se canceló el evento</h1>
+    <p>Lamentamos informarte que <strong>{{ event.title }}</strong>, tu orden
+    <strong>{{ order.code }}</strong>, fue cancelado.</p>
+    <div style="border:1px solid #2E2E3A; border-radius:14px; padding:16px; margin:16px 0;">
+      <p><strong>Motivo:</strong> {{ reason_label }}</p>
+      {% if reason %}<p>{{ reason }}</p>{% endif %}
+    </div>
+    <p>El <strong>reembolso se coordina con el organizador</strong> fuera de la
+    plataforma. Escribe a <a href="mailto:{{ contact_email }}" style="color:#F4F4F5;">{{ contact_email }}</a>
+    para gestionarlo.</p>
+  </body>
+</html>

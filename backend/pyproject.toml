@@ -1,0 +1,48 @@
+[project]
+name = "ticketera-backend"
+version = "0.1.0"
+description = "API de la plataforma de venta de entradas con QR (MVP)"
+requires-python = ">=3.12"
+dependencies = [
+  "Django>=5.1,<6",
+  "djangorestframework>=3.15",
+  "djangorestframework-simplejwt>=5.3",
+  "django-cors-headers>=4.4",
+  "django-filter>=24.3",
+  "drf-spectacular>=0.27",
+  "psycopg[binary]>=3.2",
+  "django-environ>=0.11",
+  "django-storages[s3]>=1.14",
+  "Pillow>=10.4",
+  "segno>=1.6",
+  "requests>=2.32",
+  "gunicorn>=23.0",
+  "whitenoise>=6.7",
+  "argon2-cffi>=23.1",
+  "sentry-sdk>=2.14",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "pytest-django>=4.9",
+  "pytest-cov",
+  "factory-boy>=3.3",
+  "freezegun>=1.5",
+  "ruff>=0.6",
+  "django-debug-toolbar",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py"]
+testpaths = ["tests", "apps"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

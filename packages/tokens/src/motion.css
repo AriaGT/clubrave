@@ -1,0 +1,24 @@
+/* packages/tokens/src/motion.css
+ * Transiciones de 120-240 ms que explican de dónde viene algo. Se respeta
+ * `prefers-reduced-motion` siempre (ver §9.6).
+ */
+:root {
+  --duration-instant: 90ms; /* cambio de estado: pulsación, interruptor */
+  --duration-fast: 150ms; /* aparición de menús, chips */
+  --duration-base: 220ms; /* transiciones de pantalla, hojas */
+  --duration-slow: 320ms; /* entrada de contenido destacado */
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* lo que entra */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* lo que se mueve */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,73 @@
+name: Tareas programadas (producción)
+
+# Runbook: docs/despliegue.md §4 "Tareas programadas". Reemplaza el cron
+# del hosting (Render free no trae scheduler propio) hasta que se pague un
+# plan con scheduler nativo.
+#
+# GitHub Actions no garantiza el minuto exacto de un cron (puede atrasarse
+# varios minutos en momentos de carga) — aceptable para el MVP, ver aviso
+# en el plan de despliegue.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # release_expired_orders
+    - cron: "*/10 * * * *" # resend_pending_ticket_emails
+  workflow_dispatch: # permite correrlo a mano desde la pestaña Actions
+
+jobs:
+  release-expired-orders:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DEBUG: "False"
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+      TICKET_SIGNING_KEYS: ${{ secrets.TICKET_SIGNING_KEYS }}
+      TICKET_SIGNING_KEY_ID: ${{ secrets.TICKET_SIGNING_KEY_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install .
+      - name: release_expired_orders
+        run: python manage.py release_expired_orders
+
+  resend-pending-ticket-emails:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DEBUG: "False"
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+      TICKET_SIGNING_KEYS: ${{ secrets.TICKET_SIGNING_KEYS }}
+      TICKET_SIGNING_KEY_ID: ${{ secrets.TICKET_SIGNING_KEY_ID }}
+      DEFAULT_FROM_EMAIL: ${{ secrets.DEFAULT_FROM_EMAIL }}
+      EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+      EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+      EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+      EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Instalar dependencias
+        run: pip install .
+      - name: resend_pending_ticket_emails
+        run: python manage.py resend_pending_ticket_emails

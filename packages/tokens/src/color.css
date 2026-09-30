@@ -1,0 +1,52 @@
+/* packages/tokens/src/color.css
+ * NOCTA — oscuro por defecto, no oscuro por moda. No hay tema claro en el MVP.
+ * Ver §9.2 del plan para el razonamiento detrás de cada escala.
+ */
+:root {
+  /* ── Fondos ─────────────────────────────────────────────── */
+  --color-bg: #09090b; /* lienzo: el negro grafito de la propuesta */
+  --color-bg-elevated: #121216; /* zonas elevadas: cabeceras, barras, hojas */
+
+  /* ── Superficies ────────────────────────────────────────── */
+  --color-surface: #1a1a22; /* tarjetas y contenedores */
+  --color-surface-hover: #20202a;
+  --color-surface-sunken: #141419; /* campos de formulario, celdas de datos */
+
+  /* ── Bordes ─────────────────────────────────────────────── */
+  --color-border: #2e2e3a; /* borde estándar de 1 px */
+  --color-border-subtle: #23232d; /* separadores dentro de una tarjeta */
+  --color-border-strong: #3c3c4c; /* foco de contenedor, estados activos */
+
+  /* ── Texto ──────────────────────────────────────────────── */
+  --color-text: #f4f4f5; /* principal — 17.2:1 sobre --color-bg */
+  --color-text-muted: #a1a1ab; /* secundario — 7.4:1 */
+  --color-text-subtle: #71717a; /* terciario: solo etiquetas ≥ 14 px */
+  --color-text-inverse: #09090b; /* sobre rellenos claros o de acento */
+
+  /* ── Acento primario: Electric Violet ───────────────────── */
+  --color-accent: #7c3aed;
+  --color-accent-hover: #8b5cf6;
+  --color-accent-active: #6d28d9;
+  --color-accent-soft: rgba(124, 58, 237, 0.14); /* fondos de chip/selección */
+  --color-accent-ring: rgba(124, 58, 237, 0.45); /* anillo de foco */
+  --color-accent-text: #c4b5fd; /* texto violeta legible sobre oscuro */
+
+  /* ── Acento secundario: Neon Mint (confirmación, "en vivo") ─ */
+  --color-mint: #10b981;
+  --color-mint-soft: rgba(16, 185, 129, 0.14);
+  --color-mint-text: #6ee7b7;
+
+  /* ── Semánticos ─────────────────────────────────────────── */
+  --color-success: var(--color-mint);
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.14);
+  --color-danger: #f43f5e;
+  --color-danger-soft: rgba(244, 63, 94, 0.14);
+  --color-info: #38bdf8;
+
+  /* ── Efectos ────────────────────────────────────────────── */
+  --gradient-accent: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  --gradient-scrim: linear-gradient(180deg, rgba(9, 9, 11, 0) 0%, rgba(9, 9, 11, 0.92) 78%);
+  --glow-accent: 0 0 40px rgba(124, 58, 237, 0.28); /* solo en la tienda */
+  --glow-mint: 0 0 32px rgba(16, 185, 129, 0.25); /* solo en éxito/QR válido */
+}

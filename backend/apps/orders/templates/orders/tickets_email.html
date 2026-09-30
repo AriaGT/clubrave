@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tus entradas — {{ event.title }}</title>
+  </head>
+  <body style="font-family: sans-serif; background:#09090B; color:#F4F4F5; padding:24px;">
+    <h1 style="font-size:20px;">¡Ya tienes tus entradas!</h1>
+    <p>Orden <strong>{{ order.code }}</strong> — {{ event.title }}</p>
+    <p>{{ event.starts_at }} · {{ event.venue_name }}, {{ event.city }}</p>
+
+    {% for row in ticket_rows %}
+      <div style="border:1px solid #2E2E3A; border-radius:14px; padding:16px; margin:16px 0;">
+        <p><strong>{{ row.ticket.ticket_type.name }}</strong></p>
+        <p>Titular: {{ row.ticket.holder_name }}</p>
+        <p>El código QR de esta entrada va adjunto como <strong>{{ row.qr_filename }}</strong>.</p>
+        <p style="font-family: monospace; letter-spacing: 1px;">{{ row.ticket.code }}</p>
+      </div>
+    {% endfor %}
+
+    <p><a href="{{ account_url }}">Ver mis entradas en mi cuenta</a></p>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+@import "@repo/tokens/theme.css";
+
+/* Tailwind v4 no rastrea node_modules por defecto: los paquetes del
+   monorepo (symlinks de pnpm) necesitan declararse explícitamente. */
+@source "../../../packages/ui/src";

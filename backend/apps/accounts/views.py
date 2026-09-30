@@ -1,0 +1,93 @@
+from django.contrib.auth import authenticate
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, status
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
+
+from apps.common.errors import DomainError
+
+from . import services
+from .models import User
+from .permissions import IsCustomer
+from .serializers import (
+    MeSerializer,
+    OrgLoginSerializer,
+    RequestCodeSerializer,
+    TokenPairSerializer,
+    VerifyCodeSerializer,
+)
+
+
+class OrgLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "org_login"
+
+    @extend_schema(request=OrgLoginSerializer, responses=TokenPairSerializer)
+    def post(self, request: Request):
+        serializer = OrgLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = authenticate(
+            request,
+            username=serializer.validated_data["email"].strip().lower(),
+            password=serializer.validated_data["password"],
+        )
+        if user is None or user.role != User.Role.ORGANIZER:
+            raise DomainError("VALIDATION_ERROR", "Email o contraseña incorrectos.")
+
+        tokens = services.org_tokens_for_user(user)
+        return Response(tokens, status=status.HTTP_200_OK)
+
+
+class CustomerRequestCodeView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login_code"
+
+    @extend_schema(request=RequestCodeSerializer, responses={202: None})
+    def post(self, request: Request):
+        serializer = RequestCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        services.request_login_code(
+            email=serializer.validated_data["email"],
+            ip=request.META.get("REMOTE_ADDR"),
+        )
+        # Siempre 202: no se filtra si el email tiene cuenta.
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class CustomerVerifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login_code"
+
+    @extend_schema(request=VerifyCodeSerializer, responses=TokenPairSerializer)
+    def post(self, request: Request):
+        serializer = VerifyCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = services.verify_login_code(
+            email=serializer.validated_data.get("email"),
+            code=serializer.validated_data.get("code"),
+            token=serializer.validated_data.get("token"),
+        )
+        tokens = services.customer_tokens_for_user(user)
+        return Response(tokens, status=status.HTTP_200_OK)
+
+
+class MeView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MeSerializer
+    permission_classes = [IsCustomer]
+
+    def get_object(self) -> User:
+        return self.request.user
+
+    @extend_schema(responses={204: None})
+    def delete(self, request, *args, **kwargs):
+        """Borrado de cuenta bajo petición (§13.1): anonimiza en vez de
+        borrar la fila — el historial de órdenes se conserva por obligación
+        contable (ver `services.anonymize_account`)."""
+        services.anonymize_account(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,0 +1,8 @@
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("webhooks/izipay/", views.IzipayWebhookView.as_view(), name="izipay-webhook"),
+    path("checkout/orders/<str:code>/confirm/", views.confirm_from_browser, name="order-confirm"),
+]

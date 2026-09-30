@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "organizer",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@app/organizer", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "store",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@app/store", "dev"],
+      "port": 3000
+    }
+  ]
+}
