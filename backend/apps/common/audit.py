@@ -15,6 +15,7 @@ _LABELS = {
     "ticket": lambda obj: obj.code,
     "eventimage": lambda obj: obj.alt or "Imagen",
     "tickettype": lambda obj: obj.name,
+    "guestcode": lambda obj: obj.code,
 }
 
 

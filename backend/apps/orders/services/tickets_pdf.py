@@ -45,6 +45,8 @@ def _page_for_ticket(ticket, event) -> Image.Image:
         fill="black",
         font=body_font,
     )
+    if ticket.order.is_guest:
+        draw.text((margin, margin + 175), "INVITADO", fill="black", font=body_font)
 
     qr = _qr_image(sign_ticket_code(ticket.code))
     qr_size = 700

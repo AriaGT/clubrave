@@ -133,6 +133,7 @@ REST_FRAMEWORK = {
         "checkout": "20/hour",      # por IP
         "public": "120/min",        # catálogo
         "checkin": "600/hour",      # puerta: alto, pero acotado
+        "guest_code": "30/hour",    # por IP: validar/redimir códigos de invitado
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",

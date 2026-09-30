@@ -36,6 +36,7 @@ class CheckInView(APIView):
                     "holder_name": result.ticket.holder_name,
                     "order_code": result.ticket.order.code,
                     "checked_in_at": result.ticket.checked_in_at,
+                    "is_guest": result.ticket.order.is_guest,
                 },
             }
         )

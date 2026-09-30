@@ -15,6 +15,7 @@ class CheckInTicketSerializer(serializers.Serializer):
     holder_name = serializers.CharField()
     order_code = serializers.CharField()
     checked_in_at = serializers.DateTimeField()
+    is_guest = serializers.BooleanField(help_text="Entrada de invitado (código de cortesía).")
 
 
 class CheckInResponseSerializer(serializers.Serializer):

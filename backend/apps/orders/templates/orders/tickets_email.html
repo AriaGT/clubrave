@@ -2,16 +2,23 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Tus entradas — {{ event.title }}</title>
+    <title>{% if order.is_guest %}Tu entrada de invitado{% else %}Tus entradas{% endif %} — {{ event.title }}</title>
   </head>
   <body style="font-family: sans-serif; background:#09090B; color:#F4F4F5; padding:24px;">
-    <h1 style="font-size:20px;">¡Ya tienes tus entradas!</h1>
+    {% if order.is_guest %}
+      <p style="display:inline-block; background:#7C3AED; color:#FFFFFF; font-weight:bold; letter-spacing:2px; border-radius:6px; padding:4px 10px; margin:0 0 8px;">INVITADO</p>
+      <h1 style="font-size:20px;">¡Estás en la lista!</h1>
+      <p>Tu entrada de invitado es de cortesía: no tiene costo.</p>
+    {% else %}
+      <h1 style="font-size:20px;">¡Ya tienes tus entradas!</h1>
+    {% endif %}
     <p>Orden <strong>{{ order.code }}</strong> — {{ event.title }}</p>
     <p>{{ event.starts_at }} · {{ event.venue_name }}, {{ event.city }}</p>
 
     {% for row in ticket_rows %}
       <div style="border:1px solid #2E2E3A; border-radius:14px; padding:16px; margin:16px 0;">
-        <p><strong>{{ row.ticket.ticket_type.name }}</strong></p>
+        <p><strong>{{ row.ticket.ticket_type.name }}</strong>{% if order.is_guest %} · <strong style="color:#A78BFA;">INVITADO</strong>{% endif %}</p>
+        {% if order.is_guest %}<p>Entrada / zona: {{ row.ticket.ticket_type.name }}</p>{% endif %}
         <p>Titular: {{ row.ticket.holder_name }}</p>
         <p>El código QR de esta entrada va adjunto como <strong>{{ row.qr_filename }}</strong>.</p>
         <p style="font-family: monospace; letter-spacing: 1px;">{{ row.ticket.code }}</p>

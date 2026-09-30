@@ -45,4 +45,17 @@ urlpatterns = [
         name="org-order-resend-tickets",
     ),
     path("org/tickets/<str:code>/void/", views.TicketVoidView.as_view(), name="org-ticket-void"),
+    # Códigos de invitado
+    path(
+        "org/events/<uuid:event_pk>/guest-codes/",
+        views.OrganizerGuestCodesView.as_view(),
+        name="org-event-guest-codes",
+    ),
+    path(
+        "org/guest-codes/<uuid:pk>/void/",
+        views.OrganizerGuestCodeVoidView.as_view(),
+        name="org-guest-code-void",
+    ),
+    path("guest-codes/validate/", views.GuestCodeValidateView.as_view(), name="guest-code-validate"),
+    path("guest-codes/redeem/", views.GuestCodeRedeemView.as_view(), name="guest-code-redeem"),
 ]

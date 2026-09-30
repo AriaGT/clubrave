@@ -73,6 +73,8 @@ def check_in(
                 "ticket_code": ticket.code,
                 "checked_in_at": ticket.checked_in_at.isoformat() if ticket.checked_in_at else None,
                 "checked_in_by": ticket.checked_in_by_email,
+                "ticket_type_name": ticket.ticket_type.name,
+                "is_guest": ticket.order.is_guest,
             },
         )
 

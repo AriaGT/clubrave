@@ -40,6 +40,9 @@ class AuditLog(models.Model):
         TICKETS_RESENT = "TICKETS_RESENT"
         TICKET_VOIDED = "TICKET_VOIDED"
         CHECKIN_UNDONE = "CHECKIN_UNDONE"
+        GUEST_CODES_GENERATED = "GUEST_CODES_GENERATED"
+        GUEST_CODE_VOIDED = "GUEST_CODE_VOIDED"
+        GUEST_CODE_REDEEMED = "GUEST_CODE_REDEEMED"
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now, db_index=True)
@@ -51,7 +54,7 @@ class AuditLog(models.Model):
     )
     actor_email = models.CharField(max_length=150)  # fotografía: sobrevive al borrado
     action = models.CharField(max_length=32, choices=Action.choices)
-    target_type = models.CharField(max_length=16, blank=True)  # "event" | "order" | "ticket" | ...
+    target_type = models.CharField(max_length=16, blank=True)  # "event" | "order" | "guestcode" | ...
     target_id = models.UUIDField(null=True, blank=True)
     target_label = models.CharField(max_length=150, blank=True)  # "TK-7F3A", "Sesión 02"
     event = models.ForeignKey(

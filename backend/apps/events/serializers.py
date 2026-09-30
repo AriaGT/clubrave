@@ -38,6 +38,13 @@ class TicketTypeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "No puedes bajar el aforo por debajo de lo ya vendido."
             )
+        # Lo retenido (compras en curso y códigos de invitado sin usar) también
+        # ocupa aforo: sin esto, la CheckConstraint rompería con un 500.
+        if instance and value < instance.quantity_sold + instance.quantity_reserved:
+            raise serializers.ValidationError(
+                "No puedes bajar el aforo por debajo de lo vendido más lo retenido "
+                "(compras en curso y códigos de invitado sin usar)."
+            )
         return value
 
 

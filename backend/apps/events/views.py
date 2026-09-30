@@ -437,4 +437,9 @@ class OrganizerTicketTypeViewSet(OrganizerScopedMixin, viewsets.ModelViewSet):
         ticket_type = self.get_object()
         if ticket_type.quantity_sold > 0:
             raise DomainError("VALIDATION_ERROR", "No puedes borrar un tipo de entrada con ventas.")
+        if ticket_type.guest_codes.exists():
+            raise DomainError(
+                "VALIDATION_ERROR",
+                "No puedes borrar un tipo de entrada con códigos de invitado. Desactívalo en su lugar.",
+            )
         return super().destroy(request, *args, **kwargs)

@@ -143,6 +143,11 @@ def cancel_event(
         order.void_reason = reason_label
         order.save(update_fields=["status", "voided_at", "void_reason", "updated_at"])
 
+    # Los códigos de invitado sin usar también liberan su retención (D1).
+    from .guest_codes import void_available_codes_for_event
+
+    impact["guest_codes_voided"] = void_available_codes_for_event(event=event)
+
     record(
         actor=actor,
         organization=event.organization,

@@ -16,10 +16,17 @@ from apps.events.models import Event
 from apps.payments.gateways import PaymentUnavailable, get_gateway
 from apps.payments.models import PaymentEvent
 
-from .models import Order, Ticket
+from .models import GuestCode, Order, Ticket
 from .serializers import (
     CheckoutCreateResponseSerializer,
     CheckoutCreateSerializer,
+    GuestCodeBatchSerializer,
+    GuestCodeGenerateSerializer,
+    GuestCodeRedeemSerializer,
+    GuestCodeSerializer,
+    GuestCodeValidateResponseSerializer,
+    GuestCodeValidateSerializer,
+    GuestCodeVoidSerializer,
     OrderDetailSerializer,
     OrderPublicStatusSerializer,
     OrderRefundSerializer,
@@ -29,6 +36,12 @@ from .serializers import (
 )
 from .services.checkout import BuyerData, CartLine, create_order
 from .services.expiry import release_expired_orders
+from .services.guest_codes import (
+    generate_guest_codes,
+    redeem_guest_code,
+    validate_guest_code,
+    void_guest_code,
+)
 from .services.tickets_email import resend_tickets_email
 from .services.void import mark_refunded, void_order, void_ticket
 
@@ -344,7 +357,7 @@ class OrganizerEventOrdersCsvView(APIView):
             [
                 "codigo", "estado", "email", "nombre", "total", "moneda",
                 "referencia_pasarela", "creado", "motivo_anulacion", "anulada_en",
-                "referencia_reembolso",
+                "referencia_reembolso", "invitado",
             ]
         )
         for order in orders:
@@ -355,6 +368,7 @@ class OrganizerEventOrdersCsvView(APIView):
                     order.void_reason,
                     order.voided_at.isoformat() if order.voided_at else "",
                     order.refund_reference,
+                    "si" if order.is_guest else "no",
                 ]
             )
         return response
@@ -394,3 +408,152 @@ class OrganizerEventAttendeesView(generics.ListAPIView):
                 | Q(order__buyer_email__icontains=q)
             )
         return queryset
+
+
+# ── Códigos de invitado ──────────────────────────────────────────────────────
+
+
+class GuestCodeIPThrottle(ScopedRateThrottle):
+    """Throttle por IP aunque haya sesión: el límite es contra el sondeo de
+    códigos desde un mismo origen, no por cuenta (crear cuentas es barato)."""
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
+@extend_schema_view(
+    get=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "status", str, required=False, description="AVAILABLE, REDEEMED o VOIDED."
+            ),
+            OpenApiParameter("ticket_type", str, required=False),
+        ],
+        responses=GuestCodeSerializer(many=True),
+    ),
+    post=extend_schema(request=GuestCodeGenerateSerializer, responses=GuestCodeBatchSerializer),
+)
+class OrganizerGuestCodesView(generics.ListAPIView):
+    """Lista (sin paginar, para poder copiar/compartir todos) y genera en lote
+    los códigos de invitado de un evento."""
+
+    serializer_class = GuestCodeSerializer
+    permission_classes = [IsOrganizer]
+    pagination_class = None
+
+    def get_queryset(self):
+        qs = GuestCode.objects.filter(
+            event_id=self.kwargs["event_pk"],
+            event__organization_id=self.request.auth["organization_id"],
+        ).select_related("ticket_type", "order")
+        status_filter = (self.request.query_params.get("status") or "").strip()
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        ticket_type = (self.request.query_params.get("ticket_type") or "").strip()
+        if ticket_type:
+            qs = qs.filter(ticket_type_id=ticket_type)
+        return qs
+
+    def post(self, request, event_pk):
+        event = get_object_or_404(
+            Event, pk=event_pk, organization_id=request.auth["organization_id"]
+        )
+        serializer = GuestCodeGenerateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        codes = generate_guest_codes(
+            event=event,
+            ticket_type_id=serializer.validated_data["ticket_type_id"],
+            quantity=serializer.validated_data["quantity"],
+            label=serializer.validated_data["label"],
+            actor=request.user,
+        )
+        return Response(
+            {
+                "batch_id": str(codes[0].batch_id),
+                "codes": GuestCodeSerializer(codes, many=True).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class OrganizerGuestCodeVoidView(APIView):
+    """Anula un código de invitado que todavía no se usó y libera su cupo."""
+
+    permission_classes = [IsOrganizer]
+
+    @extend_schema(request=GuestCodeVoidSerializer, responses=GuestCodeSerializer)
+    def post(self, request, pk):
+        guest_code = get_object_or_404(
+            GuestCode.objects.filter(event__organization_id=request.auth["organization_id"]), pk=pk
+        )
+        serializer = GuestCodeVoidSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        guest_code = void_guest_code(
+            guest_code=guest_code, actor=request.user, reason=serializer.validated_data["reason"]
+        )
+        return Response(GuestCodeSerializer(guest_code).data)
+
+
+def _guest_code_summary(guest_code: GuestCode) -> dict:
+    event = guest_code.event
+    ticket_type = guest_code.ticket_type
+    return {
+        "code": guest_code.code,
+        "event": {
+            "id": str(event.id),
+            "slug": event.slug,
+            "title": event.title,
+            "min_age": event.min_age,
+        },
+        "ticket_type": {
+            "id": str(ticket_type.id),
+            "name": ticket_type.name,
+            "description": ticket_type.description,
+        },
+    }
+
+
+class GuestCodeValidateView(APIView):
+    """Público: ¿este código sirve para este evento y qué entrada/zona da?
+    No redime nada. Limitado por IP contra la enumeración de códigos."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [GuestCodeIPThrottle]
+    throttle_scope = "guest_code"
+
+    @extend_schema(request=GuestCodeValidateSerializer, responses=GuestCodeValidateResponseSerializer)
+    def post(self, request):
+        serializer = GuestCodeValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        guest_code = validate_guest_code(
+            raw_code=serializer.validated_data["code"],
+            event_id=serializer.validated_data["event_id"],
+        )
+        return Response(_guest_code_summary(guest_code))
+
+
+class GuestCodeRedeemView(APIView):
+    """Redime el código y emite la entrada de cortesía (sin pasarela).
+
+    Exige sesión de comprador (el mismo OTP del checkout): la entrada queda en
+    su cuenta y el email de entradas va a su dirección verificada."""
+
+    permission_classes = [IsCustomer]
+    throttle_classes = [GuestCodeIPThrottle]
+    throttle_scope = "guest_code"
+
+    @extend_schema(request=GuestCodeRedeemSerializer, responses=OrderSerializer)
+    def post(self, request):
+        serializer = GuestCodeRedeemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        buyer = BuyerData(**{**data["buyer"], "email": request.user.email})
+        result = redeem_guest_code(
+            raw_code=data["code"],
+            event_id=data["event_id"],
+            buyer=buyer,
+            customer=request.user,
+            terms_accepted=data["terms_accepted"],
+        )
+        order = Order.objects.prefetch_related("items", "tickets__ticket_type").get(pk=result.order.pk)
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)

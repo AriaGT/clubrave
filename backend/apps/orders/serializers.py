@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Order, OrderItem, Ticket
+from .models import GuestCode, Order, OrderItem, Ticket
 from .services.checkout import BuyerData, CartLine
 from .services.codes import sign_ticket_code
 from .services.tickets_email import resends_today
@@ -15,6 +15,7 @@ class RevenueStatsSerializer(serializers.Serializer):
 
 class TicketCountStatsSerializer(serializers.Serializer):
     sold = serializers.IntegerField()
+    guests = serializers.IntegerField(help_text="Entradas de invitado emitidas (no suman ingresos).")
     capacity = serializers.IntegerField()
     checked_in = serializers.IntegerField()
 
@@ -24,6 +25,7 @@ class TicketTypeStatsSerializer(serializers.Serializer):
     name = serializers.CharField()
     price = serializers.CharField()
     sold = serializers.IntegerField()
+    guests = serializers.IntegerField()
     total = serializers.IntegerField()
     available = serializers.IntegerField()
     checked_in = serializers.IntegerField()
@@ -35,9 +37,17 @@ class Last24hStatsSerializer(serializers.Serializer):
     tickets = serializers.IntegerField()
 
 
+class GuestCodeStatsSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    available = serializers.IntegerField()
+    redeemed = serializers.IntegerField()
+    voided = serializers.IntegerField()
+
+
 class EventStatsSerializer(serializers.Serializer):
     revenue = RevenueStatsSerializer()
     tickets = TicketCountStatsSerializer()
+    guest_codes = GuestCodeStatsSerializer()
     by_ticket_type = TicketTypeStatsSerializer(many=True)
     last_24h = Last24hStatsSerializer()
     generated_at = serializers.DateTimeField()
@@ -58,13 +68,14 @@ class TicketSerializer(serializers.ModelSerializer):
         source="order.event.organization.contact_email", read_only=True
     )
     is_expired = serializers.BooleanField(read_only=True)
+    is_guest = serializers.BooleanField(source="order.is_guest", read_only=True)
     checked_in_by_email = serializers.CharField(read_only=True)
     qr_payload = serializers.SerializerMethodField()
 
     class Meta:
         model = Ticket
         fields = [
-            "id", "code", "status", "holder_name", "ticket_type_name",
+            "id", "code", "status", "holder_name", "ticket_type_name", "is_guest",
             "order_code", "event_title", "organization_name", "organization_contact_email",
             "checked_in_at", "checked_in_by_email", "voided_at", "void_reason",
             "is_expired", "qr_payload",
@@ -81,7 +92,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            "code", "status", "currency", "subtotal", "service_fee", "total",
+            "code", "status", "is_guest", "currency", "subtotal", "service_fee", "total",
             "expires_at", "paid_at", "buyer_email", "buyer_name",
             "voided_at", "void_reason", "refunded_at", "refund_reference",
             "items", "tickets", "created_at",
@@ -110,11 +121,12 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     tickets = OrderTicketSerializer(many=True, read_only=True)
     resends_today = serializers.SerializerMethodField()
+    guest_code = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
-            "code", "status", "currency", "subtotal", "service_fee", "total",
+            "code", "status", "is_guest", "guest_code", "currency", "subtotal", "service_fee", "total",
             "created_at", "paid_at", "voided_at", "void_reason_code", "void_reason",
             "refund_reference", "refunded_at",
             "buyer_email", "buyer_name", "buyer_phone", "buyer_document",
@@ -125,6 +137,13 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
     def get_resends_today(self, obj: Order) -> int:
         return resends_today(obj.id)
+
+    def get_guest_code(self, obj: Order) -> str | None:
+        """El código de invitado con el que se emitió (solo órdenes de cortesía)."""
+        if not obj.is_guest:
+            return None
+        guest_code = GuestCode.objects.filter(order=obj).only("code").first()
+        return guest_code.code if guest_code else None
 
 
 class OrderVoidSerializer(serializers.Serializer):
@@ -185,3 +204,77 @@ class PaymentSessionSerializer(serializers.Serializer):
 class CheckoutCreateResponseSerializer(serializers.Serializer):
     order = OrderSerializer()
     payment = PaymentSessionSerializer()
+
+
+# ── Códigos de invitado ──────────────────────────────────────────────────────
+
+
+class GuestCodeSerializer(serializers.ModelSerializer):
+    """Un código de invitado para el panel: estado y, si se redimió, quién y cuándo."""
+
+    ticket_type_id = serializers.UUIDField(read_only=True)
+    ticket_type_name = serializers.CharField(source="ticket_type.name", read_only=True)
+    order_code = serializers.CharField(source="order.code", read_only=True, allow_null=True, default=None)
+    redeemed_by_name = serializers.CharField(
+        source="order.buyer_name", read_only=True, allow_null=True, default=None
+    )
+    redeemed_by_email = serializers.CharField(
+        source="order.buyer_email", read_only=True, allow_null=True, default=None
+    )
+
+    class Meta:
+        model = GuestCode
+        fields = [
+            "id", "code", "status", "ticket_type_id", "ticket_type_name", "label", "batch_id",
+            "created_at", "redeemed_at", "voided_at", "order_code",
+            "redeemed_by_name", "redeemed_by_email",
+        ]
+        read_only_fields = fields
+
+
+class GuestCodeGenerateSerializer(serializers.Serializer):
+    ticket_type_id = serializers.UUIDField()
+    quantity = serializers.IntegerField(min_value=1, max_value=500)
+    label = serializers.CharField(max_length=80, required=False, allow_blank=True, default="")
+
+
+class GuestCodeBatchSerializer(serializers.Serializer):
+    batch_id = serializers.UUIDField()
+    codes = GuestCodeSerializer(many=True)
+
+
+class GuestCodeVoidSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=200, required=False, allow_blank=True, default="")
+
+
+class GuestCodeValidateSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=40)
+    event_id = serializers.UUIDField()
+
+
+class GuestCodeTicketTypeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    description = serializers.CharField(allow_blank=True)
+
+
+class GuestCodeEventSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    slug = serializers.CharField()
+    title = serializers.CharField()
+    min_age = serializers.IntegerField()
+
+
+class GuestCodeValidateResponseSerializer(serializers.Serializer):
+    """Lo mínimo para que el invitado sepa qué entrada/zona le toca."""
+
+    code = serializers.CharField()
+    event = GuestCodeEventSerializer()
+    ticket_type = GuestCodeTicketTypeSerializer()
+
+
+class GuestCodeRedeemSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=40)
+    event_id = serializers.UUIDField()
+    buyer = BuyerSerializer()
+    terms_accepted = serializers.BooleanField()

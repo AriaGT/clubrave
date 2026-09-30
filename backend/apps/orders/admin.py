@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Order, OrderItem, Ticket
+from .models import GuestCode, Order, OrderItem, Ticket
 
 
 class OrderItemInline(admin.TabularInline):
@@ -18,7 +18,7 @@ class TicketInline(admin.TabularInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ["code", "event", "status", "total", "buyer_email", "created_at"]
-    list_filter = ["status", "gateway"]
+    list_filter = ["status", "gateway", "is_guest"]
     search_fields = ["code", "buyer_email", "gateway_reference"]
     list_select_related = ["event"]
     readonly_fields = ["subtotal", "service_fee", "total", "code"]
@@ -31,3 +31,19 @@ class TicketAdmin(admin.ModelAdmin):
     list_filter = ["status"]
     search_fields = ["code", "order__code", "order__buyer_email"]
     list_select_related = ["order", "ticket_type"]
+
+
+@admin.register(GuestCode)
+class GuestCodeAdmin(admin.ModelAdmin):
+    """Solo lectura: generar, redimir y anular pasan por los servicios (inventario)."""
+
+    list_display = ["code", "event", "ticket_type", "status", "label", "redeemed_at"]
+    list_filter = ["status"]
+    search_fields = ["code", "label", "order__code", "order__buyer_email"]
+    list_select_related = ["event", "ticket_type"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

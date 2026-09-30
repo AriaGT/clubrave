@@ -53,6 +53,11 @@ class Order(TimeStampedModel):
 
     tickets_email_sent_at = models.DateTimeField(null=True, blank=True)
 
+    # Códigos de invitado: orden de cortesía (total 0, sin pasarela) emitida al
+    # redimir un `GuestCode`. Ocupa cupo como una venta, pero nunca suma a
+    # ingresos (ver `services/stats.py`).
+    is_guest = models.BooleanField(default=False)
+
     # H08 — anulación de una venta (el email y el CSV leen estos campos
     # denormalizados; el detalle vive además en la bitácora, ver §5.2).
     voided_at = models.DateTimeField(null=True, blank=True)
@@ -127,3 +132,46 @@ class Ticket(TimeStampedModel):
     @property
     def checked_in_by_email(self) -> str | None:
         return self.checked_in_by.email if self.checked_in_by_id else None
+
+
+class GuestCode(TimeStampedModel):
+    """Código de invitado: reclama **una** entrada de un tipo concreto, sin pago.
+
+    Decisión de inventario: el cupo se **retiene al generar** el código
+    (`TicketType.quantity_reserved`), igual que una orden pendiente pero sin
+    vencimiento. Así la lista de invitados nunca se queda sin lugar porque la
+    venta pública se agotó, y la tienda nunca promete cupo que ya está
+    comprometido. Al redimir, la retención pasa a vendido (`quantity_sold`);
+    al anular un código disponible, la retención se libera.
+    """
+
+    class Status(models.TextChoices):
+        AVAILABLE = "AVAILABLE", "Disponible"
+        REDEEMED = "REDEEMED", "Redimido"
+        VOIDED = "VOIDED", "Anulado"
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="guest_codes")
+    ticket_type = models.ForeignKey(TicketType, on_delete=models.PROTECT, related_name="guest_codes")
+    code = models.CharField(max_length=16, unique=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.AVAILABLE)
+    batch_id = models.UUIDField(db_index=True)
+    label = models.CharField(max_length=80, blank=True)  # "Prensa", "Lista DJ", ...
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="guest_codes_created",
+        null=True,
+        blank=True,
+    )
+    order = models.OneToOneField(
+        Order, on_delete=models.PROTECT, related_name="guest_code", null=True, blank=True
+    )
+    redeemed_at = models.DateTimeField(null=True, blank=True)
+    voided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "code"]
+        indexes = [models.Index(fields=["event", "status"])]
+
+    def __str__(self):
+        return self.code

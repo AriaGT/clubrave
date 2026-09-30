@@ -57,7 +57,11 @@ def send_tickets_email(order_id: UUID) -> bool:
 
     sent = send_email(
         to=order.buyer_email,
-        subject=f"Tus entradas para {order.event.title}",
+        subject=(
+            f"Tu entrada de invitado para {order.event.title}"
+            if order.is_guest
+            else f"Tus entradas para {order.event.title}"
+        ),
         html=html,
         attachments=attachments,
     )
