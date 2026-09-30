@@ -832,6 +832,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/door/events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Eventos habilitados para escanear. Al personal de seguridad solo se
+         *     le muestran los que aún no terminaron (los pasados no le sirven).
+         */
+        get: operations["org_door_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/door/events/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["org_door_events_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/employees/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        get: operations["org_employees_list"];
+        put?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        post: operations["org_employees_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/employees/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        get: operations["org_employees_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        delete: operations["org_employees_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        patch: operations["org_employees_partial_update"];
+        trace?: never;
+    };
+    "/api/org/employees/{id}/reset-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        post: operations["org_employees_reset_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -885,7 +993,7 @@ SiteSettings: {
          *     * `CHECKIN_UNDONE` - Checkin Undone
          * @enum {string}
          */
-        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE";
+        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
         Announce: {
             subject: string;
             message: string;
@@ -1585,6 +1693,75 @@ SiteSettings: {
             code?: string;
             token?: string;
         };
+        DoorEvent: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly title: string;
+            readonly status: components["schemas"]["StatusD0aEnum"];
+            /** Format: date-time */
+            readonly starts_at: string;
+            /** Format: date-time */
+            readonly ends_at: string | null;
+            readonly venue_name: string;
+            readonly city: string;
+            readonly scanner_opens_at: string;
+            readonly scanner_closes_at: string;
+            /** @description Para el organizador siempre True (no tiene restricción horaria). */
+            readonly scanner_is_open: boolean;
+            readonly checked_in_count: number;
+        };
+        Employee: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly full_name: string;
+            readonly role: components["schemas"]["RoleEnum"];
+            readonly is_active: boolean;
+            readonly all_events: boolean;
+            readonly events: components["schemas"]["EmployeeEvent"][];
+            /** Format: date-time */
+            readonly last_login: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        EmployeeCreate: {
+            /** Format: email */
+            email: string;
+            full_name: string;
+            password: string;
+            /** @default true */
+            all_events: boolean;
+            event_ids?: string[];
+        };
+        EmployeeEvent: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            starts_at: string;
+        };
+        EmployeePasswordReset: {
+            password: string;
+        };
+        PatchedEmployeeUpdate: {
+            full_name?: string;
+            is_active?: boolean;
+            all_events?: boolean;
+            event_ids?: string[];
+        };
+        /**
+         * @description * `SECURITY` - SECURITY
+         * @enum {string}
+         */
+        RoleEnum: "SECURITY";
+        /**
+         * @description * `DRAFT` - Borrador
+         *     * `PUBLISHED` - Publicado
+         *     * `CANCELLED` - Cancelado
+         * @enum {string}
+         */
+        StatusD0aEnum: "DRAFT" | "PUBLISHED" | "CANCELLED";
     };
     responses: never;
     parameters: never;
@@ -3115,6 +3292,184 @@ site_retrieve: {
             };
             /** @description No response body */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    org_door_events_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoorEvent"][];
+                };
+            };
+        };
+    };
+    org_door_events_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoorEvent"];
+                };
+            };
+        };
+    };
+    org_employees_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"][];
+                };
+            };
+        };
+    };
+    org_employees_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["EmployeeCreate"];
+                "multipart/form-data": components["schemas"]["EmployeeCreate"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+        };
+    };
+    org_employees_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+        };
+    };
+    org_employees_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    org_employees_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedEmployeeUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedEmployeeUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedEmployeeUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+        };
+    };
+    org_employees_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeePasswordReset"];
+                "application/x-www-form-urlencoded": components["schemas"]["EmployeePasswordReset"];
+                "multipart/form-data": components["schemas"]["EmployeePasswordReset"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
