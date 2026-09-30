@@ -54,6 +54,8 @@ evento y en la puerta — escalar es sumar workers, no rediseñar nada.
 | `TICKET_SIGNING_KEY_ID` | `k1` |
 | `ORDER_HOLD_MINUTES` | `15` (o el valor que se decida) |
 | `TERMS_VERSION` | Fecha de la versión vigente de términos |
+| `CHECKIN_WINDOW_HOURS_BEFORE_START` / `CHECKIN_WINDOW_HOURS_AFTER_END` | Opcional. Ventana del escáner del personal de Seguridad (por defecto `3` / `0`) |
+| `JWT_REFRESH_ROTATE_AFTER_SECONDS` / `JWT_REFRESH_REUSE_GRACE_SECONDS` | Opcional. Rotación del refresh token (por defecto `43200` / `120`, ver `apps/accounts/tokens.py`) |
 | `AWS_STORAGE_BUCKET_NAME` | Nombre del bucket R2 |
 | `AWS_S3_ENDPOINT_URL` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` (Cloudflare Dashboard → R2 → Overview, o al crear el API token) — **no** es el custom domain |
 | `AWS_S3_REGION_NAME` | `auto` (default ya aplicado en `base.py`) |

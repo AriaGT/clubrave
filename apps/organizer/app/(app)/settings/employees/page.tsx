@@ -223,6 +223,7 @@ function EmployeeForm({ employee, onDone }: { employee?: Employee; onDone: () =>
           {events?.results?.map((event) => (
             <label key={event.id} className="flex items-center gap-3 text-sm">
               <Checkbox
+                aria-label={event.title}
                 checked={eventIds.includes(event.id)}
                 onCheckedChange={(checked) => toggleEvent(event.id, checked === true)}
               />

@@ -48,6 +48,8 @@ export default function ScannerPage() {
   const isSecurity = role === "security";
   // Seguridad fuera de horario: pantalla de "escáner cerrado", sin cámara.
   const scannerClosed = isSecurity && !!event && !event.scanner_is_open;
+  // Para seguridad la cámara no arranca hasta confirmar que el escáner está abierto.
+  const cameraAllowed = !isSecurity || !!event?.scanner_is_open;
   const checkIn = useCheckIn();
   const undoCheckIn = useUndoCheckIn();
   const [result, setResult] = useState<ResultState | null>(null);
@@ -119,7 +121,7 @@ export default function ScannerPage() {
   };
 
   const { videoRef, supported, error: cameraError } = useScanner({
-    enabled: !result && !manualOpen && !scannerClosed,
+    enabled: !result && !manualOpen && cameraAllowed,
     onDetect: (payload) => runCheckIn({ qrPayload: payload }),
   });
 
