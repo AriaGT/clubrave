@@ -122,6 +122,43 @@ El ingreso anterior no se borra — queda en **Actividad** con la hora y quién
 lo hizo. También puedes deshacer desde **Asistentes**, buscando a la persona
 por nombre.
 
+## Códigos de invitado (entradas de cortesía)
+
+Desde el resumen del evento, **Invitados**. Necesitas tener al menos un tipo
+de entrada creado: cada código da **una** entrada gratis de un tipo concreto,
+y ese tipo define la zona. Si quieres una zona solo para invitados, crea un
+tipo de entrada (p. ej. "VIP Invitados") y desactívalo: no se vende en la
+tienda, pero sí se puede regalar con códigos.
+
+1. Elige el **tipo de entrada / zona**, la **cantidad** (hasta 500 por lote)
+   y, si quieres, una **etiqueta** para ubicarlos después ("Prensa", "Lista
+   DJ").
+2. Toca **Generar**. Los códigos son de 12 caracteres sin letras que se
+   confundan (`K7M3-QPXR-2ND4`).
+3. Compártelos: **Copiar lote** / **Compartir lote** (en el celular abre
+   WhatsApp, Instagram, etc.), **CSV** para una planilla, o uno por uno con los
+   íconos de copiar y compartir de cada fila. Cada invitación lleva un enlace
+   directo al evento con el código ya cargado.
+
+**Los códigos reservan cupo desde que los generas**: si generas 20 códigos de
+VIP, la tienda muestra 20 VIP menos a la venta, aunque nadie los haya usado
+todavía. Así un invitado nunca se queda sin lugar porque se agotó la venta.
+Si **anulas** un código que no se usó, su cupo vuelve a la venta. No puedes
+bajar el aforo de un tipo de entrada por debajo de lo vendido más los códigos
+sin usar, ni borrar un tipo de entrada que tenga códigos (desactívalo).
+
+El invitado entra al evento en la tienda, toca **¿Tienes un código?
+Ingrésalo aquí**, ve qué entrada le toca, verifica su email y llena sus datos
+como en una compra normal, pero **sin pagar**. Recibe su QR por email y en
+"Mi cuenta", marcado como **INVITADO**. Cada código sirve **una sola vez**.
+
+En la lista ves el estado de cada código: **Disponible**, **Redimido** (quién,
+con qué email, cuándo y su orden) o **Anulado**. En la puerta, el escáner
+muestra la etiqueta **INVITADO** y la zona. En **Ventas** la orden aparece con
+la marca *Invitado* y S/ 0; **nunca suma al recaudado** ni a "Vendidas" (el
+resumen muestra "+N invitados" aparte) y el CSV tiene la columna `invitado`.
+Si cancelas el evento, los códigos sin usar se anulan solos.
+
 ## Anular ventas y entradas
 
 **Importante: anular no devuelve el dinero.** Este sistema anula el QR, libera

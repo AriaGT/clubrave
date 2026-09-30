@@ -179,6 +179,20 @@ listo para ejecutar, no un despliegue ejecutado. La PWA instalable
 (service worker de Serwist) sigue pendiente desde el Hito 02, por la misma
 razón de alcance de entonces.
 
+## Códigos de invitado
+
+El organizador genera en lote códigos de cortesía ligados a un tipo de
+entrada (zona) y los comparte (copiar, Web Share API, CSV, enlace
+`/e/<slug>?codigo=`). El invitado los canjea en la tienda sin pasarela
+(`/invitado`): se emite una orden `PAID` de monto 0 con `Order.is_guest`, que
+reutiliza QR, email, "Mi cuenta" y escáner, y queda fuera de los ingresos.
+Generar un código **retiene cupo** (`quantity_reserved`); redimirlo lo pasa a
+vendido y anularlo lo libera. La redención bloquea la fila del código
+(`select_for_update`) y los endpoints públicos tienen throttle por IP
+(`guest_code`). Detalle de uso en el
+[manual del organizador](docs/manual-organizador.md#códigos-de-invitado-entradas-de-cortesía);
+el diseño está en [`apps/orders/services/guest_codes.py`](backend/apps/orders/services/guest_codes.py).
+
 ## Qué falta
 
 Con los cinco hitos de §12 cubiertos, lo que queda es lo que el propio plan
