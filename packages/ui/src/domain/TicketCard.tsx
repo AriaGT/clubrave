@@ -16,6 +16,8 @@ export interface TicketCardProps {
   ticketTypeName: string;
   holderName: string;
   status: TicketCardStatus;
+  /** Entrada emitida con un código de invitado (cortesía, sin pago). */
+  isGuest?: boolean;
   checkedInAtLabel?: string;
   /** Motivo y contacto de la organización, solo para entradas anuladas (H16). */
   voidReasonLabel?: string;
@@ -45,6 +47,7 @@ export function TicketCard({
   ticketTypeName,
   holderName,
   status,
+  isGuest,
   checkedInAtLabel,
   voidReasonLabel,
   organizationName,
@@ -70,7 +73,10 @@ export function TicketCard({
           <span className="font-display text-base font-semibold">{eventTitle}</span>
           <span className="text-sm text-[var(--color-text-muted)]">{dateLabel}</span>
         </div>
-        <Badge variant={meta.badge}>{meta.label}</Badge>
+        <div className="flex flex-col items-end gap-1">
+          <Badge variant={meta.badge}>{meta.label}</Badge>
+          {isGuest && <Badge variant="accent">Invitado</Badge>}
+        </div>
       </div>
 
       {status === "void" ? (
@@ -97,7 +103,7 @@ export function TicketCard({
 
       <div className="flex flex-col gap-1">
         <span className="text-sm text-[var(--color-text-muted)]">
-          {ticketTypeName} · {holderName}
+          {isGuest ? `Zona ${ticketTypeName}` : ticketTypeName} · {holderName}
         </span>
         <span className="font-mono text-lg tracking-wider">{formatCode(code)}</span>
         {status === "used" && checkedInAtLabel && (

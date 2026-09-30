@@ -161,6 +161,18 @@ export default function OrderDetailPage() {
             Reembolso registrado. La venta pasó a <strong>Reembolsada</strong>.
           </p>
         )}
+        {order.is_guest && (
+          <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-[var(--color-accent)] bg-[var(--color-accent-soft)] p-3 text-sm">
+            <span className="flex items-center gap-2 font-medium">
+              <Badge variant="accent">Invitado</Badge> Entrada de cortesía, sin pago
+            </span>
+            {order.guest_code && (
+              <span className="text-[var(--color-text-muted)]">
+                Código usado: <span className="font-mono">{order.guest_code.match(/.{1,4}/g)?.join("-")}</span>
+              </span>
+            )}
+          </div>
+        )}
         {resendNotice && resendSentAt && (
           <p className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm">
             Entradas reenviadas al email del comprador ({formatDate(resendSentAt)}).

@@ -54,7 +54,10 @@ export default function EventAttendeesPage() {
                     {ticket.ticket_type_name}
                   </span>
                 </div>
-                <Badge variant={badge.variant}>{badge.label}</Badge>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
+                  {ticket.is_guest && <Badge variant="accent">Invitado</Badge>}
+                </div>
               </div>
               <div className="flex justify-end">
                 <TicketActions code={ticket.code} status={ticket.status} />

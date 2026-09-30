@@ -123,7 +123,11 @@ export default function EventSalesPage() {
               <span className="text-xs text-[var(--color-text-muted)]">{formatDate(order.created_at)}</span>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <span className="font-mono text-sm">S/ {order.total}</span>
+              {order.is_guest ? (
+                <Badge variant="accent">Invitado</Badge>
+              ) : (
+                <span className="font-mono text-sm">S/ {order.total}</span>
+              )}
               <Badge variant={STATUS_VARIANT[order.status ?? ""] ?? "neutral"}>
                 {STATUS_LABEL[order.status ?? ""] ?? order.status}
               </Badge>

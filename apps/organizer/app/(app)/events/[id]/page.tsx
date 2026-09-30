@@ -83,7 +83,11 @@ export default function EventDetailPage() {
         {stats && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label="Recaudado" value={`S/ ${stats.revenue.gross}`} hint={`${stats.revenue.orders_paid} órdenes`} />
-            <StatTile label="Vendidas" value={`${stats.tickets.sold}/${stats.tickets.capacity}`} />
+            <StatTile
+              label="Vendidas"
+              value={`${stats.tickets.sold}/${stats.tickets.capacity}`}
+              hint={stats.tickets.guests > 0 ? `+${stats.tickets.guests} invitados` : undefined}
+            />
             <StatTile label="Ingresaron" value={stats.tickets.checked_in} />
             <StatTile label="Últimas 24h" value={stats.last_24h.tickets} hint={`${stats.last_24h.orders} órdenes`} />
           </div>
@@ -146,7 +150,8 @@ export default function EventDetailPage() {
               >
                 <span>{t.name}</span>
                 <span className="font-mono text-sm text-[var(--color-text-muted)]">
-                  {t.sold}/{t.total} · S/ {t.revenue}
+                  {t.sold}/{t.total}
+                  {t.guests > 0 ? ` · ${t.guests} inv.` : ""} · S/ {t.revenue}
                 </span>
               </div>
             ))}
@@ -186,6 +191,11 @@ export default function EventDetailPage() {
           <Link href={`/events/${id}/attendees`}>
             <Button variant="secondary" className="w-full">
               Asistentes
+            </Button>
+          </Link>
+          <Link href={`/events/${id}/guests`}>
+            <Button variant="secondary" className="w-full">
+              Invitados
             </Button>
           </Link>
         </div>

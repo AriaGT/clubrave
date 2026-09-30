@@ -22,6 +22,7 @@ interface ResultState {
   title: string;
   subtitle?: string;
   details?: { label: string; value: string }[];
+  tag?: string;
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -61,25 +62,40 @@ export default function ScannerPage() {
         vibrate(120);
         setSessionCount((n) => n + 1);
         setUndoCode(null);
+        const isGuest = data?.ticket.is_guest === true;
         setResult({
           outcome: "valid",
           title: "Adelante",
           subtitle: data?.ticket.ticket_type_name,
-          details: [{ label: "Titular", value: data?.ticket.holder_name || "—" }],
+          tag: isGuest ? "Invitado" : undefined,
+          details: [
+            ...(isGuest ? [{ label: "Zona", value: data?.ticket.ticket_type_name ?? "—" }] : []),
+            { label: "Titular", value: data?.ticket.holder_name || "—" },
+          ],
         });
         autoCloseRef.current = setTimeout(() => setResult(null), 2000);
       } catch (err) {
-        const shape = err as { error?: { code?: string; details?: Record<string, string> } };
+        const shape = err as {
+          error?: { code?: string; details?: Record<string, string | boolean | null> };
+        };
         const code = shape.error?.code ?? "TICKET_INVALID";
         vibrate([100, 50, 100]);
-        setUndoCode(code === "TICKET_ALREADY_USED" ? shape.error?.details?.ticket_code ?? null : null);
+        const details = shape.error?.details ?? {};
+        const text = (key: string) => (typeof details[key] === "string" ? (details[key] as string) : undefined);
+        const alreadyUsed = code === "TICKET_ALREADY_USED";
+        setUndoCode(alreadyUsed ? text("ticket_code") ?? null : null);
         setResult({
-          outcome: code === "TICKET_ALREADY_USED" ? "already_used" : "invalid",
+          outcome: alreadyUsed ? "already_used" : "invalid",
           title: ERROR_MESSAGES[code] ?? "No válida",
           subtitle:
-            code === "TICKET_ALREADY_USED" && shape.error?.details?.checked_in_at
-              ? `A las ${new Date(shape.error.details.checked_in_at).toLocaleTimeString("es-PE")}`
-              : shape.error?.details?.event_title,
+            alreadyUsed && text("checked_in_at")
+              ? `A las ${new Date(text("checked_in_at")!).toLocaleTimeString("es-PE")}`
+              : text("event_title"),
+          tag: alreadyUsed && details.is_guest === true ? "Invitado" : undefined,
+          details:
+            alreadyUsed && text("ticket_type_name")
+              ? [{ label: "Entrada / zona", value: text("ticket_type_name")! }]
+              : undefined,
         });
       }
     },
@@ -127,6 +143,7 @@ export default function ScannerPage() {
           title={result.title}
           subtitle={result.subtitle}
           details={result.details}
+          tag={result.tag}
           onDismiss={() => {
             setResult(null);
             setUndoCode(null);
