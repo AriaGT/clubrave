@@ -35,6 +35,7 @@ TICKET_WRONG_EVENT = "TICKET_WRONG_EVENT"
 TICKET_NOT_VOIDABLE = "TICKET_NOT_VOIDABLE"
 ORDER_NOT_VOIDABLE = "ORDER_NOT_VOIDABLE"
 CHECKIN_NOT_UNDOABLE = "CHECKIN_NOT_UNDOABLE"
+SCANNER_CLOSED = "SCANNER_CLOSED"
 RATE_LIMITED = "RATE_LIMITED"
 
 _STATUS_BY_CODE = {
@@ -59,6 +60,7 @@ _STATUS_BY_CODE = {
     TICKET_NOT_VOIDABLE: status.HTTP_409_CONFLICT,
     ORDER_NOT_VOIDABLE: status.HTTP_409_CONFLICT,
     CHECKIN_NOT_UNDOABLE: status.HTTP_409_CONFLICT,
+    SCANNER_CLOSED: status.HTTP_409_CONFLICT,
     RATE_LIMITED: status.HTTP_429_TOO_MANY_REQUESTS,
 }
 
@@ -84,6 +86,7 @@ _DEFAULT_MESSAGES = {
     TICKET_NOT_VOIDABLE: "Esta entrada no se puede anular.",
     ORDER_NOT_VOIDABLE: "Esta orden no se puede anular.",
     CHECKIN_NOT_UNDOABLE: "Este ingreso no se puede deshacer.",
+    SCANNER_CLOSED: "El escáner de este evento no está habilitado en este horario.",
     RATE_LIMITED: "Demasiadas solicitudes. Intenta de nuevo más tarde.",
 }
 

@@ -42,6 +42,18 @@ class Command(BaseCommand):
             user=user, organization=organization, defaults={"role": Membership.Role.OWNER}
         )
 
+        # Empleado de seguridad de ejemplo: mismo login, solo escáner.
+        security_email = "seguridad@ticketera.pe"
+        security, security_created = User.objects.get_or_create(
+            email=security_email, defaults={"role": User.Role.STAFF, "full_name": "Seguridad Demo"}
+        )
+        if security_created:
+            security.set_password("demo12345")
+            security.save(update_fields=["password"])
+        Membership.objects.get_or_create(
+            user=security, organization=organization, defaults={"role": Membership.Role.SECURITY}
+        )
+
         event, event_created = Event.objects.get_or_create(
             organization=organization,
             title="Noche Eléctrica — Edición Demo",
@@ -101,4 +113,5 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Datos de ejemplo listos."))
         self.stdout.write(f"Organizador: {email} / demo12345")
+        self.stdout.write(f"Seguridad (solo escáner): {security_email} / demo12345")
         self.stdout.write(f"Evento: {event.title} ({event.status}) — /e/{event.slug}")

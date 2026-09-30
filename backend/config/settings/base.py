@@ -153,6 +153,19 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
+# Rotación del refresh token (ver apps/accounts/tokens.py). Rotar en cada
+# refresh hacía que dos refrescos simultáneos (o una respuesta perdida porque
+# iOS suspendió la PWA) invalidaran la sesión: ahora solo se rota si el token
+# tiene más de estas horas, y un token recién rotado se acepta unos segundos
+# más para que las peticiones en carrera no terminen en logout.
+JWT_REFRESH_ROTATE_AFTER_SECONDS = env.int("JWT_REFRESH_ROTATE_AFTER_SECONDS", default=12 * 60 * 60)
+JWT_REFRESH_REUSE_GRACE_SECONDS = env.int("JWT_REFRESH_REUSE_GRACE_SECONDS", default=120)
+
+# Ventana del escáner para el personal de seguridad (el organizador no la
+# tiene): desde N horas antes del inicio hasta N horas después del fin del
+# evento (`Event.effective_ends_at`: `ends_at` o inicio + 8 h).
+CHECKIN_WINDOW_HOURS_BEFORE_START = env.float("CHECKIN_WINDOW_HOURS_BEFORE_START", default=3.0)
+CHECKIN_WINDOW_HOURS_AFTER_END = env.float("CHECKIN_WINDOW_HOURS_AFTER_END", default=0.0)
 
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 

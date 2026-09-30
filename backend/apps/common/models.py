@@ -40,6 +40,14 @@ class AuditLog(models.Model):
         TICKETS_RESENT = "TICKETS_RESENT"
         TICKET_VOIDED = "TICKET_VOIDED"
         CHECKIN_UNDONE = "CHECKIN_UNDONE"
+        # Empleados de seguridad y lo que escanean.
+        EMPLOYEE_CREATED = "EMPLOYEE_CREATED"
+        EMPLOYEE_UPDATED = "EMPLOYEE_UPDATED"
+        EMPLOYEE_DEACTIVATED = "EMPLOYEE_DEACTIVATED"
+        EMPLOYEE_REACTIVATED = "EMPLOYEE_REACTIVATED"
+        EMPLOYEE_PASSWORD_RESET = "EMPLOYEE_PASSWORD_RESET"
+        EMPLOYEE_DELETED = "EMPLOYEE_DELETED"
+        TICKET_CHECKED_IN = "TICKET_CHECKED_IN"
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now, db_index=True)

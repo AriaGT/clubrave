@@ -17,7 +17,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.common.errors import DomainError
 from apps.common.mailer import send as send_email
 
-from .models import LoginCode, Membership, PasswordChangeRequest, User
+from .models import LoginCode, Membership, PasswordChangeRequest, RefreshTokenRotation, User
 
 OTP_LENGTH = 6
 CODE_TTL_MINUTES = 15
@@ -81,6 +81,41 @@ def org_tokens_for_user(user: User) -> dict:
     if membership is None:
         raise DomainError("FORBIDDEN", "Este usuario no administra ninguna organización.")
     return _tokens_for(user, scope="org", organization_id=membership.organization_id)
+
+
+def door_tokens_for_user(user: User) -> dict:
+    """Empleado de seguridad: scope "door". Ningún permiso de organizador
+    (`IsOrganizer` exige scope "org") lo acepta, así que cualquier endpoint
+    /org/ que no se abra explícitamente al escáner le responde 403."""
+    membership = (
+        Membership.objects.filter(user=user, role=Membership.Role.SECURITY, organization__is_active=True)
+        .select_related("organization")
+        .first()
+    )
+    if membership is None:
+        raise DomainError("VALIDATION_ERROR", "Email o contraseña incorrectos.")
+    return _tokens_for(user, scope="door", organization_id=membership.organization_id)
+
+
+def panel_tokens_for_user(user: User) -> dict:
+    """Login único del panel: el organizador recibe scope "org"; el
+    personal de seguridad, scope "door" (solo escáner)."""
+    if user.role == User.Role.ORGANIZER:
+        return org_tokens_for_user(user)
+    if user.role == User.Role.STAFF:
+        return door_tokens_for_user(user)
+    raise DomainError("VALIDATION_ERROR", "Email o contraseña incorrectos.")
+
+
+def revoke_all_sessions(user: User) -> None:
+    """Pone en lista negra todos los refresh tokens del usuario y borra sus
+    marcas de rotación (así ninguno entra en la ventana de gracia de
+    `apps/accounts/tokens.py`). Los access tokens ya emitidos vencen solos
+    (30 min); si además se desactiva al usuario, simplejwt los rechaza de
+    inmediato."""
+    for outstanding in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=outstanding)
+    RefreshTokenRotation.objects.filter(user=user).delete()
 
 
 def customer_tokens_for_user(user: User) -> dict:
@@ -206,8 +241,7 @@ def confirm_password_change(*, token: str) -> User:
 
         # Cierra todas las sesiones abiertas: quien tuviera la contraseña vieja
         # (o un refresh token robado) deja de entrar.
-        for outstanding in OutstandingToken.objects.filter(user=user):
-            BlacklistedToken.objects.get_or_create(token=outstanding)
+        revoke_all_sessions(user)
 
     send_email(
         to=user.email,

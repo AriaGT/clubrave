@@ -1,15 +1,19 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework.routers import SimpleRouter
 
-from . import views
+from . import employee_views, views
+from .tokens import GraceTokenRefreshView
+
+router = SimpleRouter()
+router.register("org/employees", employee_views.EmployeeViewSet, basename="org-employee")
 
 urlpatterns = [
     path("auth/org/login/", views.OrgLoginView.as_view(), name="org-login"),
-    path("auth/org/refresh/", TokenRefreshView.as_view(), name="org-refresh"),
+    path("auth/org/refresh/", GraceTokenRefreshView.as_view(), name="org-refresh"),
     # Mismo mecanismo de simplejwt que el refresh del organizador (la rotación
     # no depende del scope); un alias propio evita que la tienda llame a una
     # ruta con "org" en el nombre.
-    path("auth/customer/refresh/", TokenRefreshView.as_view(), name="customer-refresh"),
+    path("auth/customer/refresh/", GraceTokenRefreshView.as_view(), name="customer-refresh"),
     path(
         "auth/customer/request-code/",
         views.CustomerRequestCodeView.as_view(),
@@ -24,3 +28,5 @@ urlpatterns = [
     ),
     path("me/", views.MeView.as_view(), name="me"),
 ]
+
+urlpatterns += router.urls
