@@ -1,4 +1,4 @@
-import type { ApiComponents } from "@repo/api-client";
+﻿import type { ApiComponents } from "@repo/api-client";
 import { EmptyState, EventCard } from "@repo/ui";
 import Link from "next/link";
 
@@ -15,8 +15,8 @@ export default async function HomePage() {
   return (
     <main className="mx-auto flex max-w-[var(--container-max)] flex-col gap-6 p-[var(--space-6)]">
       <header className="flex flex-col gap-1">
-        <h1 className="font-display text-3xl font-bold tracking-tight">Umbral</h1>
-        <p className="text-[var(--color-text-muted)]">Asegura tu entrada para los próximos eventos.</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Club Rave</h1>
+        <p className="text-[var(--color-text-muted)]">Asegura tu entrada para los prÃ³ximos eventos.</p>
       </header>
 
       {events.length === 0 && (
@@ -41,3 +41,4 @@ export default async function HomePage() {
     </main>
   );
 }
+

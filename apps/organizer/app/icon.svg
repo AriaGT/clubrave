@@ -1,5 +1,5 @@
-<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img">
-  <title>Umbral</title>
+﻿<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Club Rave</title>
   <rect width="100" height="100" rx="22" fill="#09090B"/>
   <g stroke="#7C3AED" stroke-width="7" stroke-linecap="round" fill="none">
     <path d="M28 20 H20 V28"/>
@@ -9,3 +9,4 @@
   </g>
   <rect x="44" y="44" width="12" height="12" rx="2" fill="#7C3AED"/>
 </svg>
+

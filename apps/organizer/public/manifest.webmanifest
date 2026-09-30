@@ -1,6 +1,6 @@
-{
-  "name": "Umbral",
-  "short_name": "Umbral",
+﻿{
+  "name": "Club Rave",
+  "short_name": "Club Rave",
   "description": "Gestiona tus eventos y valida entradas",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -19,3 +19,4 @@
     { "name": "Nuevo evento", "url": "/events/new" }
   ]
 }
+

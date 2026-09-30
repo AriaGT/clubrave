@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { QueryProvider } from "@/lib/query-provider";
@@ -9,8 +9,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(PUBLIC_SITE_URL),
-  title: { default: "Umbral", template: "%s — Umbral" },
-  description: "Asegura tu entrada. Recíbela al instante con un QR.",
+  title: { default: "Club Rave", template: "%s â€” Club Rave" },
+  description: "Asegura tu entrada. RecÃ­bela al instante con un QR.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -24,3 +24,4 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
