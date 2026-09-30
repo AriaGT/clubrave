@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session";
 export default function LoginPage() {
   const { login, status } = useSession();
   const router = useRouter();
-  const [email, setEmail] = useState("demo@ticketera.pe");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,12 +35,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-[var(--space-6)]">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-(--space-6)">
       <div className="flex flex-col items-center gap-3 text-center">
         <Logo size={56} />
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-2xl font-bold">Club Rave</h1>
-          <p className="text-[var(--color-text-muted)]">Inicia sesión para gestionar tus eventos.</p>
+          <p className="text-text-muted">Inicia sesión para gestionar tus eventos.</p>
         </div>
       </div>
 
