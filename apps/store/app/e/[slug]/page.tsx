@@ -1,4 +1,4 @@
-import type { ApiComponents } from "@repo/api-client";
+import { type ApiComponents, imagesOfKind, selectedImageOfKind } from "@repo/api-client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -23,7 +23,7 @@ export async function generateMetadata({
   const event = await getEvent(slug);
   if (!event) return {};
 
-  const cover = event.images.find((i) => i.is_cover)?.image ?? event.images[0]?.image;
+  const cover = selectedImageOfKind(event.images, "FLYER")?.image;
 
   return {
     title: event.title,
@@ -57,7 +57,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
       name: event.venue_name,
       address: event.address || event.city,
     },
-    image: event.images.map((i) => i.image),
+    // Solo flyers: zonas y mapa no representan al evento en buscadores.
+    image: imagesOfKind(event.images, "FLYER").map((i) => i.image),
     description: event.description,
     offers: event.ticket_types.map((tt) => ({
       "@type": "Offer",

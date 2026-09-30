@@ -4,6 +4,7 @@ import type { paths } from "./schema";
 
 export type { paths as ApiPaths } from "./schema";
 export type { components as ApiComponents } from "./schema";
+export * from "./images";
 
 export interface ApiClientOptions {
   baseUrl: string;

@@ -362,10 +362,11 @@ no migrar datos cuando lleguen los equipos.
 | Campo | Tipo | Notas |
 |---|---|---|
 | `event` | FK → Event (`CASCADE`) | |
+| `kind` | Enum `FLYER` / `ZONES` / `MAP` | Default `FLYER`; no cambia tras subir. Publicar exige al menos un flyer |
 | `image` | ImageField (S3) | Original subido |
 | `alt` | Texto, opcional | Accesibilidad |
 | `position` | Entero | Orden en la galería |
-| `is_cover` | Bool | **Una sola portada por evento**, garantizada por restricción parcial única |
+| `is_cover` | Bool | **Una sola elegida por tipo y evento** (la del flyer es la portada), garantizada por restricción parcial única `(event, kind)` |
 
 > Derivados (miniaturas, `webp`) se generan al subir; ver §5.7.
 

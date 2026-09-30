@@ -1,7 +1,7 @@
 "use client";
 
 import { isApiError } from "@repo/api-client";
-import type { ApiComponents, ApiErrorShape } from "@repo/api-client";
+import type { ApiComponents, ApiErrorShape, EventImageKind } from "@repo/api-client";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 
 import { PUBLIC_API_URL } from "@/lib/env";
@@ -131,8 +131,9 @@ export function useUploadEventImage(eventId: string) {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, kind }: { file: File; kind: EventImageKind }) => {
       const formData = new FormData();
+      formData.append("kind", kind);
       formData.append("image", file);
       const { data, error } = await api.POST("/api/org/events/{event_pk}/images/", {
         params: { path: { event_pk: eventId } },

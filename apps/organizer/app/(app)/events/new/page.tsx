@@ -1,5 +1,6 @@
 "use client";
 
+import { imagesOfKind } from "@repo/api-client";
 import { Stepper, TopBar } from "@repo/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -44,7 +45,7 @@ export default function NewEventWizardPage() {
 
   const completedSteps: Record<StepKey, boolean> = {
     info: !!event,
-    images: (event?.images.length ?? 0) > 0,
+    images: imagesOfKind(event?.images ?? [], "FLYER").length > 0,
     tickets: (event?.ticket_types.length ?? 0) > 0,
     publish: event?.status === "PUBLISHED",
   };

@@ -84,32 +84,39 @@ class Event(TimeStampedModel):
             errors.append("La fecha de inicio debe ser futura.")
         if not self.venue_name:
             errors.append("Falta el lugar del evento.")
-        if not self.images.exists():
-            errors.append("Debes subir al menos una imagen.")
+        if not self.images.filter(kind=EventImage.Kind.FLYER).exists():
+            errors.append("Debes subir al menos un flyer.")
         if not self.ticket_types.filter(is_active=True, quantity_total__gt=0).exists():
             errors.append("Debes crear al menos un tipo de entrada activo con aforo.")
         return errors
 
 
 class EventImage(TimeStampedModel):
+    class Kind(models.TextChoices):
+        FLYER = "FLYER", "Flyer"
+        ZONES = "ZONES", "Zonas"
+        MAP = "MAP", "Mapa de ubicación"
+
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="images")
+    kind = models.CharField(max_length=8, choices=Kind.choices, default=Kind.FLYER)
     image = models.ImageField(upload_to=event_image_upload_path)
     alt = models.CharField(max_length=200, blank=True)
     position = models.PositiveSmallIntegerField(default=0)
+    # La imagen elegida dentro de su tipo: en FLYER es la portada del evento.
     is_cover = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["position", "created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["event"],
+                fields=["event", "kind"],
                 condition=Q(is_cover=True),
-                name="one_cover_image_per_event",
+                name="one_cover_image_per_event_kind",
             ),
         ]
 
     def __str__(self):
-        return f"Imagen de {self.event.title} (#{self.position})"
+        return f"{self.get_kind_display()} de {self.event.title} (#{self.position})"
 
 
 class TicketType(TimeStampedModel):

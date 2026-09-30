@@ -73,7 +73,7 @@ _DEFAULT_MESSAGES = {
     EVENT_NOT_PUBLISHED: "Este evento no está publicado.",
     EVENT_CANCELLED: "Este evento fue cancelado y no se puede modificar.",
     EVENT_HAS_SALES: "Este evento ya tiene ventas.",
-    LAST_IMAGE: "Un evento publicado necesita al menos una imagen.",
+    LAST_IMAGE: "Un evento publicado necesita al menos un flyer.",
     ORDER_EXPIRED: "La orden venció.",
     ORDER_ALREADY_PAID: "La orden ya fue pagada.",
     PAYMENT_REJECTED: "El pago fue rechazado.",

@@ -1,5 +1,6 @@
 "use client";
 
+import { imagesOfKind } from "@repo/api-client";
 import { Badge, Button, Card, CardContent } from "@repo/ui";
 import { Check, Copy, X } from "lucide-react";
 import QRCode from "qrcode";
@@ -36,7 +37,7 @@ export function PublishStep({ eventId }: PublishStepProps) {
     { label: "Título", ok: !!event.title },
     { label: "Fecha futura", ok: new Date(event.starts_at).getTime() > Date.now() },
     { label: "Lugar", ok: !!event.venue_name },
-    { label: "Al menos una imagen", ok: event.images.length > 0 },
+    { label: "Al menos un flyer", ok: imagesOfKind(event.images, "FLYER").length > 0 },
     {
       label: "Al menos un tipo de entrada activo",
       ok: event.ticket_types.some((t) => t.is_active && t.quantity_total > 0),
@@ -58,7 +59,9 @@ export function PublishStep({ eventId }: PublishStepProps) {
             {event.venue_name}
           </p>
           <p className="text-sm text-[var(--color-text-muted)]">
-            {event.ticket_types.length} tipo(s) de entrada · {event.images.length} imagen(es)
+            {event.ticket_types.length} tipo(s) de entrada · {imagesOfKind(event.images, "FLYER").length} flyer(s) ·{" "}
+            zonas: {imagesOfKind(event.images, "ZONES").length > 0 ? "sí" : "no"} · mapa:{" "}
+            {imagesOfKind(event.images, "MAP").length > 0 ? "sí" : "no"}
           </p>
         </CardContent>
       </Card>

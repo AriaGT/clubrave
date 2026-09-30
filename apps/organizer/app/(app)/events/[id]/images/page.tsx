@@ -15,8 +15,8 @@ export default function EventImagesPage() {
       <div className="flex flex-col gap-4 p-[var(--space-4)]">
         <EventImagesManager eventId={id} />
         <p className="text-sm text-[var(--color-text-muted)]">
-          Mueve las imágenes con las flechas para ordenarlas. Un evento publicado siempre conserva al
-          menos una imagen.
+          Mueve las imágenes con las flechas para ordenarlas y marca con la estrella la que se muestra.
+          Un evento publicado siempre conserva al menos un flyer.
         </p>
       </div>
     </>

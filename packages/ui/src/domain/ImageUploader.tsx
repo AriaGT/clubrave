@@ -17,6 +17,10 @@ export interface ImageUploaderProps {
   onRemove: (id: string) => void;
   onSetCover: (id: string) => void;
   onMove: (id: string, direction: "left" | "right") => void;
+  /** Texto de la zona de arrastre. */
+  dropLabel?: string;
+  /** Etiqueta de la imagen elegida (p. ej. "Portada" o "Principal"). */
+  selectedLabel?: string;
   className?: string;
 }
 
@@ -25,7 +29,16 @@ export interface ImageUploaderProps {
  * portada. El reordenamiento usa flechas (accesible por teclado) en vez de
  * arrastrar-y-soltar puro, que es difícil de usar con una sola mano.
  */
-export function ImageUploader({ images, onAdd, onRemove, onSetCover, onMove, className }: ImageUploaderProps) {
+export function ImageUploader({
+  images,
+  onAdd,
+  onRemove,
+  onSetCover,
+  onMove,
+  dropLabel = "Arrastra imágenes o toca para elegir",
+  selectedLabel = "Portada",
+  className,
+}: ImageUploaderProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = React.useState(false);
 
@@ -57,7 +70,7 @@ export function ImageUploader({ images, onAdd, onRemove, onSetCover, onMove, cla
         )}
       >
         <ImagePlus className="h-8 w-8 text-[var(--color-text-subtle)]" />
-        <span className="font-medium">Arrastra imágenes o toca para elegir</span>
+        <span className="font-medium">{dropLabel}</span>
         <span className="text-sm text-[var(--color-text-muted)]">JPG, PNG o WebP. Máximo 8 MB.</span>
       </button>
       <input
@@ -81,7 +94,7 @@ export function ImageUploader({ images, onAdd, onRemove, onSetCover, onMove, cla
               <img src={image.url} alt={image.alt ?? ""} className="aspect-square w-full object-cover" />
               {image.isCover && (
                 <span className="absolute left-1 top-1 rounded-[var(--radius-sm)] bg-[var(--color-accent)] px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide text-white">
-                  Portada
+                  {selectedLabel}
                 </span>
               )}
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[var(--gradient-scrim)] p-1">
@@ -94,7 +107,7 @@ export function ImageUploader({ images, onAdd, onRemove, onSetCover, onMove, cla
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </IconButton>
-                <IconButton label="Marcar como portada" size="sm" variant="ghost" onClick={() => onSetCover(image.id)}>
+                <IconButton label={`Marcar como ${selectedLabel.toLowerCase()}`} size="sm" variant="ghost" onClick={() => onSetCover(image.id)}>
                   <Star className={cn("h-4 w-4", image.isCover && "fill-current")} />
                 </IconButton>
                 <IconButton label="Eliminar imagen" size="sm" variant="ghost" onClick={() => onRemove(image.id)}>

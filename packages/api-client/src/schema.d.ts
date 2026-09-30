@@ -919,6 +919,8 @@ export interface components {
             readonly id: string;
             /** Format: uuid */
             readonly event: string;
+            /** @default FLYER */
+            kind?: components["schemas"]["KindEnum"];
             /** Format: uri */
             image: string;
             alt?: string;
@@ -1010,6 +1012,13 @@ export interface components {
             /** Format: date-time */
             generated_at: string;
         };
+        /**
+         * @description * `FLYER` - Flyer
+         *     * `ZONES` - Zonas
+         *     * `MAP` - Mapa de ubicación
+         * @enum {string}
+         */
+        KindEnum: "FLYER" | "ZONES" | "MAP";
         Last24hStats: {
             orders: number;
             tickets: number;
@@ -1281,6 +1290,8 @@ export interface components {
             readonly id?: string;
             /** Format: uuid */
             readonly event?: string;
+            /** @default FLYER */
+            kind?: components["schemas"]["KindEnum"];
             /** Format: uri */
             image?: string;
             alt?: string;

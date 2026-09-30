@@ -1,5 +1,7 @@
+import { Maximize2 } from "lucide-react";
 import * as React from "react";
 
+import { ImageLightbox } from "../composition/ImageLightbox";
 import { cn } from "../lib/cn";
 
 export interface EventHeroProps {
@@ -7,11 +9,21 @@ export interface EventHeroProps {
   dateLabel: string;
   title: string;
   venueLabel: string;
+  /** Si se indica (p. ej. "Flyer"), la portada se puede ver completa: el
+   * encuadre del hero la recorta y un flyer suele llevar el line-up. */
+  coverExpandTitle?: string;
   className?: string;
 }
 
 /** Portada a sangre con degradado inferior y datos superpuestos (§11.3). */
-export function EventHero({ coverImage, dateLabel, title, venueLabel, className }: EventHeroProps) {
+export function EventHero({
+  coverImage,
+  dateLabel,
+  title,
+  venueLabel,
+  coverExpandTitle,
+  className,
+}: EventHeroProps) {
   return (
     <div className={cn("relative aspect-[4/5] w-full sm:aspect-video", className)}>
       {coverImage ? (
@@ -21,6 +33,17 @@ export function EventHero({ coverImage, dateLabel, title, venueLabel, className 
         <div className="absolute inset-0 bg-[var(--color-surface-sunken)]" />
       )}
       <div className="absolute inset-0 bg-[var(--gradient-scrim)]" />
+      {coverImage && coverExpandTitle && (
+        <ImageLightbox src={coverImage} alt={`${coverExpandTitle} de ${title}`} title={coverExpandTitle}>
+          <button
+            type="button"
+            className="absolute right-[var(--space-4)] top-[var(--space-4)] inline-flex items-center gap-1.5 rounded-[var(--radius-full)] bg-[var(--color-bg)]/70 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm transition-colors duration-[var(--duration-fast)] hover:bg-[var(--color-bg)]/90 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]"
+          >
+            <Maximize2 className="h-4 w-4" />
+            Ver {coverExpandTitle.toLowerCase()}
+          </button>
+        </ImageLightbox>
+      )}
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-[var(--space-6)]">
         <span className="w-fit rounded-[var(--radius-sm)] bg-[var(--color-accent)] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-white">
           {dateLabel}

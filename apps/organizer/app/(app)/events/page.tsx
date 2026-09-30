@@ -1,5 +1,6 @@
 "use client";
 
+import { type EventImageKind, selectedImageOfKind } from "@repo/api-client";
 import { Button, EmptyState, EventCard, Skeleton, TopBar } from "@repo/ui";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -13,8 +14,8 @@ const TABS = [
   { key: "CANCELLED", label: "Cancelados" },
 ] as const;
 
-function coverImageOf(event: { images: { image: string; is_cover?: boolean }[] }) {
-  return event.images.find((i) => i.is_cover)?.image ?? event.images[0]?.image ?? null;
+function coverImageOf(event: { images: { image: string; kind?: EventImageKind; is_cover?: boolean }[] }) {
+  return selectedImageOfKind(event.images, "FLYER")?.image ?? null;
 }
 
 export default function EventsListPage() {

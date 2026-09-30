@@ -58,13 +58,20 @@ class Command(BaseCommand):
         )
 
         if not event.images.exists():
-            EventImage.objects.create(
-                event=event,
-                image=_placeholder_image("Noche Eléctrica", (124, 58, 237)),
-                alt="Portada de Noche Eléctrica",
-                position=0,
-                is_cover=True,
-            )
+            placeholders = [
+                (EventImage.Kind.FLYER, "Noche Eléctrica", (124, 58, 237), "Flyer de Noche Eléctrica"),
+                (EventImage.Kind.ZONES, "Zonas - Noche Eléctrica", (39, 39, 42), "Plano de zonas"),
+                (EventImage.Kind.MAP, "Mapa - Warehouse 09", (24, 24, 27), "Mapa de ubicación"),
+            ]
+            for position, (kind, text, color, alt) in enumerate(placeholders):
+                EventImage.objects.create(
+                    event=event,
+                    kind=kind,
+                    image=_placeholder_image(text, color),
+                    alt=alt,
+                    position=position,
+                    is_cover=True,
+                )
 
         if not event.ticket_types.exists():
             TicketType.objects.bulk_create(

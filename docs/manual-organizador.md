@@ -13,16 +13,24 @@
 2. Toca **Nuevo evento**.
 3. **Paso 1 — Información**: título, fecha y hora, lugar, edad mínima. Se
    guarda solo con escribir el título; puedes cerrar la app y seguir después.
-4. **Paso 2 — Flyers**: sube una o varias fotos (arrastra o toca la cámara).
-   La primera que subas es la portada; puedes cambiarla con la estrella.
+4. **Paso 2 — Imágenes**: hay tres tipos, y en cada uno puedes subir varias
+   (arrastra o toca la cámara) y elegir con la estrella la que se muestra:
+   - **Flyer** (obligatorio): la portada del evento en la tienda y al
+     compartir el enlace.
+   - **Zonas** (opcional): el plano del local con las zonas de cada entrada.
+     El comprador lo ve junto a la lista de entradas.
+   - **Mapa de ubicación** (opcional): cómo llegar. Se ve en la sección
+     *Lugar*, junto a la dirección.
+
+   La primera imagen que subas de cada tipo queda elegida.
 5. **Paso 3 — Entradas**: crea cada tipo (nombre, precio, cantidad, máximo
    por compra). Puedes agregar varias — Preventa, General, VIP, etc.
 6. **Paso 4 — Publicación**: revisa la lista de requisitos (todos en verde) y
    toca **Publicar evento**. Te da un enlace y un código QR: compártelos en
    redes.
 
-**Para publicar necesitas, como mínimo:** título, fecha futura, lugar, una
-imagen, y un tipo de entrada activo con aforo mayor a cero.
+**Para publicar necesitas, como mínimo:** título, fecha futura, lugar, un
+flyer, y un tipo de entrada activo con aforo mayor a cero.
 
 ## Editar un evento ya publicado
 
@@ -41,17 +49,21 @@ Desde el resumen del evento, **Editar**. Cambia lo que necesites y guarda.
   **Nunca se envía solo** — tú decides.
 - Un evento cancelado no se puede editar.
 
-### Cambiar los flyers
+### Cambiar el flyer, las zonas o el mapa
 
-Desde el resumen del evento, **Imágenes**. Ahí puedes:
+Desde el resumen del evento, **Imágenes**. Cada tipo (Flyer, Zonas, Mapa de
+ubicación) tiene su propia sección, y en cada una puedes:
 
 - **Subir** nuevas (arrastra o toca la cámara).
-- **Cambiar la portada**: toca la estrella de la imagen que quieras primera.
-- **Reordenar**: las flechas mueven cada imagen a izquierda o derecha, y ese
-  orden es el que ve el comprador.
-- **Borrar**: el tacho. Si el evento está publicado no te deja borrar la
-  última imagen — sube la nueva primero. Si borras la que era portada, la
-  siguiente toma su lugar automáticamente.
+- **Elegir la que se muestra**: toca la estrella. En el flyer es la
+  *portada*; en zonas y mapa, la *principal*. Elegir una no cambia la de los
+  otros tipos.
+- **Reordenar**: las flechas mueven cada imagen a izquierda o derecha dentro
+  de su tipo.
+- **Borrar**: el tacho. Si el evento está publicado no te deja borrar el
+  último flyer — sube el nuevo primero. Zonas y mapa sí se pueden quedar
+  vacíos. Si borras la elegida, la siguiente de su tipo toma su lugar
+  automáticamente.
 
 ### Avisar a los que ya compraron
 

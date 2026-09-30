@@ -44,8 +44,15 @@ class TicketTypeSerializer(serializers.ModelSerializer):
 class EventImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventImage
-        fields = ["id", "event", "image", "alt", "position", "is_cover"]
+        fields = ["id", "event", "kind", "image", "alt", "position", "is_cover"]
         read_only_fields = ["id", "event"]
+
+    def validate_kind(self, value):
+        # Cambiar el tipo movería la imagen entre selecciones (`is_cover` es
+        # por tipo); para eso se borra y se vuelve a subir.
+        if self.instance is not None and value != self.instance.kind:
+            raise serializers.ValidationError("El tipo de una imagen no se puede cambiar.")
+        return value
 
     def validate_image(self, value):
         # Nunca se confía en la extensión ni el Content-Type declarado
@@ -66,9 +73,9 @@ class EventPublicListSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_cover_image(self, obj):
-        cover = next((img for img in obj.images.all() if img.is_cover), None)
-        if cover is None:
-            cover = obj.images.first()
+        # Se filtra en Python para aprovechar el `prefetch_related("images")`.
+        flyers = [img for img in obj.images.all() if img.kind == EventImage.Kind.FLYER]
+        cover = next((img for img in flyers if img.is_cover), flyers[0] if flyers else None)
         if not cover or not cover.image:
             return None
         request = self.context.get("request")

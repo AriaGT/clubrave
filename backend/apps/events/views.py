@@ -340,17 +340,20 @@ class OrganizerEventImageViewSet(OrganizerScopedMixin, viewsets.ModelViewSet):
         event = self._get_event()
         if event.status == Event.Status.CANCELLED:
             raise DomainError("EVENT_CANCELLED", "Un evento cancelado no admite cambios de imágenes.")
-        is_cover = serializer.validated_data.get("is_cover", False) or not event.images.exists()
+        # La selección es por tipo: la primera imagen de cada tipo queda elegida.
+        kind = serializer.validated_data.get("kind", EventImage.Kind.FLYER)
+        same_kind = event.images.filter(kind=kind)
+        is_cover = serializer.validated_data.get("is_cover", False) or not same_kind.exists()
         if is_cover:
-            EventImage.objects.filter(event=event, is_cover=True).update(is_cover=False)
-        serializer.save(event=event, is_cover=is_cover)
+            same_kind.filter(is_cover=True).update(is_cover=False)
+        serializer.save(event=event, kind=kind, is_cover=is_cover)
 
     def perform_update(self, serializer):
         event = self._get_event()
         if event.status == Event.Status.CANCELLED:
             raise DomainError("EVENT_CANCELLED", "Un evento cancelado no admite cambios de imágenes.")
         if serializer.validated_data.get("is_cover"):
-            EventImage.objects.filter(event=event, is_cover=True).update(is_cover=False)
+            event.images.filter(kind=serializer.instance.kind, is_cover=True).update(is_cover=False)
         serializer.save()
 
     def destroy(self, request, *args, **kwargs):
@@ -359,17 +362,22 @@ class OrganizerEventImageViewSet(OrganizerScopedMixin, viewsets.ModelViewSet):
         if event.status == Event.Status.CANCELLED:
             raise DomainError("EVENT_CANCELLED", "Un evento cancelado no admite cambios de imágenes.")
 
-        # D5 — un evento publicado nunca se queda sin imagen.
-        if event.status == Event.Status.PUBLISHED and event.images.count() <= 1:
+        # D5 — un evento publicado nunca se queda sin flyer (zonas y mapa son opcionales).
+        same_kind = event.images.filter(kind=image.kind)
+        if (
+            event.status == Event.Status.PUBLISHED
+            and image.kind == EventImage.Kind.FLYER
+            and same_kind.count() <= 1
+        ):
             raise DomainError(
                 "LAST_IMAGE",
-                "Un evento publicado necesita al menos una imagen. Sube la nueva antes de borrar esta.",
+                "Un evento publicado necesita al menos un flyer. Sube el nuevo antes de borrar este.",
             )
 
         was_cover = image.is_cover
         image.delete()
         if was_cover:
-            remaining = event.images.first()
+            remaining = same_kind.first()
             if remaining:
                 remaining.is_cover = True
                 remaining.save(update_fields=["is_cover"])

@@ -1,7 +1,7 @@
 "use client";
 
-import type { ApiComponents } from "@repo/api-client";
-import { Badge, Button, CartSheet, Divider, EventHero, TicketTypeRow } from "@repo/ui";
+import { type ApiComponents, selectedImageOfKind } from "@repo/api-client";
+import { Badge, Button, CartSheet, Divider, EventHero, ImagePreviewCard, TicketTypeRow } from "@repo/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -39,12 +39,17 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
   );
 
   const subtotal = cartLines.reduce((sum, l) => sum + Number(l.subtotal), 0);
-  const cover = event.images.find((i) => i.is_cover)?.image ?? event.images[0]?.image ?? null;
+  // Cada imagen va donde se usa: el flyer vende (hero), las zonas ayudan a
+  // elegir entrada (junto a la lista) y el mapa ayuda a llegar (en Lugar).
+  const flyer = selectedImageOfKind(event.images, "FLYER");
+  const zones = selectedImageOfKind(event.images, "ZONES");
+  const map = selectedImageOfKind(event.images, "MAP");
 
   return (
     <main className="mx-auto flex max-w-[var(--container-max)] flex-col pb-28">
       <EventHero
-        coverImage={cover}
+        coverImage={flyer?.image ?? null}
+        coverExpandTitle="Flyer"
         dateLabel={new Date(event.starts_at).toLocaleDateString("es-PE", {
           weekday: "short",
           day: "2-digit",
@@ -65,6 +70,14 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
               El organizador suspendió la venta de entradas. Vuelve en un momento.
             </span>
           </div>
+        )}
+        {zones && (
+          <figure className="mt-3 flex flex-col gap-2">
+            <ImagePreviewCard src={zones.image} alt={zones.alt || `Zonas de ${event.title}`} title="Zonas" />
+            <figcaption className="text-sm text-[var(--color-text-muted)]">
+              Mira dónde queda cada zona antes de elegir tu entrada.
+            </figcaption>
+          </figure>
         )}
         <div>
           {event.ticket_types.length === 0 && (
@@ -99,6 +112,14 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
         <h2 className="font-display text-xl font-semibold">Lugar</h2>
         <p>{event.venue_name}</p>
         <p className="text-[var(--color-text-muted)]">{event.address}</p>
+        {map && (
+          <ImagePreviewCard
+            src={map.image}
+            alt={map.alt || `Mapa de ubicación de ${event.venue_name}`}
+            title="Mapa de ubicación"
+            className="mt-2"
+          />
+        )}
         {event.maps_url && (
           <a href={event.maps_url} target="_blank" rel="noreferrer" className="w-fit">
             <Button variant="secondary" size="sm">

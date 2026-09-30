@@ -76,9 +76,11 @@ def _paid_order(event, ticket_type, email: str = "comprador@test.pe", quantity: 
     return order
 
 
-def _add_image(event, position: int, alt: str = "Foto") -> EventImage:
+def _add_image(
+    event, position: int, alt: str = "Foto", kind: str = EventImage.Kind.FLYER, is_cover: bool = False
+) -> EventImage:
     return EventImage.objects.create(
-        event=event, image="events/test.jpg", alt=alt, position=position
+        event=event, image="events/test.jpg", alt=alt, position=position, kind=kind, is_cover=is_cover
     )
 
 
@@ -329,6 +331,111 @@ def test_deleting_other_images_works_and_cover_promotes(client_a, published_even
 
     second.refresh_from_db()
     assert second.is_cover is True
+
+
+def test_first_image_of_each_kind_is_selected_without_touching_the_flyer(client_a, published_event):
+    flyer = published_event.images.get()
+    response = client_a.post(
+        f"/api/org/events/{published_event.id}/images/",
+        {"kind": "ZONES", "alt": "Zonas", "image": _valid_image_upload()},
+        format="multipart",
+    )
+    assert response.status_code == 201
+    assert response.json()["kind"] == "ZONES"
+    assert response.json()["is_cover"] is True
+
+    flyer.refresh_from_db()
+    assert flyer.is_cover is True
+
+
+def test_upload_without_kind_defaults_to_flyer(client_a, published_event):
+    response = client_a.post(
+        f"/api/org/events/{published_event.id}/images/",
+        {"image": _valid_image_upload()},
+        format="multipart",
+    )
+    assert response.status_code == 201
+    assert response.json()["kind"] == "FLYER"
+    assert response.json()["is_cover"] is False
+
+
+def test_selecting_an_image_only_affects_its_own_kind(client_a, published_event):
+    flyer = published_event.images.get()
+    zones_a = _add_image(published_event, position=1, kind=EventImage.Kind.ZONES, is_cover=True)
+    zones_b = _add_image(published_event, position=2, kind=EventImage.Kind.ZONES)
+    second_flyer = _add_image(published_event, position=3)
+
+    response = client_a.patch(
+        f"/api/org/events/{published_event.id}/images/{second_flyer.id}/",
+        {"is_cover": True},
+        format="json",
+    )
+    assert response.status_code == 200
+    for image in (flyer, zones_a, zones_b, second_flyer):
+        image.refresh_from_db()
+    assert (flyer.is_cover, second_flyer.is_cover) == (False, True)
+    assert (zones_a.is_cover, zones_b.is_cover) == (True, False)
+
+
+def test_kind_cannot_be_changed_after_upload(client_a, published_event):
+    image = published_event.images.get()
+    response = client_a.patch(
+        f"/api/org/events/{published_event.id}/images/{image.id}/", {"kind": "MAP"}, format="json"
+    )
+    assert response.status_code == 400
+    image.refresh_from_db()
+    assert image.kind == EventImage.Kind.FLYER
+
+
+def test_last_zones_or_map_image_of_a_published_event_can_be_deleted(client_a, published_event):
+    zones = _add_image(published_event, position=1, kind=EventImage.Kind.ZONES, is_cover=True)
+    response = client_a.delete(f"/api/org/events/{published_event.id}/images/{zones.id}/")
+    assert response.status_code == 204
+    assert published_event.images.count() == 1
+
+
+def test_last_flyer_is_protected_even_with_other_kinds_present(client_a, published_event):
+    flyer = published_event.images.get()
+    _add_image(published_event, position=1, kind=EventImage.Kind.MAP, is_cover=True)
+    response = client_a.delete(f"/api/org/events/{published_event.id}/images/{flyer.id}/")
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "LAST_IMAGE"
+
+
+def test_deleting_the_selected_image_promotes_one_of_the_same_kind(client_a, published_event):
+    flyer = published_event.images.get()
+    map_a = _add_image(published_event, position=1, kind=EventImage.Kind.MAP, is_cover=True)
+    map_b = _add_image(published_event, position=2, kind=EventImage.Kind.MAP)
+
+    response = client_a.delete(f"/api/org/events/{published_event.id}/images/{map_a.id}/")
+    assert response.status_code == 204
+    map_b.refresh_from_db()
+    flyer.refresh_from_db()
+    assert map_b.is_cover is True
+    assert flyer.is_cover is True
+
+
+def test_publish_requires_a_flyer_not_just_any_image(client_a, published_event, ticket_type):
+    published_event.status = Event.Status.DRAFT
+    published_event.save(update_fields=["status"])
+    published_event.images.update(kind=EventImage.Kind.MAP)
+
+    response = client_a.post(f"/api/org/events/{published_event.id}/publish/")
+    assert response.status_code == 400
+    assert "Debes subir al menos un flyer." in response.json()["error"]["details"]["errors"]
+
+
+def test_public_list_cover_is_the_selected_flyer(published_event):
+    from rest_framework.test import APIClient
+
+    published_event.images.update(is_cover=False)
+    _add_image(published_event, position=0, kind=EventImage.Kind.ZONES, is_cover=True)
+    selected = _add_image(published_event, position=5, is_cover=True)
+
+    response = APIClient().get("/api/events/")
+    assert response.status_code == 200
+    [event] = response.json()["results"]
+    assert event["cover_image"].endswith(selected.image.url)
 
 
 def test_images_of_cancelled_event_are_read_only(client_a, published_event):

@@ -1,5 +1,6 @@
 "use client";
 
+import { imagesOfKind } from "@repo/api-client";
 import { Button, EmptyState } from "@repo/ui";
 
 import { useEvent } from "@/features/events/hooks";
@@ -13,7 +14,7 @@ export interface ImagesStepProps {
 export function ImagesStep({ eventId, onNext }: ImagesStepProps) {
   const { data: event } = useEvent(eventId);
 
-  const images = event?.images ?? [];
+  const flyers = imagesOfKind(event?.images ?? [], "FLYER");
 
   if (!event) {
     return <EmptyState title="Guarda primero la información general" description="Necesitamos el evento creado para poder subir imágenes." />;
@@ -22,7 +23,7 @@ export function ImagesStep({ eventId, onNext }: ImagesStepProps) {
   return (
     <div className="flex flex-col gap-5">
       <EventImagesManager eventId={eventId} />
-      <Button onClick={onNext} disabled={images.length === 0} className="self-end">
+      <Button onClick={onNext} disabled={flyers.length === 0} className="self-end">
         Continuar
       </Button>
     </div>
