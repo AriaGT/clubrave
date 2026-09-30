@@ -18,6 +18,13 @@ export const ACTIVITY_ACTION_LABELS: Record<string, string> = {
   TICKETS_RESENT: "Entradas reenviadas",
   TICKET_VOIDED: "Entrada anulada",
   CHECKIN_UNDONE: "Ingreso deshecho",
+  EMPLOYEE_CREATED: "Empleado creado",
+  EMPLOYEE_UPDATED: "Empleado editado",
+  EMPLOYEE_DEACTIVATED: "Empleado desactivado",
+  EMPLOYEE_REACTIVATED: "Empleado reactivado",
+  EMPLOYEE_PASSWORD_RESET: "Contraseña de empleado cambiada",
+  EMPLOYEE_DELETED: "Empleado eliminado",
+  TICKET_CHECKED_IN: "Ingreso validado por seguridad",
 };
 
 const LIMA_FORMATTER = new Intl.DateTimeFormat("es-PE", {

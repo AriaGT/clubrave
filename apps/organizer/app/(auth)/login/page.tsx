@@ -40,7 +40,7 @@ export default function LoginPage() {
         <Logo size={56} />
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-2xl font-bold">Club Rave</h1>
-          <p className="text-text-muted">Inicia sesión para gestionar tus eventos.</p>
+          <p className="text-text-muted">Inicia sesión para gestionar tus eventos o escanear en la puerta.</p>
         </div>
       </div>
 
