@@ -97,7 +97,7 @@ export function ImageUploader({
                   {selectedLabel}
                 </span>
               )}
-              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[var(--gradient-scrim)] p-1">
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[image:var(--gradient-scrim)] p-1">
                 <IconButton
                   label="Mover a la izquierda"
                   size="sm"

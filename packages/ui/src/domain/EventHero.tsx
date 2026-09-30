@@ -32,7 +32,7 @@ export function EventHero({
       ) : (
         <div className="absolute inset-0 bg-[var(--color-surface-sunken)]" />
       )}
-      <div className="absolute inset-0 bg-[var(--gradient-scrim)]" />
+      <div className="absolute inset-0 bg-[image:var(--gradient-scrim-hero)]" />
       {coverImage && coverExpandTitle && (
         <ImageLightbox src={coverImage} alt={`${coverExpandTitle} de ${title}`} title={coverExpandTitle}>
           <button

@@ -47,6 +47,15 @@
   /* ── Efectos ────────────────────────────────────────────── */
   --gradient-accent: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   --gradient-scrim: linear-gradient(180deg, rgba(9, 9, 11, 0) 0%, rgba(9, 9, 11, 0.92) 78%);
+  /* Portadas: velo leve arriba (botones) y fondo casi opaco bajo el título,
+   * que se superpone a flyers con mucho texto propio. */
+  --gradient-scrim-hero: linear-gradient(
+    180deg,
+    rgba(9, 9, 11, 0.35) 0%,
+    rgba(9, 9, 11, 0.2) 25%,
+    rgba(9, 9, 11, 0.55) 50%,
+    rgba(9, 9, 11, 0.94) 78%
+  );
   --glow-accent: 0 0 40px rgba(124, 58, 237, 0.28); /* solo en la tienda */
   --glow-mint: 0 0 32px rgba(16, 185, 129, 0.25); /* solo en éxito/QR válido */
 }
