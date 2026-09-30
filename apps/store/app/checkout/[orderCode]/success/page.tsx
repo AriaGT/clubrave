@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Skeleton, TicketCard } from "@repo/ui";
+import { Badge, Button, Skeleton, TicketCard } from "@repo/ui";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -37,11 +37,14 @@ export default function CheckoutSuccessPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 p-[var(--space-6)]">
       <div className="flex flex-col items-center gap-2 text-center">
+        {order.is_guest && <Badge variant="accent">Invitado</Badge>}
         <h1 className="font-display text-2xl font-bold text-[var(--color-mint-text)]">
-          ¡Ya estás dentro!
+          {order.is_guest ? "¡Estás en la lista!" : "¡Ya estás dentro!"}
         </h1>
         <p className="text-[var(--color-text-muted)]">
-          Te enviamos tus entradas a {order.buyer_email}. También están aquí.
+          {order.is_guest
+            ? `Tu entrada de invitado llegó a ${order.buyer_email}. También está aquí.`
+            : `Te enviamos tus entradas a ${order.buyer_email}. También están aquí.`}
         </p>
       </div>
 
@@ -56,6 +59,7 @@ export default function CheckoutSuccessPage() {
               dateLabel={ticket.order_code ?? ""}
               ticketTypeName={ticket.ticket_type_name ?? ""}
               holderName={ticket.holder_name ?? ""}
+              isGuest={ticket.is_guest}
               status="active"
             />
           ) : (

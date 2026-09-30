@@ -47,7 +47,11 @@ export default function AccountOrdersPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-sm">S/ {order.total}</span>
+              {order.is_guest ? (
+                <Badge variant="accent">Invitado</Badge>
+              ) : (
+                <span className="font-mono text-sm">S/ {order.total}</span>
+              )}
               <Badge variant={STATUS_VARIANT[order.status ?? ""] ?? "neutral"}>
                 {STATUS_LABEL[order.status ?? ""] ?? order.status}
               </Badge>

@@ -3,9 +3,10 @@
 import { type ApiComponents, selectedImageOfKind } from "@repo/api-client";
 import { Badge, Button, CartSheet, Divider, EventHero, ImagePreviewCard, TicketTypeRow } from "@repo/ui";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { useCartStore } from "@/features/cart/store";
+import { GuestCodeBox } from "@/features/guest/GuestCodeBox";
 
 import { useEventDetail } from "./hooks";
 
@@ -97,6 +98,11 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
             />
           ))}
         </div>
+        {/* Siempre visible: un código puede dar un tipo de entrada oculto
+            (inactivo) o seguir sirviendo con la venta pausada. */}
+        <Suspense fallback={null}>
+          <GuestCodeBox eventId={event.id} eventSlug={event.slug ?? ""} />
+        </Suspense>
       </section>
 
       <Divider />

@@ -51,9 +51,12 @@ export default function AccountOrderDetailPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="font-mono text-xl font-semibold">{order.code}</h1>
-        <Badge variant={STATUS_VARIANT[order.status ?? ""] ?? "neutral"}>
-          {STATUS_LABEL[order.status ?? ""] ?? order.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {order.is_guest && <Badge variant="accent">Invitado</Badge>}
+          <Badge variant={STATUS_VARIANT[order.status ?? ""] ?? "neutral"}>
+            {STATUS_LABEL[order.status ?? ""] ?? order.status}
+          </Badge>
+        </div>
       </div>
 
       <ul className="flex flex-col gap-2">
@@ -62,14 +65,14 @@ export default function AccountOrderDetailPage() {
             <span>
               {item.quantity}× {item.ticket_type_name}
             </span>
-            <span className="font-mono">S/ {item.subtotal}</span>
+            <span className="font-mono">{order.is_guest ? "Cortesía" : `S/ ${item.subtotal}`}</span>
           </li>
         ))}
       </ul>
 
       <div className="flex justify-between border-t border-[var(--color-border-subtle)] pt-2 font-semibold">
         <span>Total</span>
-        <span className="font-mono">S/ {order.total}</span>
+        <span className="font-mono">{order.is_guest ? "Invitado · S/ 0.00" : `S/ ${order.total}`}</span>
       </div>
 
       {(order.status === "CANCELLED" || order.status === "REFUNDED") && (

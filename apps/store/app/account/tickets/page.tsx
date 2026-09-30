@@ -79,6 +79,7 @@ export default function AccountTicketsPage() {
               ticketTypeName={ticket.ticket_type_name ?? ""}
               holderName={ticket.holder_name ?? ""}
               status={STATUS_MAP[tab]}
+              isGuest={ticket.is_guest}
               checkedInAtLabel={
                 ticket.checked_in_at
                   ? new Date(ticket.checked_in_at).toLocaleTimeString("es-PE")
