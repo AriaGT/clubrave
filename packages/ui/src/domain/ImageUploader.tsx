@@ -89,9 +89,11 @@ export function ImageUploader({
         type="file"
         accept="image/jpeg,image/png,image/webp"
         multiple
-        capture="environment"
         className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = "";
+        }}
       />
 
       {(images.length > 0 || uploadingCount > 0) && (
