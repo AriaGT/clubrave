@@ -7,20 +7,22 @@ import { PUBLIC_API_URL } from "./env";
 import { useSession } from "./session";
 
 export function useApi() {
-  const { accessToken, refresh, logout } = useSession();
+  const { getAccessToken, refresh } = useSession();
 
+  // Cliente estable: lee el token de un ref, así una consulta en curso no se
+  // queda con un token viejo capturado en su closure.
   return useMemo(
     () =>
       createApiClient({
         baseUrl: PUBLIC_API_URL,
-        getAccessToken: () => accessToken,
-        onUnauthorized: () => {
-          // El access token expiró o es inválido: intenta rotarlo en segundo
-          // plano. Si el refresh también falla, `refresh()` deja la sesión
-          // en "anonymous" y las rutas protegidas redirigen a /login.
-          refresh().catch(() => logout());
-        },
+        getAccessToken,
+        // Ante un 401: un único refresh compartido por todas las peticiones
+        // que fallaron a la vez, y reintento transparente con el token nuevo.
+        // Si el refresh es rechazado de verdad, `refresh()` deja la sesión en
+        // "anonymous" y el layout manda a /login; si solo no hay red, la
+        // sesión se conserva.
+        onUnauthorized: () => refresh(),
       }),
-    [accessToken, refresh, logout]
+    [getAccessToken, refresh]
   );
 }

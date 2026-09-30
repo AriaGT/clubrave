@@ -9,7 +9,12 @@ export * from "./images";
 export interface ApiClientOptions {
   baseUrl: string;
   getAccessToken?: () => string | null;
-  onUnauthorized?: () => void;
+  /**
+   * Se llama ante un 401. Si devuelve (o resuelve) un access token nuevo, la
+   * petición se reintenta UNA vez con él y el llamador nunca ve el 401. Si
+   * devuelve `void`/`null`, el 401 llega tal cual al llamador.
+   */
+  onUnauthorized?: () => void | string | null | Promise<string | null | void>;
 }
 
 /**
@@ -20,6 +25,9 @@ export interface ApiClientOptions {
  */
 export function createApiClient({ baseUrl, getAccessToken, onUnauthorized }: ApiClientOptions) {
   const client = createClient<paths>({ baseUrl });
+  // Copia intacta de cada petición (el cuerpo se consume al enviarla) para
+  // poder reintentarla tras un refresh.
+  const pending = new WeakMap<Request, Request>();
 
   const authMiddleware: Middleware = {
     async onRequest({ request }) {
@@ -27,13 +35,18 @@ export function createApiClient({ baseUrl, getAccessToken, onUnauthorized }: Api
       if (token) {
         request.headers.set("Authorization", `Bearer ${token}`);
       }
+      pending.set(request, request.clone());
       return request;
     },
-    async onResponse({ response }) {
-      if (response.status === 401) {
-        onUnauthorized?.();
-      }
-      return response;
+    async onResponse({ request, response }) {
+      const copy = pending.get(request);
+      pending.delete(request);
+      if (response.status !== 401 || !onUnauthorized) return response;
+
+      const fresh = await onUnauthorized();
+      if (typeof fresh !== "string" || !copy) return response;
+      copy.headers.set("Authorization", `Bearer ${fresh}`);
+      return fetch(copy);
     },
   };
 
