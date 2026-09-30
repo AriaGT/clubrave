@@ -10,10 +10,13 @@ import {
   Switch,
   TopBar,
 } from "@repo/ui";
+import { QrCode } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { downloadDoorPoster } from "@/features/events/doorPoster";
+import { PUBLIC_STORE_URL } from "@/lib/env";
 import {
   apiErrorMessage,
   useChangeImpact,
@@ -37,6 +40,8 @@ export default function EventDetailPage() {
   const deleteEvent = useDeleteEvent(id);
   const [unpublishOpen, setUnpublishOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [posterBusy, setPosterBusy] = useState(false);
+  const [posterError, setPosterError] = useState<string | null>(null);
 
   const isCancelled = event?.status === "CANCELLED";
   const isPublished = event?.status === "PUBLISHED";
@@ -223,6 +228,32 @@ export default function EventDetailPage() {
                 Enviar comunicado
               </Button>
             </Link>
+            <Button
+              variant="secondary"
+              className="w-full"
+              loading={posterBusy}
+              onClick={async () => {
+                setPosterBusy(true);
+                setPosterError(null);
+                try {
+                  await downloadDoorPoster({
+                    url: `${PUBLIC_STORE_URL}/e/${event.slug}`,
+                    slug: event.slug,
+                    title: event.title,
+                    startsAt: event.starts_at,
+                    venue: event.venue_name,
+                  });
+                } catch {
+                  setPosterError("No se pudo generar la imagen. Inténtalo de nuevo.");
+                } finally {
+                  setPosterBusy(false);
+                }
+              }}
+            >
+              <QrCode className="h-4 w-4" aria-hidden />
+              Descargar QR para la puerta
+            </Button>
+            {posterError && <p className="text-sm text-[var(--color-danger)]">{posterError}</p>}
             <Link href={`/scan/${id}`}>
               <Button variant="primary" className="w-full">
                 Escanear

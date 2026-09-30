@@ -184,6 +184,15 @@ caracteres que le entregas en persona.
   validado por seguridad", con su email), igual que las altas, bajas y
   cambios de empleados.
 
+## QR para la puerta
+
+En el resumen de un evento publicado, **Descargar QR para la puerta** baja una
+imagen (PNG vertical, lista para imprimir en A5, A4 o A3) con el QR del enlace
+del evento en la tienda, el nombre, la fecha y el lugar. Pégala donde hace fila
+la gente: quien escanea llega directo a comprar su entrada. Imprímela a color
+y sobre fondo claro o mate; si la hoja brilla con la luz, el código puede
+costar más de leer.
+
 ## Anular ventas y entradas
 
 **Importante: anular no devuelve el dinero.** Este sistema anula el QR, libera
