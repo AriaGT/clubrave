@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 
 import { cn } from "../lib/cn";
 
@@ -26,4 +26,3 @@ export const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   )
 );
 Logo.displayName = "Logo";
-

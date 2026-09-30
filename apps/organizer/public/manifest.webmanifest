@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "Club Rave",
   "short_name": "Club Rave",
   "description": "Gestiona tus eventos y valida entradas",
@@ -19,4 +19,3 @@
     { "name": "Nuevo evento", "url": "/events/new" }
   ]
 }
-

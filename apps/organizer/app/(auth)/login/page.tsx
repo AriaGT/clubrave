@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button, FieldError, Input, Label, Logo } from "@repo/ui";
 import { useRouter } from "next/navigation";
@@ -28,7 +28,7 @@ export default function LoginPage() {
       await login(email, password);
       router.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo iniciar sesiÃ³n.");
+      setError(err instanceof Error ? err.message : "No se pudo iniciar sesión.");
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export default function LoginPage() {
         <Logo size={56} />
         <div className="flex flex-col gap-1">
           <h1 className="font-display text-2xl font-bold">Club Rave</h1>
-          <p className="text-[var(--color-text-muted)]">Inicia sesiÃ³n para gestionar tus eventos.</p>
+          <p className="text-[var(--color-text-muted)]">Inicia sesión para gestionar tus eventos.</p>
         </div>
       </div>
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">ContraseÃ±a</Label>
+          <Label htmlFor="password">Contraseña</Label>
           <Input
             id="password"
             type="password"
@@ -69,10 +69,9 @@ export default function LoginPage() {
         </div>
         <FieldError>{error}</FieldError>
         <Button type="submit" loading={loading}>
-          Iniciar sesiÃ³n
+          Iniciar sesión
         </Button>
       </form>
     </main>
   );
 }
-

@@ -1,142 +1,142 @@
-﻿# Club Rave â€” manual del organizador
+# Club Rave — manual del organizador
 
 > **Sobre este manual.** Cubre los controles del organizador definidos en
-> [`plan-controles-organizador.md`](./plan-controles-organizador.md) â€” las 16
-> historias de usuario (H01â€“H16) ya estÃ¡n implementadas y verificadas de
+> [`plan-controles-organizador.md`](./plan-controles-organizador.md) — las 16
+> historias de usuario (H01–H16) ya están implementadas y verificadas de
 > punta a punta. Todo lo que describe este documento funciona hoy.
 
 ---
 
 ## Crear y publicar un evento (menos de 5 minutos)
 
-1. Entra a **panel.tudominio.pe** con tu email y contraseÃ±a.
+1. Entra a **panel.tudominio.pe** con tu email y contraseña.
 2. Toca **Nuevo evento**.
-3. **Paso 1 â€” InformaciÃ³n**: tÃ­tulo, fecha y hora, lugar, edad mÃ­nima. Se
-   guarda solo con escribir el tÃ­tulo; puedes cerrar la app y seguir despuÃ©s.
-4. **Paso 2 â€” Flyers**: sube una o varias fotos (arrastra o toca la cÃ¡mara).
+3. **Paso 1 — Información**: título, fecha y hora, lugar, edad mínima. Se
+   guarda solo con escribir el título; puedes cerrar la app y seguir después.
+4. **Paso 2 — Flyers**: sube una o varias fotos (arrastra o toca la cámara).
    La primera que subas es la portada; puedes cambiarla con la estrella.
-5. **Paso 3 â€” Entradas**: crea cada tipo (nombre, precio, cantidad, mÃ¡ximo
-   por compra). Puedes agregar varias â€” Preventa, General, VIP, etc.
-6. **Paso 4 â€” PublicaciÃ³n**: revisa la lista de requisitos (todos en verde) y
-   toca **Publicar evento**. Te da un enlace y un cÃ³digo QR: compÃ¡rtelos en
+5. **Paso 3 — Entradas**: crea cada tipo (nombre, precio, cantidad, máximo
+   por compra). Puedes agregar varias — Preventa, General, VIP, etc.
+6. **Paso 4 — Publicación**: revisa la lista de requisitos (todos en verde) y
+   toca **Publicar evento**. Te da un enlace y un código QR: compártelos en
    redes.
 
-**Para publicar necesitas, como mÃ­nimo:** tÃ­tulo, fecha futura, lugar, una
+**Para publicar necesitas, como mínimo:** título, fecha futura, lugar, una
 imagen, y un tipo de entrada activo con aforo mayor a cero.
 
 ## Editar un evento ya publicado
 
 Desde **Eventos**, toca el evento y luego **Tipos de entrada** para agregar,
 editar o desactivar entradas. No puedes bajar el aforo por debajo de lo ya
-vendido, ni borrar un tipo de entrada con ventas â€” solo desactivarlo.
+vendido, ni borrar un tipo de entrada con ventas — solo desactivarlo.
 
-### Corregir la informaciÃ³n (fecha, lugar, tÃ­tulo)
+### Corregir la información (fecha, lugar, título)
 
 Desde el resumen del evento, **Editar**. Cambia lo que necesites y guarda.
 
-- El **enlace del evento no cambia** aunque cambies el tÃ­tulo: lo que ya
+- El **enlace del evento no cambia** aunque cambies el título: lo que ya
   compartiste en redes sigue funcionando.
 - Si el evento ya tiene ventas y cambias **fecha, hora o lugar**, al guardar
-  te avisa cuÃ¡ntas personas compraron y te ofrece mandarles un comunicado.
-  **Nunca se envÃ­a solo** â€” tÃº decides.
+  te avisa cuántas personas compraron y te ofrece mandarles un comunicado.
+  **Nunca se envía solo** — tú decides.
 - Un evento cancelado no se puede editar.
 
 ### Cambiar los flyers
 
-Desde el resumen del evento, **ImÃ¡genes**. AhÃ­ puedes:
+Desde el resumen del evento, **Imágenes**. Ahí puedes:
 
-- **Subir** nuevas (arrastra o toca la cÃ¡mara).
+- **Subir** nuevas (arrastra o toca la cámara).
 - **Cambiar la portada**: toca la estrella de la imagen que quieras primera.
 - **Reordenar**: las flechas mueven cada imagen a izquierda o derecha, y ese
   orden es el que ve el comprador.
-- **Borrar**: el tacho. Si el evento estÃ¡ publicado no te deja borrar la
-  Ãºltima imagen â€” sube la nueva primero. Si borras la que era portada, la
-  siguiente toma su lugar automÃ¡ticamente.
+- **Borrar**: el tacho. Si el evento está publicado no te deja borrar la
+  última imagen — sube la nueva primero. Si borras la que era portada, la
+  siguiente toma su lugar automáticamente.
 
 ### Avisar a los que ya compraron
 
 Desde el resumen del evento, **Enviar comunicado**. Escribe asunto y mensaje,
-revisa la vista previa, y confirma: te dice a cuÃ¡ntas personas exactas va.
+revisa la vista previa, y confirma: te dice a cuántas personas exactas va.
 
-Llega solo a quienes **pagaron** â€” nunca a Ã³rdenes canceladas o vencidas. Las
-respuestas van al email de contacto de tu organizaciÃ³n. MÃ¡ximo 3 comunicados
-por evento al dÃ­a.
+Llega solo a quienes **pagaron** — nunca a órdenes canceladas o vencidas. Las
+respuestas van al email de contacto de tu organización. Máximo 3 comunicados
+por evento al día.
 
-## Ver cÃ³mo va la venta
+## Ver cómo va la venta
 
-En el resumen del evento verÃ¡s, actualizado cada 30 segundos: recaudado
-total, entradas vendidas por tipo, y cuÃ¡ntas ya ingresaron. En **Ventas**
-puedes buscar una orden por email o cÃ³digo, y exportar todo a CSV para
-contabilidad. En **Asistentes** ves quiÃ©n ya entrÃ³ y quiÃ©n no.
+En el resumen del evento verás, actualizado cada 30 segundos: recaudado
+total, entradas vendidas por tipo, y cuántas ya ingresaron. En **Ventas**
+puedes buscar una orden por email o código, y exportar todo a CSV para
+contabilidad. En **Asistentes** ves quién ya entró y quién no.
 
 ### Buscar una venta con alguien esperando
 
-En **Ventas**, el buscador de arriba filtra por **cÃ³digo, email o nombre** a
-medida que escribes. Las pestaÃ±as de estado (Todas Â· Pagadas Â· Pendientes Â·
-Anuladas) traen el nÃºmero de cada una.
+En **Ventas**, el buscador de arriba filtra por **código, email o nombre** a
+medida que escribes. Las pestañas de estado (Todas · Pagadas · Pendientes ·
+Anuladas) traen el número de cada una.
 
 Toca cualquier fila para abrir el **detalle de la orden**: comprador completo,
-quÃ© comprÃ³, cuÃ¡nto pagÃ³, por quÃ© pasarela, si le llegÃ³ el email de entradas y
-cuÃ¡ndo, y la lista de entradas emitidas con su estado (VÃ¡lida / IngresÃ³ /
-Anulada) y, si ingresÃ³, la hora y quiÃ©n la validÃ³.
+qué compró, cuánto pagó, por qué pasarela, si le llegó el email de entradas y
+cuándo, y la lista de entradas emitidas con su estado (Válida / Ingresó /
+Anulada) y, si ingresó, la hora y quién la validó.
 
 ## Escanear en la puerta
 
-Toca **Escanear** en la barra inferior, elige el evento, y apunta la cÃ¡mara
+Toca **Escanear** en la barra inferior, elige el evento, y apunta la cámara
 al QR de cada persona.
 
-- **Verde ("Adelante")**: entrada vÃ¡lida, ya quedÃ³ registrado el ingreso.
+- **Verde ("Adelante")**: entrada válida, ya quedó registrado el ingreso.
   Se cierra solo en 2 segundos.
-- **Ãmbar ("Ya ingresÃ³")**: esta entrada ya se usÃ³ â€” muestra a quÃ© hora y
-  quiÃ©n la validÃ³. Requiere que toques para cerrar: es tu momento de
+- **Ámbar ("Ya ingresó")**: esta entrada ya se usó — muestra a qué hora y
+  quién la validó. Requiere que toques para cerrar: es tu momento de
   resolver la duda con la persona.
-- **Rojo ("No vÃ¡lida")**: no es una entrada de este evento, es falsa, o la
+- **Rojo ("No válida")**: no es una entrada de este evento, es falsa, o la
   venta fue anulada.
 
-**Si la cÃ¡mara falla o la pantalla estÃ¡ rota**: toca el Ã­cono de teclado
-(arriba a la derecha) y escribe el cÃ³digo de la entrada a mano â€” el
+**Si la cámara falla o la pantalla está rota**: toca el ícono de teclado
+(arriba a la derecha) y escribe el código de la entrada a mano — el
 comprador lo tiene visible debajo de su QR, en bloques de 4 caracteres.
 
 ### Deshacer un ingreso escaneado por error
 
-Pasa: se escanea el celular equivocado y la persona correcta llega despuÃ©s y
-le sale Ã¡mbar.
+Pasa: se escanea el celular equivocado y la persona correcta llega después y
+le sale ámbar.
 
-En la pantalla **Ã¡mbar**, toca **Deshacer ingreso**, elige el motivo (escaneo
-por error / doble escaneo / otro) y listo: esa entrada vuelve a estar vÃ¡lida y
+En la pantalla **ámbar**, toca **Deshacer ingreso**, elige el motivo (escaneo
+por error / doble escaneo / otro) y listo: esa entrada vuelve a estar válida y
 el siguiente escaneo da verde.
 
-El ingreso anterior no se borra â€” queda en **Actividad** con la hora y quiÃ©n
-lo hizo. TambiÃ©n puedes deshacer desde **Asistentes**, buscando a la persona
+El ingreso anterior no se borra — queda en **Actividad** con la hora y quién
+lo hizo. También puedes deshacer desde **Asistentes**, buscando a la persona
 por nombre.
 
 ## Anular ventas y entradas
 
 **Importante: anular no devuelve el dinero.** Este sistema anula el QR, libera
-el cupo y avisa al comprador. La devoluciÃ³n la haces tÃº por fuera (Yape,
-transferencia, lo que uses) y despuÃ©s la registras aquÃ­ para que tu
+el cupo y avisa al comprador. La devolución la haces tú por fuera (Yape,
+transferencia, lo que uses) y después la registras aquí para que tu
 contabilidad cuadre.
 
 ### Anular una venta completa
 
-Entra a **Ventas â†’ la orden â†’ Anular venta**.
+Entra a **Ventas → la orden → Anular venta**.
 
 1. Elige el motivo: fraude o contracargo, compra duplicada, pedido del
    comprador, error tuyo, u otro.
 2. Decide si **devuelves los cupos a la venta** (viene encendido si el evento
-   todavÃ­a no pasÃ³). Encendido, esas entradas vuelven a estar disponibles para
+   todavía no pasó). Encendido, esas entradas vuelven a estar disponibles para
    que otro las compre.
 3. Confirma.
 
-QuÃ© pasa: todas las entradas vÃ¡lidas de esa orden quedan anuladas y su QR sale
+Qué pasa: todas las entradas válidas de esa orden quedan anuladas y su QR sale
 **rojo** en la puerta. El comprador recibe un email con el motivo y tu
 contacto, y ve la entrada como "Anulada" en su cuenta.
 
-**Ojo con quien ya entrÃ³**: si alguna entrada de esa orden ya ingresÃ³, la
+**Ojo con quien ya entró**: si alguna entrada de esa orden ya ingresó, la
 pantalla te lo advierte antes de confirmar. Anular la venta **no saca a nadie
-del local** â€” esa entrada ya se usÃ³ y se queda como usada.
+del local** — esa entrada ya se usó y se queda como usada.
 
-Una orden **pendiente** (que nunca llegÃ³ a pagarse) tambiÃ©n se puede anular:
+Una orden **pendiente** (que nunca llegó a pagarse) también se puede anular:
 libera su reserva de inmediato en vez de esperar los 15 minutos.
 
 ### Anular una sola entrada
@@ -146,102 +146,101 @@ Si de una compra de 6 solo una persona no va, no anules las 6. Desde
 entrada**: motivo, si devuelves el cupo, confirmar. La orden sigue pagada, con
 una entrada menos.
 
-No puedes anular una entrada que **ya ingresÃ³**. Si fue un error de escaneo,
+No puedes anular una entrada que **ya ingresó**. Si fue un error de escaneo,
 usa **Deshacer ingreso** primero.
 
 ### Registrar que ya devolviste el dinero
 
 En una orden anulada, **Marcar como reembolsada**. Puedes anotar la referencia
-("Yape 12/03", nÃºmero de operaciÃ³n, lo que te sirva).
+("Yape 12/03", número de operación, lo que te sirva).
 
 Esto **no mueve dinero**: solo deja constancia. Pasa a estado *Reembolsada*, y
-el CSV de ventas trae las columnas de motivo, fecha de anulaciÃ³n y referencia
+el CSV de ventas trae las columnas de motivo, fecha de anulación y referencia
 para tu contador.
 
 ### Reenviar las entradas a alguien que dice que no le llegaron
 
-Es el reclamo mÃ¡s comÃºn y casi siempre estÃ¡ en spam. En el detalle de la
+Es el reclamo más común y casi siempre está en spam. En el detalle de la
 orden, **Reenviar entradas**. Se manda al mismo email de la compra (no se
-puede cambiar el destinatario, por seguridad) y te muestra cuÃ¡ndo se enviÃ³ la
-Ãºltima vez. MÃ¡ximo 5 reenvÃ­os por orden al dÃ­a.
+puede cambiar el destinatario, por seguridad) y te muestra cuándo se envió la
+última vez. Máximo 5 reenvíos por orden al día.
 
-Si aun asÃ­ insiste, recuÃ©rdale que **las entradas siempre estÃ¡n en "Mi cuenta"
+Si aun así insiste, recuérdale que **las entradas siempre están en "Mi cuenta"
 de la tienda**, aunque el email se haya perdido.
 
 ## Parar la venta sin bajar el evento
 
-Â¿Se llenÃ³ el aforo real del local? Â¿Hay un problema que tienes que confirmar?
+¿Se llenó el aforo real del local? ¿Hay un problema que tienes que confirmar?
 En el resumen del evento, el interruptor **Pausar venta**.
 
-La pÃ¡gina del evento **sigue viva** â€” el link de tu bio de Instagram no se
-rompe â€” pero muestra "Venta pausada temporalmente" y nadie puede comprar.
-Quien estÃ© pagando en ese momento puede terminar dentro de sus 15 minutos.
+La página del evento **sigue viva** — el link de tu bio de Instagram no se
+rompe — pero muestra "Venta pausada temporalmente" y nadie puede comprar.
+Quien esté pagando en ese momento puede terminar dentro de sus 15 minutos.
 Reanudar es el mismo interruptor.
 
-Ãšsalo en vez de despublicar cuando el evento sÃ­ va a ocurrir.
+Úsalo en vez de despublicar cuando el evento sí va a ocurrir.
 
 ## Despublicar un evento
 
-Si publicaste algo por error y **nadie comprÃ³ todavÃ­a**: resumen del evento â†’
-**Zona de riesgo** â†’ **Despublicar**. Vuelve a borrador, sale de la cartelera y
+Si publicaste algo por error y **nadie compró todavía**: resumen del evento →
+**Zona de riesgo** → **Despublicar**. Vuelve a borrador, sale de la cartelera y
 su enlace deja de funcionar. Lo corriges y lo publicas de nuevo.
 
-Si ya hay ventas, el botÃ³n estÃ¡ bloqueado a propÃ³sito: despublicar dejarÃ­a a
+Si ya hay ventas, el botón está bloqueado a propósito: despublicar dejaría a
 gente con entradas de un evento invisible. Usa **Pausar venta** o **Cancelar
-evento** segÃºn el caso.
+evento** según el caso.
 
 ## Cancelar un evento
 
-Esto es definitivo: **no se puede deshacer**. Si el evento se recupera despuÃ©s,
+Esto es definitivo: **no se puede deshacer**. Si el evento se recupera después,
 se crea uno nuevo.
 
-Desde el resumen del evento, **Zona de riesgo â†’ Cancelar evento**. Antes de
-confirmar verÃ¡s el daÃ±o exacto:
+Desde el resumen del evento, **Zona de riesgo → Cancelar evento**. Antes de
+confirmar verás el daño exacto:
 
-- cuÃ¡ntas Ã³rdenes pagadas hay,
-- cuÃ¡ntas personas distintas estÃ¡n afectadas,
-- cuÃ¡ntas entradas se van a anular,
-- cuÃ¡ntas **ya ingresaron**,
-- y cuÃ¡nto dinero representa.
+- cuántas órdenes pagadas hay,
+- cuántas personas distintas están afectadas,
+- cuántas entradas se van a anular,
+- cuántas **ya ingresaron**,
+- y cuánto dinero representa.
 
-Luego: elige el motivo (problema con el local, aforo, cancelaciÃ³n del artista,
-clima, otro), agrega lo que quieras explicar, y **escribe el tÃ­tulo del evento**
-para habilitar el botÃ³n. Es a propÃ³sito: es la Ãºnica acciÃ³n del sistema que te
+Luego: elige el motivo (problema con el local, aforo, cancelación del artista,
+clima, otro), agrega lo que quieras explicar, y **escribe el título del evento**
+para habilitar el botón. Es a propósito: es la única acción del sistema que te
 obliga a escribir.
 
-Al confirmar: todas las entradas quedan anuladas, las Ã³rdenes pendientes
+Al confirmar: todas las entradas quedan anuladas, las órdenes pendientes
 liberan su cupo, y cada comprador recibe un email **con tu motivo y el email de
-contacto de tu organizaciÃ³n**. Los reembolsos se coordinan aparte (no son
-automÃ¡ticos en esta versiÃ³n) â€” el email ya le dice a la gente que te escriba.
+contacto de tu organización**. Los reembolsos se coordinan aparte (no son
+automáticos en esta versión) — el email ya le dice a la gente que te escriba.
 
 El evento cancelado no desaparece: sigues pudiendo ver sus ventas, sus
 asistentes y su actividad para cerrar cuentas.
 
-## Ver quiÃ©n hizo quÃ© (Actividad)
+## Ver quién hizo qué (Actividad)
 
-Desde el resumen del evento, **Actividad**. Es la bitÃ¡cora: cada acciÃ³n de
-control con **quiÃ©n** la hizo, **cuÃ¡ndo** (hora de Lima), **sobre quÃ©** y **con
-quÃ© motivo**.
+Desde el resumen del evento, **Actividad**. Es la bitácora: cada acción de
+control con **quién** la hizo, **cuándo** (hora de Lima), **sobre qué** y **con
+qué motivo**.
 
 Queda registrado: publicar, despublicar, pausar y reanudar, editar la
-informaciÃ³n, borrar una imagen, enviar comunicado, cancelar el evento, anular
+información, borrar una imagen, enviar comunicado, cancelar el evento, anular
 una orden, marcarla reembolsada, anular una entrada, deshacer un ingreso y
 reenviar entradas.
 
-No se puede editar ni borrar. Si alguien de tu equipo anulÃ³ algo el viernes,
-aquÃ­ estÃ¡.
+No se puede editar ni borrar. Si alguien de tu equipo anuló algo el viernes,
+aquí está.
 
-## Â¿Algo no cuadra?
+## ¿Algo no cuadra?
 
 - **Una venta no aparece**: revisa en **Ventas** filtrando por email; si
-  dice "Pendiente" por mÃ¡s de 15 minutos, probablemente el pago no se
-  completÃ³ y el cupo ya se liberÃ³ solo.
-- **Alguien dice que pagÃ³ pero no tiene su entrada**: pÃ­dele que revise
-  "Mi cuenta" en la tienda â€” las entradas siempre estÃ¡n ahÃ­ aunque el email
-  se haya perdido. Si de verdad no llegÃ³, usa **Reenviar entradas**.
-- **A alguien le sale "Anulada" y no sabe por quÃ©**: abre su orden en
-  **Ventas** y mira el motivo; estÃ¡ tambiÃ©n en **Actividad** con quiÃ©n la
-  anulÃ³.
-- **Cualquier otra cosa**: contacta a soporte tÃ©cnico con el cÃ³digo de la
+  dice "Pendiente" por más de 15 minutos, probablemente el pago no se
+  completó y el cupo ya se liberó solo.
+- **Alguien dice que pagó pero no tiene su entrada**: pídele que revise
+  "Mi cuenta" en la tienda — las entradas siempre están ahí aunque el email
+  se haya perdido. Si de verdad no llegó, usa **Reenviar entradas**.
+- **A alguien le sale "Anulada" y no sabe por qué**: abre su orden en
+  **Ventas** y mira el motivo; está también en **Actividad** con quién la
+  anuló.
+- **Cualquier otra cosa**: contacta a soporte técnico con el código de la
   orden (empieza con `TK-`) a mano; es lo primero que te van a pedir.
-
