@@ -129,3 +129,18 @@ class LoginCode(TimeStampedModel):
 
     def is_usable(self) -> bool:
         return self.consumed_at is None and not self.is_expired() and self.attempts < self.MAX_ATTEMPTS
+
+
+class PasswordChangeRequest(TimeStampedModel):
+    """Cambio de contraseña pendiente de confirmar por correo. La contraseña
+    nueva se guarda ya hasheada; solo se aplica al usuario cuando abre el
+    enlace enviado a su email (el token se guarda hasheado, de un solo uso)."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_change_requests")
+    new_password_hash = models.CharField(max_length=256)
+    token_hash = models.CharField(max_length=128, unique=True)
+    expires_at = models.DateTimeField()
+    consumed_at = models.DateTimeField(null=True, blank=True)
+
+    def is_usable(self) -> bool:
+        return self.consumed_at is None and timezone.now() < self.expires_at

@@ -33,3 +33,12 @@ class VerifyCodeSerializer(serializers.Serializer):
         if not attrs.get("token") and not (attrs.get("email") and attrs.get("code")):
             raise serializers.ValidationError("Envía {email, code} o {token}.")
         return attrs
+
+
+class PasswordChangeRequestSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+
+class PasswordChangeConfirmSerializer(serializers.Serializer):
+    token = serializers.CharField()

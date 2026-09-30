@@ -10,10 +10,12 @@ from apps.common.errors import DomainError
 
 from . import services
 from .models import User
-from .permissions import IsCustomer
+from .permissions import IsCustomer, IsOrganizer
 from .serializers import (
     MeSerializer,
     OrgLoginSerializer,
+    PasswordChangeConfirmSerializer,
+    PasswordChangeRequestSerializer,
     RequestCodeSerializer,
     TokenPairSerializer,
     VerifyCodeSerializer,
@@ -90,4 +92,40 @@ class MeView(generics.RetrieveUpdateDestroyAPIView):
         borrar la fila — el historial de órdenes se conserva por obligación
         contable (ver `services.anonymize_account`)."""
         services.anonymize_account(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordChangeRequestView(APIView):
+    """Organizador con sesión: pide cambiar su contraseña; se confirma por email."""
+
+    permission_classes = [IsOrganizer]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_change"
+
+    @extend_schema(request=PasswordChangeRequestSerializer, responses={202: None})
+    def post(self, request: Request):
+        serializer = PasswordChangeRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        services.request_password_change(
+            user=request.user,
+            current_password=serializer.validated_data["current_password"],
+            new_password=serializer.validated_data["new_password"],
+        )
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class PasswordChangeConfirmView(APIView):
+    """Sin sesión a propósito: el enlace del correo puede abrirse en otro
+    navegador; el token de un solo uso ya prueba el acceso al email."""
+
+    permission_classes = [permissions.AllowAny]
+    authentication_classes: list = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "password_change"
+
+    @extend_schema(request=PasswordChangeConfirmSerializer, responses={204: None})
+    def post(self, request: Request):
+        serializer = PasswordChangeConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        services.confirm_password_change(token=serializer.validated_data["token"])
         return Response(status=status.HTTP_204_NO_CONTENT)

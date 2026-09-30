@@ -159,3 +159,76 @@ def test_delete_me_endpoint_anonymizes_the_authenticated_customer(client, custom
 def test_delete_me_requires_authentication(client):
     response = client.delete("/api/me/")
     assert response.status_code == 401
+
+
+# --- Cambio de contraseña con confirmación por email ---------------------
+
+import re  # noqa: E402
+
+from apps.accounts.models import PasswordChangeRequest  # noqa: E402
+
+
+def _org_client(user):
+    from apps.accounts.services import org_tokens_for_user
+
+    api = APIClient()
+    api.credentials(HTTP_AUTHORIZATION=f"Bearer {org_tokens_for_user(user)['access']}")
+    return api
+
+
+def _token_from_outbox() -> str:
+    match = re.search(r"token=([\w-]+)", mail.outbox[-1].body)
+    assert match, "No se encontró el enlace de confirmación"
+    return match.group(1)
+
+
+def _request_change(api, new_password="otra-clave-larga-99"):
+    return api.post(
+        "/api/auth/org/password-change/",
+        {"current_password": "clave12345", "new_password": new_password},
+    )
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+def test_password_change_only_applies_after_email_confirmation(organizer_user):
+    mail.outbox = []
+    assert _request_change(_org_client(organizer_user)).status_code == 202
+    organizer_user.refresh_from_db()
+    assert organizer_user.check_password("clave12345")  # aún no cambia
+
+    token = _token_from_outbox()
+    assert APIClient().post("/api/auth/org/password-change/confirm/", {"token": token}).status_code == 204
+    organizer_user.refresh_from_db()
+    assert organizer_user.check_password("otra-clave-larga-99")
+
+    # el enlace es de un solo uso
+    assert APIClient().post("/api/auth/org/password-change/confirm/", {"token": token}).status_code == 400
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+def test_password_change_rejects_wrong_current_or_weak_new(organizer_user):
+    api = _org_client(organizer_user)
+    wrong = api.post(
+        "/api/auth/org/password-change/",
+        {"current_password": "incorrecta", "new_password": "otra-clave-larga-99"},
+    )
+    assert wrong.status_code == 400
+    assert _request_change(api, new_password="123").status_code == 400
+    assert not PasswordChangeRequest.objects.exists()
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+def test_password_change_link_expires(organizer_user):
+    _request_change(_org_client(organizer_user))
+    PasswordChangeRequest.objects.update(expires_at=timezone.now() - timedelta(minutes=1))
+    response = APIClient().post("/api/auth/org/password-change/confirm/", {"token": _token_from_outbox()})
+    assert response.status_code == 400
+
+
+def test_password_change_requires_organizer_session(customer_user):
+    from apps.accounts.services import customer_tokens_for_user
+
+    api = APIClient()
+    api.credentials(HTTP_AUTHORIZATION=f"Bearer {customer_tokens_for_user(customer_user)['access']}")
+    response = api.post("/api/auth/org/password-change/", {"current_password": "x", "new_password": "y"})
+    assert response.status_code == 403

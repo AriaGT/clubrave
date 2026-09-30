@@ -5,19 +5,24 @@ import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.common.errors import DomainError
 from apps.common.mailer import send as send_email
 
-from .models import LoginCode, Membership, User
+from .models import LoginCode, Membership, PasswordChangeRequest, User
 
 OTP_LENGTH = 6
 CODE_TTL_MINUTES = 15
 REQUEST_RATE_LIMIT_PER_HOUR = 5
+PASSWORD_CHANGE_TTL_MINUTES = 30
 
 
 @transaction.atomic
@@ -142,4 +147,71 @@ def verify_login_code(*, email: str | None, code: str | None, token: str | None)
             email=login_code.email,
             defaults={"role": User.Role.CUSTOMER},
         )
+    return user
+
+
+@transaction.atomic
+def request_password_change(*, user: User, current_password: str, new_password: str) -> None:
+    """Paso 1: valida la contraseña actual y la nueva, y envía el enlace de
+    confirmación. La contraseña NO cambia hasta que se abre el enlace."""
+    if not user.check_password(current_password):
+        raise DomainError("VALIDATION_ERROR", "La contraseña actual no es correcta.")
+    if current_password == new_password:
+        raise DomainError("VALIDATION_ERROR", "La contraseña nueva debe ser distinta a la actual.")
+    try:
+        validate_password(new_password, user)
+    except DjangoValidationError as exc:
+        raise DomainError("VALIDATION_ERROR", " ".join(exc.messages)) from exc
+
+    # Una sola solicitud viva: la más reciente invalida las anteriores.
+    PasswordChangeRequest.objects.filter(user=user, consumed_at=None).update(consumed_at=timezone.now())
+
+    token = secrets.token_urlsafe(32)
+    PasswordChangeRequest.objects.create(
+        user=user,
+        new_password_hash=make_password(new_password),
+        token_hash=_hash(token),
+        expires_at=timezone.now() + timedelta(minutes=PASSWORD_CHANGE_TTL_MINUTES),
+    )
+
+    link = f"{settings.FRONTEND_PANEL_URL}/confirmar-contrasena?token={token}"
+    send_email(
+        to=user.email,
+        subject="Confirma el cambio de tu contraseña",
+        html=(
+            "<p>Recibimos una solicitud para cambiar la contraseña de tu cuenta de Club Rave.</p>"
+            f"<p><a href='{link}'>Confirmar el cambio de contraseña</a></p>"
+            f"<p>El enlace vence en {PASSWORD_CHANGE_TTL_MINUTES} minutos. Si no fuiste tú, "
+            "ignora este correo: tu contraseña actual sigue siendo la misma.</p>"
+        ),
+    )
+
+
+def confirm_password_change(*, token: str) -> User:
+    """Paso 2: aplica la contraseña guardada y cierra las demás sesiones."""
+    with transaction.atomic():
+        change = (
+            PasswordChangeRequest.objects.select_for_update()
+            .select_related("user")
+            .filter(token_hash=_hash(token))
+            .first()
+        )
+        if change is None or not change.is_usable() or not change.user.is_active:
+            raise DomainError("VALIDATION_ERROR", "El enlace no es válido o ha vencido.")
+
+        user = change.user
+        user.password = change.new_password_hash
+        user.save(update_fields=["password"])
+        PasswordChangeRequest.objects.filter(user=user, consumed_at=None).update(consumed_at=timezone.now())
+
+        # Cierra todas las sesiones abiertas: quien tuviera la contraseña vieja
+        # (o un refresh token robado) deja de entrar.
+        for outstanding in OutstandingToken.objects.filter(user=user):
+            BlacklistedToken.objects.get_or_create(token=outstanding)
+
+    send_email(
+        to=user.email,
+        subject="Tu contraseña fue cambiada",
+        html="<p>La contraseña de tu cuenta de Club Rave acaba de cambiar. Si no fuiste tú, contáctanos de inmediato.</p>",
+    )
     return user

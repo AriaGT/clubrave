@@ -16,5 +16,11 @@ urlpatterns = [
         name="customer-request-code",
     ),
     path("auth/customer/verify/", views.CustomerVerifyView.as_view(), name="customer-verify"),
+    path("auth/org/password-change/", views.PasswordChangeRequestView.as_view(), name="org-password-change"),
+    path(
+        "auth/org/password-change/confirm/",
+        views.PasswordChangeConfirmView.as_view(),
+        name="org-password-change-confirm",
+    ),
     path("me/", views.MeView.as_view(), name="me"),
 ]
