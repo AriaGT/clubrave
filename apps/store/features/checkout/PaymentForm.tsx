@@ -8,11 +8,42 @@ import type { StoredPaymentSession } from "./payment-session-storage";
 declare global {
   interface Window {
     KR?: {
-      setFormConfig: (config: { formToken: string; "kr-language"?: string }) => Promise<unknown>;
+      setFormConfig: (config: {
+        formToken: string;
+        "kr-language"?: string;
+        fields?: { all: Record<"default" | "error", FieldStyle> };
+      }) => Promise<unknown>;
       onSubmit: (callback: (response: unknown) => boolean | void) => void;
       onError?: (callback: (error: unknown) => void) => void;
     };
   }
+}
+
+interface FieldStyle {
+  backgroundColor: string;
+  color: string;
+  iconColor: string;
+}
+
+/**
+ * Tarjeta, fecha y CVV son iframes de otro origen: el CSS de la tienda no
+ * los alcanza, solo se estilan con la configuración del SDK. Los valores
+ * salen de los tokens del design system (`var()` no sirve dentro del iframe,
+ * hay que pasar colores ya resueltos).
+ */
+function fieldStyleConfig() {
+  const css = getComputedStyle(document.documentElement);
+  const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  const text = token("--color-text", "#f4f4f5");
+  const bg = token("--color-surface-sunken", "#141419");
+  const muted = token("--color-text-muted", "#a1a1ab");
+  const danger = token("--color-danger", "#f43f5e");
+  return {
+    all: {
+      default: { backgroundColor: bg, color: text, iconColor: muted },
+      error: { backgroundColor: bg, color: danger, iconColor: danger },
+    },
+  };
 }
 
 export interface PaymentFormProps {
@@ -44,7 +75,7 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
     function configureForm() {
       if (cancelled || !window.KR) return;
       containerRef.current?.setAttribute("kr-form-token", session.form_token);
-      window.KR.setFormConfig({ formToken: session.form_token })
+      window.KR.setFormConfig({ formToken: session.form_token, fields: fieldStyleConfig() })
         .then(() => {
           if (cancelled) return;
           setStatus("ready");

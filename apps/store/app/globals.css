@@ -26,11 +26,19 @@
 }
 
 /* Formulario incrustado de Izipay (Krypton). El tema `classic-reset` de Izipay
-   se carga después de este archivo y pinta los campos de blanco, así que cada
-   regla repite `div.kr-embedded` para ganarle por especificidad, y los
-   colores/fondos llevan !important porque el tema también los fija en línea.
-   Estructura: `.kr-field-element` (caja externa, sin estilo) → `.kr-field-wrapper`
-   o `.kr-select` (la caja visible) → `.kr-input-wrapper`/input (transparentes). */
+   se carga después de este archivo, así que cada regla repite `div.kr-embedded`
+   para ganarle por especificidad.
+
+   Estructura real:
+     .kr-field-element        caja externa (sin estilo propio)
+       .kr-field-wrapper      la caja visible: borde, fondo, foco
+         .kr-field-component  iframe (tarjeta, fecha, CVV) o <input> (titular)
+         .kr-icon-wrapper-root
+     .kr-select               botón del selector, dentro de su .kr-field-wrapper
+
+   Los iframes de tarjeta/fecha/CVV viven en otro origen: este CSS no los
+   alcanza. Su fondo, color e iconos se fijan con `fields.all` en
+   `KR.setFormConfig` (ver PaymentForm.tsx). */
 div.kr-embedded {
   display: flex;
   flex-direction: column;
@@ -40,32 +48,31 @@ div.kr-embedded {
   font-family: var(--font-sans);
 }
 
-/* Cajas externas: sin fondo, borde ni relleno propios. */
-div.kr-embedded .kr-pan,
-div.kr-embedded .kr-expiry,
-div.kr-embedded .kr-security-code,
-div.kr-embedded .kr-card-holder-name,
-div.kr-embedded .kr-card-holder-mail,
-div.kr-embedded .kr-installment-number,
-div.kr-embedded .kr-first-installment-delay,
-div.kr-embedded .kr-identity-document-type,
-div.kr-embedded .kr-identity-document-number,
-div.kr-embedded .kr-pocket-type {
+/* Cajas externas: sin fondo ni borde, y con la altura del campo (el tema les
+   fija 35px y el campo mide 48, así que se montaban unas sobre otras). */
+div.kr-embedded .kr-field-element {
   width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   background: transparent !important;
   border: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
   box-shadow: none !important;
 }
+div.kr-embedded .kr-label {
+  display: none !important;
+}
 
-/* La caja visible de cada campo de texto y de cada selector. */
-div.kr-embedded .kr-field-wrapper,
-div.kr-embedded .kr-field.kr-text,
-div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select {
+/* La caja visible de cada campo. */
+div.kr-embedded .kr-field-wrapper {
   display: flex;
-  align-items: center;
+  /* El texto dentro del iframe (31px) queda centrado en una caja de 48px
+     solo si el iframe va pegado arriba: lo demás se centra aparte. */
+  align-items: flex-start;
   box-sizing: border-box;
+  width: 100%;
+  height: auto !important;
   min-height: 3rem;
   padding: 0 var(--space-3) !important;
   background: var(--color-surface-sunken) !important;
@@ -74,30 +81,22 @@ div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select {
   color: var(--color-text) !important;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-div.kr-embedded .kr-field-wrapper:focus-within,
-div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select:focus-within {
+div.kr-embedded .kr-field-wrapper:focus-within {
   border-color: var(--color-accent) !important;
   box-shadow: 0 0 0 3px var(--color-accent-ring) !important;
 }
-/* El mismo campo aparece anidado: solo la caja más externa lleva borde. */
-div.kr-embedded .kr-field-wrapper .kr-field.kr-text,
-div.kr-embedded .kr-field.kr-text .kr-field-wrapper {
-  min-height: 0;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-div.kr-embedded .kr-field.kr-text .kr-input-wrapper,
-div.kr-embedded .kr-field-wrapper .kr-field-component {
+div.kr-embedded .kr-field-component {
   flex: 1;
   min-width: 0;
   background: transparent !important;
 }
-div.kr-embedded .kr-field.kr-text input.kr-theme,
-div.kr-embedded input[type="text"],
-div.kr-embedded input[type="email"] {
+div.kr-embedded .kr-text-wrapper .kr-field-component {
+  align-self: center;
+  height: auto !important;
+}
+
+/* Titular: único campo que no es iframe. */
+div.kr-embedded input.kr-input-field {
   width: 100%;
   height: 2.75rem !important;
   box-sizing: border-box;
@@ -111,50 +110,61 @@ div.kr-embedded input[type="email"] {
   outline: 0 !important;
   box-shadow: none !important;
 }
-div.kr-embedded .kr-field.kr-text input.kr-theme::placeholder {
+div.kr-embedded input.kr-input-field::placeholder {
   color: var(--color-text-subtle) !important;
   opacity: 1;
 }
 
-/* Iconos (tarjeta, calendario, ayuda del CVV, titular). */
+/* Iconos (tarjeta, calendario, titular) y ayuda del CVV. */
 div.kr-embedded .kr-icon-wrapper-root,
-div.kr-embedded .kr-help-button-wrapper,
-div.kr-embedded .kr-field.kr-text .kr-icon {
+div.kr-embedded .kr-icon-wrapper-root .kr-icon,
+div.kr-embedded .kr-help-button-wrapper {
+  background: transparent !important;
+}
+div.kr-embedded .kr-icon-wrapper-root {
   display: flex;
   align-items: center;
+  align-self: center;
   flex: none;
-  width: auto !important;
   margin-left: var(--space-2);
-  padding: 0 !important;
-  background: transparent !important;
-  color: var(--color-text-muted) !important;
 }
-div.kr-embedded .kr-field.kr-text .kr-icon i {
-  color: var(--color-text-muted) !important;
-}
-div.kr-embedded .kr-icon-wrapper-root svg,
-div.kr-embedded .kr-field.kr-text .kr-icon svg {
+div.kr-embedded .kr-icon-wrapper-root svg {
   width: 1.5rem;
   height: auto;
 }
-div.kr-embedded .kr-icon-wrapper-root svg [fill]:not([fill="none"]),
-div.kr-embedded .kr-field.kr-text .kr-icon svg [fill]:not([fill="none"]) {
+div.kr-embedded .kr-icon-wrapper-root svg [fill]:not([fill="none"]) {
   fill: var(--color-text-muted);
 }
-div.kr-embedded .kr-help-button {
-  background: var(--color-surface-hover) !important;
-  border-radius: var(--radius-full) !important;
+div.kr-embedded .kr-help-button-wrapper {
+  display: flex !important;
+  align-items: center;
+  align-self: center;
+  flex: none;
+  height: auto !important;
+  margin-left: var(--space-2);
 }
 
-/* Selectores de cuotas y diferido (select propio del tema). */
+/* Selectores de cuotas y diferido: el `.kr-field-wrapper` ya es la caja, así
+   que el botón interior no lleva borde ni fondo propios. */
 div.kr-embedded .kr-select-wrapper.kr-custom-select {
-  width: 100%;
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
 }
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select {
+  display: flex !important;
+  flex: 1;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between !important;
   width: 100%;
+  min-height: 3rem;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
   cursor: pointer;
-  justify-content: space-between;
-  font-size: var(--text-base);
 }
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select,
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select span,
@@ -167,41 +177,28 @@ div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select .kr-select-caret 
   position: static;
   display: flex;
   align-items: center;
+  height: auto;
   color: var(--color-text-muted);
 }
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select .kr-select-caret svg {
   fill: currentColor;
 }
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options {
+  top: 100%;
+  left: 0;
+  margin-top: var(--space-1);
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
-  overflow-y: auto;
 }
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option {
   padding: var(--space-2) var(--space-3);
-  color: var(--color-text);
   cursor: pointer;
 }
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option:hover,
 div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option.kr-active-option {
   background: var(--color-surface-hover) !important;
-}
-div.kr-embedded .kr-select-wrapper.kr-real-select select {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0 var(--space-3);
-  background: var(--color-surface-sunken) !important;
-  color: var(--color-text) !important;
-  border: 1px solid var(--color-border) !important;
-  border-radius: var(--radius-md);
-}
-
-div.kr-embedded label,
-div.kr-embedded .kr-field-wrapper label {
-  color: var(--color-text-muted) !important;
-  font-size: var(--text-sm);
 }
 
 /* Error del formulario: caja suave en vez del bloque rojo sólido del tema. */
