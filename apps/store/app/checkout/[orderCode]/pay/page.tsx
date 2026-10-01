@@ -23,7 +23,13 @@ function PayScreen() {
   const { orderCode } = useParams<{ orderCode: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: order, refetch } = useOrderStatus(orderCode, { pollUntilPaid: true });
+  const [submitted, setSubmitted] = useState(false);
+  const paymentGateway = loadPaymentSession(orderCode)?.gateway;
+  // Con el formulario incrustado el pago no existe hasta que el comprador lo
+  // envía: sondear antes solo golpea el backend sin nada que esperar.
+  const { data: order, refetch } = useOrderStatus(orderCode, {
+    pollUntilPaid: paymentGateway !== "izipay" || submitted,
+  });
   const confirm = useConfirmPayment(orderCode);
   const clearCart = useCartStore((s) => s.clear);
   const eventSlug = useCartStore((s) => s.eventSlug);
@@ -71,6 +77,7 @@ function PayScreen() {
 
   async function handleRealSubmit(rawResponse: Record<string, unknown>) {
     setFormError(null);
+    setSubmitted(true);
     try {
       await confirm.mutateAsync(rawResponse);
     } catch {
@@ -135,9 +142,11 @@ function PayScreen() {
         <>
           <PaymentForm session={paymentSession} onSubmitted={handleRealSubmit} onError={setFormError} />
           {formError && <p className="text-sm text-[var(--color-danger)]">{formError}</p>}
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Estamos confirmando tu pago con el banco…
-          </p>
+          {submitted && (
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Estamos confirmando tu pago con el banco…
+            </p>
+          )}
         </>
       )}
 

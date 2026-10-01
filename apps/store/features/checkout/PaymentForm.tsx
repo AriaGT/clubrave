@@ -84,7 +84,10 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
     }
 
     if (existing) {
-      loadTheme(configureForm);
+      // En React Strict Mode (dev) el efecto corre dos veces: la segunda
+      // encuentra el script ya insertado pero quizá aún sin cargar.
+      if (window.KR) loadTheme(configureForm);
+      else existing.addEventListener("load", () => loadTheme(configureForm), { once: true });
     } else {
       const script = document.createElement("script");
       script.src = session.js_url;

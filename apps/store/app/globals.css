@@ -24,3 +24,62 @@
     width: 100%;
   }
 }
+
+/* Formulario incrustado de Izipay (Krypton): el tema `classic-reset` no pinta
+   nada, así que lo vestimos con los tokens del design system. */
+.kr-embedded {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+.kr-embedded .kr-field-wrapper,
+.kr-embedded .kr-installment-number,
+.kr-embedded .kr-first-installment-delay {
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+}
+.kr-embedded .kr-field-wrapper:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-ring);
+}
+.kr-embedded input,
+.kr-embedded select {
+  width: 100%;
+  background: transparent;
+  color: var(--color-text);
+  border: 0;
+  outline: 0;
+}
+.kr-embedded .kr-field-element {
+  background: transparent;
+  color: var(--color-text);
+}
+.kr-embedded .kr-field-wrapper label,
+.kr-embedded label {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+.kr-embedded .kr-form-error {
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+.kr-embedded .kr-payment-button {
+  width: 100%;
+  cursor: pointer;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+}
+.kr-embedded .kr-payment-button:hover {
+  background: var(--color-accent-hover);
+}
+.kr-embedded .kr-payment-button:active {
+  background: var(--color-accent-active);
+}
