@@ -181,6 +181,9 @@ class TestCreateSession:
         assert sent_body["amount"] == int(order.total * 100)
         assert isinstance(sent_body["amount"], int)
         assert sent_body["orderId"] == order.code
+        assert sent_body["customer"]["email"] == order.buyer_email
+        assert sent_body["customer"]["billingDetails"]["country"] == "PE"
+        assert sent_body["customer"]["billingDetails"]["firstName"]
 
     def test_never_creates_a_session_without_configured_credentials(self, order):
         with override_settings(IZIPAY_SHOP_ID=""):

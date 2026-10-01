@@ -133,6 +133,17 @@ class IzipayGateway:
         self.rest_url = settings.IZIPAY_REST_URL
         self.js_url = settings.IZIPAY_JS_URL
 
+    @staticmethod
+    def _customer(order) -> dict:
+        """Datos del comprador: 3-D Secure 2 los pide para autenticar la tarjeta."""
+        first_name, _, last_name = order.buyer_name.strip().partition(" ")
+        billing = {"firstName": first_name, "lastName": last_name or first_name, "country": "PE"}
+        if order.buyer_phone:
+            billing["phoneNumber"] = order.buyer_phone
+        if order.buyer_document:
+            billing["identityCode"] = order.buyer_document
+        return {"email": order.buyer_email, "billingDetails": billing}
+
     def create_session(self, order) -> PaymentSession:
         if not (self.shop_id and self.rest_password and self.public_key and self.hmac_key and self.js_url):
             raise PaymentUnavailable("Izipay no está configurado (faltan credenciales).")
@@ -142,7 +153,7 @@ class IzipayGateway:
             "amount": int((order.total * 100).to_integral_value()),  # céntimos enteros
             "currency": order.currency,
             "orderId": order.code,
-            "customer": {"email": order.buyer_email},
+            "customer": self._customer(order),
         }
         try:
             response = requests.post(
