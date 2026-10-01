@@ -130,7 +130,10 @@ REST_FRAMEWORK = {
         "login_code": "5/hour",     # por email: código OTP del comprador
         "org_login": "30/hour",     # login del organizador (email + contraseña)
         "password_change": "10/hour",  # solicitar/confirmar cambio de contraseña
-        "checkout": "20/hour",      # por IP
+        # Por IP, y en Perú muchos compradores salen por la misma IP del
+        # operador móvil (CGNAT): un límite bajo los bloquea entre ellos en
+        # plena venta. Frena el abuso automatizado sin castigar al público.
+        "checkout": "60/hour",
         "public": "120/min",        # catálogo
         "checkin": "600/hour",      # puerta: alto, pero acotado
         "guest_code": "30/hour",    # por IP: validar/redimir códigos de invitado
