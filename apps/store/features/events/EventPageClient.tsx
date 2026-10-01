@@ -7,16 +7,24 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 
 import { useCartStore } from "@/features/cart/store";
 import { GuestCodeBox } from "@/features/guest/GuestCodeBox";
+import { useHydrated } from "@/lib/use-hydrated";
 
 import { useEventDetail } from "./hooks";
 
 type EventDetail = ApiComponents["schemas"]["EventPublicDetail"];
 
+const NO_LINES: Record<string, number> = {};
+
 export function EventPageClient({ event: initialEvent }: { event: EventDetail }) {
   const router = useRouter();
   const { data } = useEventDetail(initialEvent.slug ?? "", initialEvent);
   const event = data ?? initialEvent;
-  const { eventId, lines, setEvent, setQuantity, totalItems } = useCartStore();
+  const { eventId, lines: storedLines, setEvent, setQuantity, totalItems } = useCartStore();
+  // El carrito vive en localStorage: el servidor siempre lo ve vacío, así que
+  // el cliente también debe verlo vacío hasta hidratar o el HTML no coincide.
+  const hydrated = useHydrated();
+  const lines = hydrated ? storedLines : NO_LINES;
+  const itemCount = hydrated ? totalItems() : 0;
   const [cartOpen, setCartOpen] = useState(false);
 
   const paymentsDisabled = event.payments_disabled === true;
@@ -143,14 +151,14 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
         </Badge>
       </section>
 
-      {!salesPaused && totalItems() > 0 && (
+      {!salesPaused && itemCount > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-[var(--space-4)] shadow-[var(--glow-accent)]">
           <button
             onClick={() => setCartOpen(true)}
             className="mx-auto flex w-full max-w-[var(--container-max)] items-center justify-between rounded-[var(--radius-md)] bg-[var(--color-accent)] px-4 py-3 text-white"
           >
             <span>
-              {totalItems()} entrada{totalItems() > 1 ? "s" : ""} · S/ {subtotal.toFixed(2)}
+              {itemCount} entrada{itemCount > 1 ? "s" : ""} · S/ {subtotal.toFixed(2)}
             </span>
             <span>Continuar →</span>
           </button>
