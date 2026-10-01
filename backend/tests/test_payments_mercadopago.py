@@ -129,6 +129,13 @@ def test_manifest_lowercases_the_order_id():
     assert manifest == f"id:{MP_ORDER_ID.lower()};request-id:req-1;ts:123;"
 
 
+def test_parse_order_keeps_the_collecting_account():
+    """`user_id` identifica la cuenta que cobra: es la verificación de que el
+    dinero va al organizador y no a la cuenta del integrador."""
+    order = mp_module.parse_order({"id": MP_ORDER_ID, "user_id": 1858095454})
+    assert order.user_id == "1858095454"
+
+
 def test_manifest_omits_missing_components():
     assert build_signature_manifest(data_id="", request_id="req-1", ts="123") == "request-id:req-1;ts:123;"
 

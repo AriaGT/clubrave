@@ -73,6 +73,11 @@ class Command(BaseCommand):
         self.stdout.write(f"  moneda:       {order.currency}")
         self.stdout.write(f"  checkout_url: {order.checkout_url}")
         self.stdout.write(
-            "\nAbre esa URL para pagar con un usuario o tarjeta de prueba. "
+            self.style.WARNING(f"  cobra la cuenta user_id={order.user_id or 'desconocido'}")
+        )
+        self.stdout.write(
+            "\nConfirma que ese user_id es la cuenta del ORGANIZADOR: el dinero entra "
+            "en la cuenta dueña del access token.\n"
+            "Luego abre el checkout_url para pagar con un usuario o tarjeta de prueba. "
             "La notificación debe llegar a /api/webhooks/mercadopago/."
         )

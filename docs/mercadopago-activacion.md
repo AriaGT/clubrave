@@ -4,6 +4,9 @@
 > variables de entorno y dar de alta una URL de webhook. **Ni una línea de
 > código nueva.** El flujo completo ya está construido y probado.
 
+Para elegir entre pasarelas y ver los cuatro modos de `PAYMENT_GATEWAY`,
+empieza por [`pagos.md`](./pagos.md).
+
 ## Por qué Checkout Pro sobre la Orders API
 
 | Criterio | Checkout Pro (elegido) | Checkout API / Bricks |
@@ -70,6 +73,17 @@ debe crearse **en la cuenta del organizador** y es él quien entrega el access
 token de producción. El integrador no necesita (ni debe) poner su propia
 cuenta en medio.
 
+> **Trampa a evitar.** El integrador normalmente ya tiene su propia cuenta de
+> Mercado Pago y su propia aplicación de desarrollo (y es la que suele estar
+> autenticada en herramientas como el MCP de Mercado Pago). Usar **ese**
+> access token para producción desvía a la cuenta del integrador el dinero de
+> los compradores de un tercero. La app del integrador sirve para sandbox;
+> para cobrar, el token tiene que venir de la cuenta del organizador.
+>
+> Verificación rápida antes de abrir la venta: el `user_id` que devuelve la
+> respuesta de creación de la order debe ser el del organizador. También lo
+> confirma el `mercadopago_smoketest`, que lo imprime.
+
 Si en el futuro la plataforma cobra a varios organizadores desde una sola
 aplicación, el camino es **Mercado Pago Connect / marketplace** (OAuth: cada
 organizador autoriza la aplicación y se cobra con su token, con
@@ -112,13 +126,59 @@ entradas, email) con los botones de aprobar/rechazar en `/checkout/{code}/pay`.
 ### Verificación en un comando
 
 ```bash
-python manage.py mercadopago_smoketest
+python manage.py mercadopago_smoketest              # S/ 1.00
+python manage.py mercadopago_smoketest --amount 5   # otro importe
 ```
 
-Crea una order real contra Mercado Pago con el importe mínimo usando la
-configuración vigente y muestra el `checkout_url`, el `id` y el estado. Sirve
-para confirmar que el token y el payload son válidos antes de abrir la venta.
+Crea una order real contra Mercado Pago con la configuración vigente y
+muestra el `id`, el estado, la moneda, el `checkout_url` y el `user_id` de la
+cuenta que cobra. Sirve para confirmar, antes de abrir la venta, que el token
+es válido, que el payload se acepta y que el dinero va a la cuenta correcta.
 No toca la base de datos.
+
+### Si algo falla
+
+El error trae el mensaje literal de Mercado Pago, que suele decir exactamente
+qué pasa:
+
+| Mensaje | Qué significa | Qué hacer |
+|---|---|---|
+| `invalid_credentials: Test credentials are not supported…` | El token es de los de prefijo `TEST-`, que la Orders API no acepta | Usar credenciales de producción (del organizador, o de un usuario de prueba) |
+| `401` sin más detalle | Token mal copiado, con espacios o incompleto | Volver a copiarlo del panel |
+| `total_amount` / suma de ítems | El total no coincide con la suma de los ítems | No debería pasar: la comisión viaja como una línea más. Reportar |
+| «Algo ha salido mal» al volver del checkout | `FRONTEND_STORE_URL` no es HTTPS público, o apunta a `localhost` | Corregir la variable; Mercado Pago rechaza dominios locales |
+| La orden queda `PENDING` y nunca cierra | El webhook no llega, o se rechaza por firma | Ver abajo |
+
+**Si el webhook no cierra las órdenes**, en orden:
+
+1. ¿`MERCADOPAGO_WEBHOOK_SECRET` es la clave de **esa misma** aplicación? Una
+   clave de otra app da firma inválida (`401` en nuestros logs).
+2. ¿La URL de alta es exactamente `https://api.clubrave.pe/api/webhooks/mercadopago/`,
+   con la barra final?
+3. ¿El evento suscrito es **Order (Mercado Pago)** y no «Pagos»?
+4. Usa **Simular** en el panel de Webhooks para ver qué responde nuestro
+   servidor. Ojo con interpretarlo:
+   - `401` → la firma no valida: la clave secreta no corresponde. Es el
+     problema que estás buscando.
+   - `503` → la firma **sí** validó, pero el `Data ID` que escribiste no
+     existe como order en Mercado Pago. Con un id inventado esto es lo
+     esperado y significa que la configuración está bien. Para obtener `200`,
+     simula con el `id` real de una order (el que imprime el smoketest).
+
+   La tabla completa de respuestas está en «Seguridad del webhook», abajo.
+
+Mientras tanto la venta no se pierde: la pantalla de pago reconsulta la order
+al volver el comprador, así que el pago se acredita por ese camino aunque el
+webhook esté mal configurado. Igual hay que arreglarlo, porque es el camino
+que cubre al comprador que cierra el navegador.
+
+## Cortar los cobros en caliente
+
+`PAYMENT_GATEWAY=disabled` y reiniciar. La tienda avisa de un problema
+técnico temporal y no se crean órdenes ni se retiene inventario.
+
+> **Nunca `fake` en producción**: aprueba cualquier cosa y emitiría entradas
+> sin cobrar. Ver [`pagos.md`](./pagos.md).
 
 ## Estados y qué hace cada uno
 
@@ -134,6 +194,18 @@ No toca la base de datos.
 entradas. La `expiration_time` de la order se fija a `ORDER_HOLD_MINUTES`
 para que la order de Mercado Pago venza junto con nuestra retención de
 inventario, en lugar del día entero que usa por defecto.
+
+> **Decisión abierta: medios diferidos y `ORDER_HOLD_MINUTES`.** Con el valor
+> actual (15 minutos) un comprador que elige Yape o efectivo puede tardar más
+> de lo que dura la retención: la orden vence, el cupo se libera y el pago
+> llega tarde. El sistema lo maneja sin vender de más — `mark_paid` revalida
+> el aforo y, si ya no hay cupo, marca `FAILED` para gestionar reembolso —
+> pero el comprador se queda sin entrada habiendo pagado.
+>
+> Si se espera volumen por medios diferidos, hay dos caminos: subir
+> `ORDER_HOLD_MINUTES`, o excluir esos medios de pago en el objeto `config`
+> de la order para que el checkout solo ofrezca cobro inmediato. No está
+> decidido; depende del evento.
 
 ## Seguridad del webhook
 

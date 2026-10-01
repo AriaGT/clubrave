@@ -6,6 +6,12 @@
 > construido y probado de punta a punta con `FakeGateway`; este documento
 > es exclusivamente el cambio de configuración.
 
+Izipay es la alternativa de **formulario incrustado** (el comprador no sale
+del sitio). La otra opción implementada es Mercado Pago Checkout Pro, con
+redirección y sin alcance PCI para nosotros → [guía](./mercadopago-activacion.md).
+Para comparar las dos y ver los cuatro modos de `PAYMENT_GATEWAY`, empieza
+por [`pagos.md`](./pagos.md).
+
 ## 0. Antes de pedir nada
 
 Confirma que el código ya funciona con `PAYMENT_GATEWAY=fake` (es el valor
@@ -112,9 +118,12 @@ es pública por diseño y sí viaja al navegador dentro de la respuesta de
 
 ## 5. Volver atrás sin drama
 
-Si algo falla en producción y hay que cortar los cobros reales de
-inmediato: cambia `PAYMENT_GATEWAY=izipay` a `PAYMENT_GATEWAY=fake` y
-reinicia. El checkout sigue funcionando (crea órdenes, retiene inventario)
-pero sin cobrar de verdad — es el mismo interruptor que usamos en
-desarrollo, no un modo de emergencia aparte que haya que mantener por
-separado.
+Si algo falla en producción y hay que cortar los cobros de inmediato:
+`PAYMENT_GATEWAY=disabled` y reiniciar. El sitio sigue en pie y la tienda
+avisa de un problema técnico temporal, pero no se crean órdenes ni se retiene
+inventario — `get_gateway()` falla cerrado antes de tocar el cupo.
+
+> **Nunca pongas `fake` en producción.** `FakeGateway` aprueba cualquier
+> cosa: la pantalla de pago muestra el botón «Simular pago aprobado» y
+> emitiría entradas reales sin cobrar un sol. Es el modo de desarrollo, no
+> un modo de emergencia. El interruptor de emergencia es `disabled`.

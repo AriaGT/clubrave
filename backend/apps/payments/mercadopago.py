@@ -58,6 +58,9 @@ class MercadoPagoOrder:
     currency: str
     checkout_url: str
     payment_reference: str | None
+    # Cuenta de Mercado Pago que cobra. Sirve para confirmar que el dinero va
+    # a la cuenta del organizador y no a la del integrador.
+    user_id: str = ""
     raw: dict = field(default_factory=dict)
 
     @property
@@ -115,6 +118,7 @@ def parse_order(data: dict) -> MercadoPagoOrder:
         currency=data.get("currency") or data.get("currency_id") or "",
         checkout_url=data.get("checkout_url") or "",
         payment_reference=_first_payment_id(data),
+        user_id=str(data.get("user_id") or ""),
         raw=data,
     )
 

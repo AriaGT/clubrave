@@ -115,6 +115,11 @@ desplaza este"). El documento [`docs/izipay-activacion.md`](./docs/izipay-activa
 tiene el checklist exacto de qué pedirle a Izipay y los nueve escenarios de
 prueba de §8.8 para correr en cuanto lleguen.
 
+Posteriormente se añadió **Mercado Pago Checkout Pro** como segunda pasarela
+real, y es la recomendada para empezar a cobrar: el comprador paga en el
+entorno de Mercado Pago, así que la tarjeta no pasa por nuestro servidor.
+Ver la sección [Pagos](#pagos).
+
 ## Endurecimiento y despliegue (Hito 05)
 
 Checklist de seguridad de §13.1 revisado punto por punto contra el código
@@ -178,6 +183,31 @@ hosting contratado en este ejercicio) — `docs/despliegue.md` es el runbook
 listo para ejecutar, no un despliegue ejecutado. La PWA instalable
 (service worker de Serwist) sigue pendiente desde el Hito 02, por la misma
 razón de alcance de entonces.
+
+## Pagos
+
+La pasarela se elige con una sola variable, `PAYMENT_GATEWAY`, detrás de la
+interfaz `PaymentGateway` ([`backend/apps/payments/gateways.py`](backend/apps/payments/gateways.py)):
+
+| Valor | Qué es | ¿Cobra? |
+|---|---|---|
+| `mercadopago` | Checkout Pro (Orders API), con redirección | Sí |
+| `izipay` | Formulario incrustado (Krypton) | Sí |
+| `fake` | Desarrollo y tests: botones de aprobar/rechazar | No |
+| `disabled` | Interruptor de emergencia: bloquea las compras | No |
+
+`fake` es el valor por defecto y **nunca debe ir a producción**: aprueba
+cualquier cosa y emitiría entradas sin cobrar. Para cortar cobros en caliente
+el modo correcto es `disabled`.
+
+En los dos proveedores reales el estado de la orden lo decide un canal
+servidor-a-servidor, nunca el navegador; en Mercado Pago, además, el retorno
+del comprador reconsulta la order a la API, así que manipular la URL de éxito
+no produce entradas y cerrar el navegador tras pagar tampoco las pierde.
+
+Guía de decisión y los cuatro modos: [`docs/pagos.md`](docs/pagos.md).
+Activación paso a paso: [`docs/mercadopago-activacion.md`](docs/mercadopago-activacion.md)
+y [`docs/izipay-activacion.md`](docs/izipay-activacion.md).
 
 ## Códigos de invitado
 
