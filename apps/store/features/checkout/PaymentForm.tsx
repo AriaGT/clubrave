@@ -61,13 +61,35 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
         });
     }
 
+    // El SDK no trae estilos propios: Izipay los sirve como "tema" (CSS + JS)
+    // en la carpeta /ext/ de la misma versión. Sin ellos el formulario sale
+    // como HTML crudo. Si el tema no carga, el pago sigue funcionando.
+    const themeBase = session.js_url.replace(/\/[^/]+\/[^/]+$/, "/ext/");
+    function loadTheme(done: () => void) {
+      if (!document.querySelector(`link[href="${themeBase}classic-reset.css"]`)) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = `${themeBase}classic-reset.css`;
+        document.head.appendChild(link);
+      }
+      if (document.querySelector(`script[src="${themeBase}classic.js"]`)) {
+        done();
+        return;
+      }
+      const themeScript = document.createElement("script");
+      themeScript.src = `${themeBase}classic.js`;
+      themeScript.onload = done;
+      themeScript.onerror = done;
+      document.body.appendChild(themeScript);
+    }
+
     if (existing) {
-      configureForm();
+      loadTheme(configureForm);
     } else {
       const script = document.createElement("script");
       script.src = session.js_url;
       script.setAttribute("kr-public-key", session.public_key);
-      script.onload = configureForm;
+      script.onload = () => loadTheme(configureForm);
       script.onerror = () => {
         if (!cancelled) {
           setStatus("error");
