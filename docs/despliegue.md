@@ -63,7 +63,9 @@ evento y en la puerta — escalar es sumar workers, no rediseñar nada.
 | `AWS_S3_CUSTOM_DOMAIN` | `cdn.clubrave.pe` — **sin** `https://` delante |
 | `DEFAULT_FROM_EMAIL`, `EMAIL_HOST*` | Del proveedor de email transaccional (Resend/Brevo por SMTP) |
 | `FRONTEND_STORE_URL` / `FRONTEND_PANEL_URL` | `https://clubrave.pe` / `https://panel.clubrave.pe` |
-| `PAYMENT_GATEWAY`, `IZIPAY_*` | Ver [`izipay-activacion.md`](./izipay-activacion.md) — `fake` mientras no haya credenciales |
+| `PAYMENT_GATEWAY` | `mercadopago` para cobrar con Checkout Pro; `fake` mientras no haya credenciales; `disabled` para bloquear compras |
+| `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `MERCADOPAGO_MODE` | Ver [`mercadopago-activacion.md`](./mercadopago-activacion.md). El dinero entra en la cuenta dueña del access token |
+| `IZIPAY_*` | Ver [`izipay-activacion.md`](./izipay-activacion.md) — alternativa a Mercado Pago |
 | `SENTRY_DSN` | Del proyecto de Sentry (sección 6), opcional |
 
 **Frontends** (ambas apps)

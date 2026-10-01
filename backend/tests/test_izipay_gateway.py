@@ -70,7 +70,7 @@ class TestBrowserReturnSignature:
             "kr-hash": _sign(raw, "test-hmac-sha256-key"),
             "kr-hash-key": "sha256_hmac",
         }
-        result = IzipayGateway().verify_browser_return(payload)
+        result = IzipayGateway().verify_browser_return(order, payload)
         assert result.signature_valid
         assert result.approved
         assert result.order_code == order.code
@@ -87,7 +87,7 @@ class TestBrowserReturnSignature:
         # Cambia un solo carácter tras firmar: simula un JSON re-serializado
         # o manipulado en tránsito.
         payload["kr-answer"] = raw.replace("PAID", "PAId")
-        result = IzipayGateway().verify_browser_return(payload)
+        result = IzipayGateway().verify_browser_return(order, payload)
         assert not result.signature_valid
 
     def test_signed_with_the_wrong_channel_key_is_rejected(self, order):
@@ -99,7 +99,7 @@ class TestBrowserReturnSignature:
             "kr-hash": _sign(raw, "test-rest-password"),
             "kr-hash-key": "sha256_hmac",  # miente sobre qué clave usó
         }
-        result = IzipayGateway().verify_browser_return(payload)
+        result = IzipayGateway().verify_browser_return(order, payload)
         assert not result.signature_valid
 
     def test_hash_key_label_mismatch_is_rejected_even_with_correct_hmac(self, order):
@@ -111,7 +111,7 @@ class TestBrowserReturnSignature:
             "kr-hash": _sign(raw, "test-hmac-sha256-key"),
             "kr-hash-key": "password",
         }
-        result = IzipayGateway().verify_browser_return(payload)
+        result = IzipayGateway().verify_browser_return(order, payload)
         assert not result.signature_valid
 
 

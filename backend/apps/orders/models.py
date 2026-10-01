@@ -50,6 +50,10 @@ class Order(TimeStampedModel):
 
     gateway = models.CharField(max_length=32, default="fake")
     gateway_reference = models.CharField(max_length=100, blank=True)
+    # Id de la orden del lado de la pasarela, guardado al abrir la sesión de
+    # pago. Es lo que permite volver a preguntarle a la pasarela cuál fue el
+    # resultado real en lugar de creerle al navegador (ver §7.2).
+    gateway_order_id = models.CharField(max_length=100, blank=True, db_index=True)
 
     tickets_email_sent_at = models.DateTimeField(null=True, blank=True)
 

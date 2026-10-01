@@ -4,41 +4,6 @@
  */
 
 export interface paths {
-    "/api/org/site/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma. */
-        get: operations["org_site_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** @description Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma. */
-        patch: operations["org_site_partial_update"];
-        trace?: never;
-    };
-    "/api/site/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Logo, contacto y redes para la barra y el pie de la tienda. */
-        get: operations["site_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/auth/customer/refresh/": {
         parameters: {
             query?: never;
@@ -101,6 +66,43 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["auth_org_login_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/org/password-change/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Organizador con sesión: pide cambiar su contraseña; se confirma por email. */
+        post: operations["auth_org_password_change_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/org/password-change/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Sin sesión a propósito: el enlace del correo puede abrirse en otro
+         *     navegador; el token de un solo uso ya prueba el acceso al email.
+         */
+        post: operations["auth_org_password_change_confirm_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -176,7 +178,13 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Retorno del navegador: feedback inmediato, NO autoritativo (§7.2). */
+        /**
+         * @description El comprador volvió del checkout. No es el navegador el que decide.
+         *
+         *     Con Izipay el navegador trae una respuesta firmada; con Mercado Pago no
+         *     trae nada y la pasarela vuelve a consultar la order. En ambos casos el
+         *     estado final sale de `gateway`, nunca de lo que diga el cliente.
+         */
         post: operations["checkout_orders_confirm_create"];
         delete?: never;
         options?: never;
@@ -390,6 +398,114 @@ export interface paths {
         get: operations["org_checkin_lookup_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/door/events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Eventos habilitados para escanear. Al personal de seguridad solo se
+         *     le muestran los que aún no terminaron (los pasados no le sirven).
+         */
+        get: operations["org_door_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/door/events/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["org_door_events_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/employees/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        get: operations["org_employees_list"];
+        put?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        post: operations["org_employees_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/org/employees/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        get: operations["org_employees_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        delete: operations["org_employees_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        patch: operations["org_employees_partial_update"];
+        trace?: never;
+    };
+    "/api/org/employees/{id}/reset-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
+         *     id de otra organización responde 404, igual que uno inexistente.
+         */
+        post: operations["org_employees_reset_password_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -822,6 +938,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/site/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma. */
+        get: operations["org_site_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma. */
+        patch: operations["org_site_partial_update"];
+        trace?: never;
+    };
     "/api/org/ticket-types/": {
         parameters: {
             query?: never;
@@ -868,7 +1002,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description H13 — deshacer un ingreso escaneado por error (`CHECKED_IN` → `VALID`). */
+        /**
+         * @description H13 — deshacer un ingreso escaneado por error (`CHECKED_IN` → `VALID`).
+         *
+         *     Solo el organizador: el personal de seguridad no puede reabrir una
+         *     entrada usada (evita que alguien en puerta la "recicle").
+         */
         post: operations["org_tickets_undo_checkin_create"];
         delete?: never;
         options?: never;
@@ -887,6 +1026,23 @@ export interface paths {
         put?: never;
         /** @description H12 — anular una entrada suelta (`VALID` → `VOID`), la orden no cambia. */
         post: operations["org_tickets_void_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/site/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Logo, contacto y redes para la barra y el pie de la tienda. */
+        get: operations["site_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -915,95 +1071,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/org/door/events/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description Eventos habilitados para escanear. Al personal de seguridad solo se
-         *     le muestran los que aún no terminaron (los pasados no le sirven).
-         */
-        get: operations["org_door_events_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/org/door/events/{id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["org_door_events_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/org/employees/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        get: operations["org_employees_list"];
-        put?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        post: operations["org_employees_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/org/employees/{id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        get: operations["org_employees_retrieve"];
-        put?: never;
-        post?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        delete: operations["org_employees_destroy"];
-        options?: never;
-        head?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        patch: operations["org_employees_partial_update"];
-        trace?: never;
-    };
-    "/api/org/employees/{id}/reset-password/": {
+    "/api/webhooks/mercadopago/": {
         parameters: {
             query?: never;
             header?: never;
@@ -1013,10 +1081,16 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
+         * @description Notificaciones de Mercado Pago (tópico `order`) para Checkout Pro.
+         *
+         *     Su autenticación **es** la firma `x-signature`, no un token de sesión. El
+         *     cuerpo de la notificación solo se usa para saber *qué* order consultar: el
+         *     resultado del cobro se lee preguntándole a Mercado Pago (ver
+         *     `MercadoPagoGateway.verify_ipn`).
+         *
+         *     Mercado Pago espera 200/201 antes de 22 segundos; si no, reintenta.
          */
-        post: operations["org_employees_reset_password_create"];
+        post: operations["webhooks_mercadopago_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1027,38 +1101,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        PatchedSiteSettings: {
-            /** Format: uri */
-            logo?: string | null;
-            tagline?: string;
-            contact_phone?: string;
-            whatsapp?: string;
-            contact_email?: string;
-            address?: string;
-            instagram_url?: string;
-            tiktok_url?: string;
-            facebook_url?: string;
-            youtube_url?: string;
-            complaints_book_url?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
-        };
-SiteSettings: {
-            /** Format: uri */
-            logo?: string | null;
-            tagline?: string;
-            contact_phone?: string;
-            whatsapp?: string;
-            contact_email?: string;
-            address?: string;
-            instagram_url?: string;
-            tiktok_url?: string;
-            facebook_url?: string;
-            youtube_url?: string;
-            complaints_book_url?: string;
-            /** Format: date-time */
-            readonly updated_at?: string;
-        };
         /**
          * @description * `EVENT_PUBLISHED` - Event Published
          *     * `EVENT_UNPUBLISHED` - Event Unpublished
@@ -1069,11 +1111,22 @@ SiteSettings: {
          *     * `EVENT_SALES_RESUMED` - Event Sales Resumed
          *     * `EVENT_ANNOUNCED` - Event Announced
          *     * `IMAGE_DELETED` - Image Deleted
+         *     * `SITE_SETTINGS_UPDATED` - Site Settings Updated
          *     * `ORDER_VOIDED` - Order Voided
          *     * `ORDER_REFUND_MARKED` - Order Refund Marked
          *     * `TICKETS_RESENT` - Tickets Resent
          *     * `TICKET_VOIDED` - Ticket Voided
          *     * `CHECKIN_UNDONE` - Checkin Undone
+         *     * `GUEST_CODES_GENERATED` - Guest Codes Generated
+         *     * `GUEST_CODE_VOIDED` - Guest Code Voided
+         *     * `GUEST_CODE_REDEEMED` - Guest Code Redeemed
+         *     * `EMPLOYEE_CREATED` - Employee Created
+         *     * `EMPLOYEE_UPDATED` - Employee Updated
+         *     * `EMPLOYEE_DEACTIVATED` - Employee Deactivated
+         *     * `EMPLOYEE_REACTIVATED` - Employee Reactivated
+         *     * `EMPLOYEE_PASSWORD_RESET` - Employee Password Reset
+         *     * `EMPLOYEE_DELETED` - Employee Deleted
+         *     * `TICKET_CHECKED_IN` - Ticket Checked In
          * @enum {string}
          */
         ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
@@ -1174,19 +1227,71 @@ SiteSettings: {
             order: components["schemas"]["Order"];
             payment: components["schemas"]["PaymentSession"];
         };
+        DoorEvent: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly title: string;
+            readonly status: components["schemas"]["StatusD0aEnum"];
+            /** Format: date-time */
+            readonly starts_at: string;
+            /** Format: date-time */
+            readonly ends_at: string | null;
+            readonly venue_name: string;
+            readonly city: string;
+            readonly scanner_opens_at: string;
+            readonly scanner_closes_at: string;
+            /** @description Para el organizador siempre True (no tiene restricción horaria). */
+            readonly scanner_is_open: boolean;
+            readonly checked_in_count: number;
+        };
+        Employee: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly full_name: string;
+            readonly role: components["schemas"]["RoleEnum"];
+            readonly is_active: boolean;
+            readonly all_events: boolean;
+            readonly events: components["schemas"]["EmployeeEvent"][];
+            /** Format: date-time */
+            readonly last_login: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        EmployeeCreate: {
+            /** Format: email */
+            email: string;
+            full_name: string;
+            password: string;
+            /** @default true */
+            all_events: boolean;
+            event_ids?: string[];
+        };
+        EmployeeEvent: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            starts_at: string;
+        };
+        EmployeePasswordReset: {
+            password: string;
+        };
         EventImage: {
             /** Format: uuid */
             readonly id: string;
             /** Format: uuid */
             readonly event: string;
             /** @default FLYER */
-            kind?: components["schemas"]["KindEnum"];
+            kind: components["schemas"]["KindEnum"];
             /** Format: uri */
             image: string;
             alt?: string;
             /** Format: int64 */
             position?: number;
-            is_cover?: boolean;
+            /** @default false */
+            is_cover: boolean;
         };
         EventOrganizer: {
             /** Format: uuid */
@@ -1194,7 +1299,7 @@ SiteSettings: {
             title: string;
             readonly slug: string;
             description?: string;
-            readonly status: components["schemas"]["EventOrganizerStatusEnum"];
+            readonly status: components["schemas"]["StatusD0aEnum"];
             /** Format: date-time */
             starts_at: string;
             /** Format: date-time */
@@ -1220,13 +1325,6 @@ SiteSettings: {
             readonly cancellation_reason: string;
             readonly cancellation_reason_code: string;
         };
-        /**
-         * @description * `DRAFT` - Borrador
-         *     * `PUBLISHED` - Publicado
-         *     * `CANCELLED` - Cancelado
-         * @enum {string}
-         */
-        EventOrganizerStatusEnum: "DRAFT" | "PUBLISHED" | "CANCELLED";
         EventPublicDetail: {
             /** Format: uuid */
             readonly id: string;
@@ -1275,6 +1373,10 @@ SiteSettings: {
             last_24h: components["schemas"]["Last24hStats"];
             /** Format: date-time */
             generated_at: string;
+        };
+        GraceTokenRefresh: {
+            refresh: string;
+            readonly access: string;
         };
         /** @description Un código de invitado para el panel: estado y, si se redimió, quién y cuándo. */
         GuestCode: {
@@ -1635,19 +1737,33 @@ SiteSettings: {
             previous?: string | null;
             results: components["schemas"]["TicketType"][];
         };
+        PasswordChangeConfirm: {
+            token: string;
+        };
+        PasswordChangeRequest: {
+            current_password: string;
+            new_password: string;
+        };
+        PatchedEmployeeUpdate: {
+            full_name?: string;
+            is_active?: boolean;
+            all_events?: boolean;
+            event_ids?: string[];
+        };
         PatchedEventImage: {
             /** Format: uuid */
             readonly id?: string;
             /** Format: uuid */
             readonly event?: string;
             /** @default FLYER */
-            kind?: components["schemas"]["KindEnum"];
+            kind: components["schemas"]["KindEnum"];
             /** Format: uri */
             image?: string;
             alt?: string;
             /** Format: int64 */
             position?: number;
-            is_cover?: boolean;
+            /** @default false */
+            is_cover: boolean;
         };
         PatchedEventOrganizer: {
             /** Format: uuid */
@@ -1655,7 +1771,7 @@ SiteSettings: {
             title?: string;
             readonly slug?: string;
             description?: string;
-            readonly status?: components["schemas"]["EventOrganizerStatusEnum"];
+            readonly status?: components["schemas"]["StatusD0aEnum"];
             /** Format: date-time */
             starts_at?: string;
             /** Format: date-time */
@@ -1690,6 +1806,26 @@ SiteSettings: {
             phone?: string;
             document_id?: string;
             marketing_consent?: boolean;
+        };
+        /**
+         * @description Lectura pública y edición desde el panel. `logo` acepta un archivo
+         *     (multipart) o `null` para quitarlo.
+         */
+        PatchedSiteSettings: {
+            /** Format: uri */
+            logo?: string | null;
+            tagline?: string;
+            contact_phone?: string;
+            whatsapp?: string;
+            contact_email?: string;
+            address?: string;
+            instagram_url?: string;
+            tiktok_url?: string;
+            facebook_url?: string;
+            youtube_url?: string;
+            complaints_book_url?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
         };
         PatchedTicketType: {
             /** Format: uuid */
@@ -1727,6 +1863,7 @@ SiteSettings: {
             form_token: string;
             public_key: string;
             js_url: string;
+            checkout_url: string;
         };
         ReorderImages: {
             order: string[];
@@ -1740,6 +1877,31 @@ SiteSettings: {
             gross: string;
             currency: string;
             orders_paid: number;
+        };
+        /**
+         * @description * `SECURITY` - SECURITY
+         * @enum {string}
+         */
+        RoleEnum: "SECURITY";
+        /**
+         * @description Lectura pública y edición desde el panel. `logo` acepta un archivo
+         *     (multipart) o `null` para quitarlo.
+         */
+        SiteSettings: {
+            /** Format: uri */
+            logo?: string | null;
+            tagline?: string;
+            contact_phone?: string;
+            whatsapp?: string;
+            contact_email?: string;
+            address?: string;
+            instagram_url?: string;
+            tiktok_url?: string;
+            facebook_url?: string;
+            youtube_url?: string;
+            complaints_book_url?: string;
+            /** Format: date-time */
+            readonly updated_at: string;
         };
         /**
          * @description * `VALID` - Válida
@@ -1758,6 +1920,13 @@ SiteSettings: {
          * @enum {string}
          */
         Status7d7Enum: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "CANCELLED" | "REFUNDED";
+        /**
+         * @description * `DRAFT` - Borrador
+         *     * `PUBLISHED` - Publicado
+         *     * `CANCELLED` - Cancelado
+         * @enum {string}
+         */
+        StatusD0aEnum: "DRAFT" | "PUBLISHED" | "CANCELLED";
         Ticket: {
             /** Format: uuid */
             readonly id: string;
@@ -1844,10 +2013,6 @@ SiteSettings: {
             access: string;
             refresh: string;
         };
-        TokenRefresh: {
-            readonly access: string;
-            refresh: string;
-        };
         UndoCheckIn: {
             reason_code: components["schemas"]["UndoCheckInReasonCodeEnum"];
             /** @default  */
@@ -1870,75 +2035,6 @@ SiteSettings: {
             code?: string;
             token?: string;
         };
-        DoorEvent: {
-            /** Format: uuid */
-            readonly id: string;
-            readonly title: string;
-            readonly status: components["schemas"]["StatusD0aEnum"];
-            /** Format: date-time */
-            readonly starts_at: string;
-            /** Format: date-time */
-            readonly ends_at: string | null;
-            readonly venue_name: string;
-            readonly city: string;
-            readonly scanner_opens_at: string;
-            readonly scanner_closes_at: string;
-            /** @description Para el organizador siempre True (no tiene restricción horaria). */
-            readonly scanner_is_open: boolean;
-            readonly checked_in_count: number;
-        };
-        Employee: {
-            /** Format: uuid */
-            readonly id: string;
-            /** Format: email */
-            readonly email: string;
-            readonly full_name: string;
-            readonly role: components["schemas"]["RoleEnum"];
-            readonly is_active: boolean;
-            readonly all_events: boolean;
-            readonly events: components["schemas"]["EmployeeEvent"][];
-            /** Format: date-time */
-            readonly last_login: string | null;
-            /** Format: date-time */
-            readonly created_at: string;
-        };
-        EmployeeCreate: {
-            /** Format: email */
-            email: string;
-            full_name: string;
-            password: string;
-            /** @default true */
-            all_events: boolean;
-            event_ids?: string[];
-        };
-        EmployeeEvent: {
-            /** Format: uuid */
-            id: string;
-            title: string;
-            /** Format: date-time */
-            starts_at: string;
-        };
-        EmployeePasswordReset: {
-            password: string;
-        };
-        PatchedEmployeeUpdate: {
-            full_name?: string;
-            is_active?: boolean;
-            all_events?: boolean;
-            event_ids?: string[];
-        };
-        /**
-         * @description * `SECURITY` - SECURITY
-         * @enum {string}
-         */
-        RoleEnum: "SECURITY";
-        /**
-         * @description * `DRAFT` - Borrador
-         *     * `PUBLISHED` - Publicado
-         *     * `CANCELLED` - Cancelado
-         * @enum {string}
-         */
-        StatusD0aEnum: "DRAFT" | "PUBLISHED" | "CANCELLED";
     };
     responses: never;
     parameters: never;
@@ -1948,69 +2044,6 @@ SiteSettings: {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    org_site_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
-                };
-            };
-        };
-    };
-    org_site_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": components["schemas"]["PatchedSiteSettings"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteSettings"];
-                "application/json": components["schemas"]["PatchedSiteSettings"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
-                };
-            };
-        };
-    };
-site_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
-                };
-            };
-        };
-    };
     auth_customer_refresh_create: {
         parameters: {
             query?: never;
@@ -2020,9 +2053,9 @@ site_retrieve: {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TokenRefresh"];
-                "application/x-www-form-urlencoded": components["schemas"]["TokenRefresh"];
-                "multipart/form-data": components["schemas"]["TokenRefresh"];
+                "application/json": components["schemas"]["GraceTokenRefresh"];
+                "application/x-www-form-urlencoded": components["schemas"]["GraceTokenRefresh"];
+                "multipart/form-data": components["schemas"]["GraceTokenRefresh"];
             };
         };
         responses: {
@@ -2031,7 +2064,7 @@ site_retrieve: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenRefresh"];
+                    "application/json": components["schemas"]["GraceTokenRefresh"];
                 };
             };
         };
@@ -2110,6 +2143,54 @@ site_retrieve: {
             };
         };
     };
+    auth_org_password_change_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PasswordChangeRequest"];
+                "multipart/form-data": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_org_password_change_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeConfirm"];
+                "application/x-www-form-urlencoded": components["schemas"]["PasswordChangeConfirm"];
+                "multipart/form-data": components["schemas"]["PasswordChangeConfirm"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     auth_org_refresh_create: {
         parameters: {
             query?: never;
@@ -2119,9 +2200,9 @@ site_retrieve: {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TokenRefresh"];
-                "application/x-www-form-urlencoded": components["schemas"]["TokenRefresh"];
-                "multipart/form-data": components["schemas"]["TokenRefresh"];
+                "application/json": components["schemas"]["GraceTokenRefresh"];
+                "application/x-www-form-urlencoded": components["schemas"]["GraceTokenRefresh"];
+                "multipart/form-data": components["schemas"]["GraceTokenRefresh"];
             };
         };
         responses: {
@@ -2130,7 +2211,7 @@ site_retrieve: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenRefresh"];
+                    "application/json": components["schemas"]["GraceTokenRefresh"];
                 };
             };
         };
@@ -2563,6 +2644,184 @@ site_retrieve: {
                 content: {
                     "application/json": components["schemas"]["Ticket"];
                 };
+            };
+        };
+    };
+    org_door_events_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoorEvent"][];
+                };
+            };
+        };
+    };
+    org_door_events_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoorEvent"];
+                };
+            };
+        };
+    };
+    org_employees_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"][];
+                };
+            };
+        };
+    };
+    org_employees_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["EmployeeCreate"];
+                "multipart/form-data": components["schemas"]["EmployeeCreate"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+        };
+    };
+    org_employees_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+        };
+    };
+    org_employees_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    org_employees_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedEmployeeUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedEmployeeUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedEmployeeUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Employee"];
+                };
+            };
+        };
+    };
+    org_employees_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeePasswordReset"];
+                "application/x-www-form-urlencoded": components["schemas"]["EmployeePasswordReset"];
+                "multipart/form-data": components["schemas"]["EmployeePasswordReset"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3393,6 +3652,50 @@ site_retrieve: {
             };
         };
     };
+    org_site_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+        };
+    };
+    org_site_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["PatchedSiteSettings"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteSettings"];
+                "application/json": components["schemas"]["PatchedSiteSettings"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+        };
+    };
     org_ticket_types_list: {
         parameters: {
             query?: {
@@ -3568,6 +3871,25 @@ site_retrieve: {
             };
         };
     };
+    site_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+        };
+    };
     webhooks_izipay_create: {
         parameters: {
             query?: never;
@@ -3605,177 +3927,43 @@ site_retrieve: {
             };
         };
     };
-    org_door_events_list: {
+    webhooks_mercadopago_create: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DoorEvent"][];
-                };
-            };
-        };
-    };
-    org_door_events_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DoorEvent"];
-                };
-            };
-        };
-    };
-    org_employees_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Employee"][];
-                };
-            };
-        };
-    };
-    org_employees_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["EmployeeCreate"];
-                "application/x-www-form-urlencoded": components["schemas"]["EmployeeCreate"];
-                "multipart/form-data": components["schemas"]["EmployeeCreate"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
+                "application/json": {
+                    [key: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Employee"];
+                "application/x-www-form-urlencoded": {
+                    [key: string]: unknown;
+                };
+                "multipart/form-data": {
+                    [key: string]: unknown;
                 };
             };
         };
-    };
-    org_employees_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Employee"];
-                };
-            };
-        };
-    };
-    org_employees_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
         responses: {
             /** @description No response body */
-            204: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-        };
-    };
-    org_employees_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PatchedEmployeeUpdate"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedEmployeeUpdate"];
-                "multipart/form-data": components["schemas"]["PatchedEmployeeUpdate"];
-            };
-        };
-        responses: {
-            200: {
+            /** @description No response body */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Employee"];
-                };
+                content?: never;
             };
-        };
-    };
-    org_employees_reset_password_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EmployeePasswordReset"];
-                "application/x-www-form-urlencoded": components["schemas"]["EmployeePasswordReset"];
-                "multipart/form-data": components["schemas"]["EmployeePasswordReset"];
-            };
-        };
-        responses: {
             /** @description No response body */
-            204: {
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

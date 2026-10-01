@@ -196,9 +196,12 @@ class CheckoutCreateSerializer(serializers.Serializer):
 
 class PaymentSessionSerializer(serializers.Serializer):
     gateway = serializers.CharField()
-    form_token = serializers.CharField()
-    public_key = serializers.CharField()
+    form_token = serializers.CharField(allow_blank=True)
+    public_key = serializers.CharField(allow_blank=True)
     js_url = serializers.CharField(allow_blank=True)
+    # Checkout Pro de Mercado Pago: a dónde redirigir al comprador. Vacío en
+    # las pasarelas de formulario incrustado.
+    checkout_url = serializers.CharField(allow_blank=True)
 
 
 class CheckoutCreateResponseSerializer(serializers.Serializer):

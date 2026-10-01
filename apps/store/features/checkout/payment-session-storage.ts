@@ -5,6 +5,9 @@ export interface StoredPaymentSession {
   form_token: string;
   public_key: string;
   js_url: string;
+  /** Checkout Pro de Mercado Pago: a dónde redirigir. Vacío en las pasarelas
+   *  de formulario incrustado. */
+  checkout_url: string;
 }
 
 const KEY_PREFIX = "umbral.payment_session.";

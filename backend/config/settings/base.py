@@ -220,3 +220,21 @@ IZIPAY_JS_URL = env(
 # Etiqueta operativa: valida que no se mezclen credenciales de prueba con un
 # despliegue que se cree "production" (ver system check payments.W001).
 IZIPAY_MODE = env("IZIPAY_MODE", default="test")
+
+# Mercado Pago — Checkout Pro sobre la Orders API (ver docs/mercadopago-activacion.md).
+# El access token es privado y solo vive en el servidor: Checkout Pro con
+# redirección no necesita clave pública en el navegador.
+MERCADOPAGO_ACCESS_TOKEN = env("MERCADOPAGO_ACCESS_TOKEN", default="")
+# Clave secreta del webhook, generada en Tus integraciones › Webhooks. Sin
+# ella la validación de firma falla cerrado y no se procesa ninguna
+# notificación (ver MercadoPagoClient.validate_webhook_signature).
+MERCADOPAGO_WEBHOOK_SECRET = env("MERCADOPAGO_WEBHOOK_SECRET", default="")
+MERCADOPAGO_API_BASE_URL = env("MERCADOPAGO_API_BASE_URL", default="https://api.mercadopago.com")
+# Valor de `processing_mode` al crear la order, tal cual lo documenta Mercado
+# Pago para Checkout Pro. Se deja configurable para no requerir un despliegue
+# si el proveedor cambia el valor esperado.
+MERCADOPAGO_PROCESSING_MODE = env("MERCADOPAGO_PROCESSING_MODE", default="manual")
+# Respaldo cuando la consulta de la order no repite la moneda.
+MERCADOPAGO_CURRENCY = env("MERCADOPAGO_CURRENCY", default="PEN")
+# Etiqueta operativa equivalente a IZIPAY_MODE (ver system check payments.W003).
+MERCADOPAGO_MODE = env("MERCADOPAGO_MODE", default="test")

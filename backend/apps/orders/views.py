@@ -82,8 +82,13 @@ class CheckoutCreateView(APIView):
             raise DomainError("PAYMENT_UNAVAILABLE", str(exc)) from exc
 
         order.gateway = session.gateway
-        order.save(update_fields=["gateway"])
-        PaymentEvent.objects.create(order=order, kind=PaymentEvent.Kind.SESSION_CREATED)
+        order.gateway_order_id = session.provider_order_id
+        order.save(update_fields=["gateway", "gateway_order_id"])
+        PaymentEvent.objects.create(
+            order=order,
+            kind=PaymentEvent.Kind.SESSION_CREATED,
+            external_id=session.provider_order_id or None,
+        )
 
         return Response(
             {
@@ -93,6 +98,7 @@ class CheckoutCreateView(APIView):
                     "form_token": session.form_token,
                     "public_key": session.public_key,
                     "js_url": session.js_url,
+                    "checkout_url": session.checkout_url,
                 },
             },
             status=status.HTTP_201_CREATED,

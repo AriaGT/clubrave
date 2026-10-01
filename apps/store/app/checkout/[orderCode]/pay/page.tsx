@@ -1,8 +1,8 @@
 "use client";
 
 import { Button, Card, CardContent, useAsyncAction } from "@repo/ui";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/features/cart/store";
 import { useConfirmPayment, useOrderStatus } from "@/features/checkout/pay-hooks";
@@ -10,16 +10,19 @@ import { loadPaymentSession } from "@/features/checkout/payment-session-storage"
 import { PaymentForm } from "@/features/checkout/PaymentForm";
 
 /**
- * Con `PAYMENT_GATEWAY=fake` (por defecto en desarrollo) esta pantalla
- * simula el formulario de la pasarela: aprobar/rechazar llama a `/confirm/`
- * con el mismo payload que usaría el navegador real, ejercitando el camino
- * de código completo (§8.2). Con `PAYMENT_GATEWAY=izipay` se monta el
- * formulario incrustado real (`PaymentForm`) — ver docs/izipay-activacion.md
- * para activarlo con credenciales reales.
+ * Tres formas de cobrar detrás de la misma pantalla:
+ *
+ * - `mercadopago` — Checkout Pro: se redirige al comprador al entorno de
+ *   Mercado Pago y vuelve a esta misma URL con `?mp=success|failure|pending`.
+ *   Ese parámetro **no decide nada**: al volver se le pide al backend que
+ *   reconsulte el cobro a Mercado Pago (ver `confirm_from_browser`).
+ * - `izipay` — formulario incrustado real (`PaymentForm`).
+ * - `fake` — simulador de desarrollo, que ejercita el mismo camino de código.
  */
-export default function PayPage() {
+function PayScreen() {
   const { orderCode } = useParams<{ orderCode: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: order, refetch } = useOrderStatus(orderCode, { pollUntilPaid: true });
   const confirm = useConfirmPayment(orderCode);
   const clearCart = useCartStore((s) => s.clear);
@@ -27,6 +30,10 @@ export default function PayPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const paymentSession = loadPaymentSession(orderCode);
+  const mpReturn = searchParams.get("mp");
+  const isRedirectGateway = paymentSession?.gateway === "mercadopago";
+  const isEmbeddedGateway = paymentSession?.gateway === "izipay";
+  const checkoutUrl = paymentSession?.checkout_url ?? "";
 
   useEffect(() => {
     if (order?.status === "PAID") {
@@ -35,8 +42,26 @@ export default function PayPage() {
     }
   }, [order?.status, orderCode, router, clearCart]);
 
-  // Confirmar y releer el estado es una sola espera: el botón sigue ocupado
-  // hasta que la orden refleja el resultado.
+  // Ida al checkout de Mercado Pago. Se omite cuando el comprador *vuelve*
+  // de allí, o la pantalla entraría en un bucle de redirecciones.
+  useEffect(() => {
+    if (!order || order.status !== "PENDING") return;
+    if (!isRedirectGateway || mpReturn || !checkoutUrl) return;
+    window.location.href = checkoutUrl;
+  }, [order, isRedirectGateway, mpReturn, checkoutUrl]);
+
+  // Vuelta del checkout: una sola llamada para que el backend reconsulte el
+  // cobro. Si falla, el webhook cierra la orden igual y el sondeo lo refleja.
+  const alreadyConfirmed = useRef(false);
+  useEffect(() => {
+    if (!isRedirectGateway || !mpReturn || alreadyConfirmed.current) return;
+    alreadyConfirmed.current = true;
+    confirm
+      .mutateAsync({})
+      .catch(() => undefined)
+      .finally(() => refetch());
+  }, [isRedirectGateway, mpReturn, confirm, refetch]);
+
   const [decision, setDecision] = useState<boolean | null>(null);
   const decide = useAsyncAction(async (approved: boolean) => {
     setDecision(approved);
@@ -57,7 +82,7 @@ export default function PayPage() {
 
   if (!order) return null;
 
-  const isRealGateway = paymentSession?.gateway === "izipay";
+  const isPending = order.status === "PENDING";
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 p-[var(--space-6)]">
@@ -69,7 +94,44 @@ export default function PayPage() {
         </CardContent>
       </Card>
 
-      {order.status === "PENDING" && isRealGateway && paymentSession && (
+      {isPending && isRedirectGateway && !mpReturn && checkoutUrl && (
+        <div className="flex flex-col gap-3">
+          <p className="text-[var(--color-text-muted)]">
+            Te estamos llevando a Mercado Pago para completar el pago…
+          </p>
+          <Button size="lg" onClick={() => (window.location.href = checkoutUrl)}>
+            Continuar a Mercado Pago
+          </Button>
+        </div>
+      )}
+
+      {isPending && isRedirectGateway && mpReturn === "pending" && (
+        <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-3">
+          <span className="font-medium text-[var(--color-warning)]">Pago pendiente de confirmación</span>
+          <span className="text-sm text-[var(--color-text-muted)]">
+            Elegiste un medio de pago que se acredita en unos minutos. Cuando Mercado Pago lo confirme,
+            te enviamos las entradas por correo. Puedes cerrar esta página.
+          </span>
+        </div>
+      )}
+
+      {isPending && isRedirectGateway && (mpReturn === "success" || mpReturn === "failure") && (
+        <p className="text-[var(--color-text-muted)]">Estamos confirmando tu pago con Mercado Pago…</p>
+      )}
+
+      {isPending && isRedirectGateway && !checkoutUrl && (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-[var(--color-danger)]">
+            No se encontró la sesión de pago en este navegador. Si ya pagaste, te enviaremos las
+            entradas por correo en cuanto Mercado Pago lo confirme.
+          </p>
+          <Button onClick={() => router.push(eventSlug ? `/e/${eventSlug}` : "/")}>
+            Volver al evento
+          </Button>
+        </div>
+      )}
+
+      {isPending && isEmbeddedGateway && paymentSession && (
         <>
           <PaymentForm session={paymentSession} onSubmitted={handleRealSubmit} onError={setFormError} />
           {formError && <p className="text-sm text-[var(--color-danger)]">{formError}</p>}
@@ -79,7 +141,7 @@ export default function PayPage() {
         </>
       )}
 
-      {order.status === "PENDING" && !isRealGateway && (
+      {isPending && !isRedirectGateway && !isEmbeddedGateway && (
         <div className="flex flex-col gap-3">
           <p className="text-[var(--color-text-muted)]">
             Entorno de pruebas: simula el resultado del banco.
@@ -103,12 +165,6 @@ export default function PayPage() {
         </div>
       )}
 
-      {order.status === "PENDING" && isRealGateway && !paymentSession && (
-        <p className="text-sm text-[var(--color-danger)]">
-          No se encontró la sesión de pago. Vuelve a intentar la compra desde el evento.
-        </p>
-      )}
-
       {order.status === "FAILED" && (
         <div className="flex flex-col gap-3">
           <p className="text-[var(--color-danger)]">Tu pago fue rechazado.</p>
@@ -118,7 +174,27 @@ export default function PayPage() {
         </div>
       )}
 
+      {order.status === "EXPIRED" && (
+        <div className="flex flex-col gap-3">
+          <p className="text-[var(--color-danger)]">
+            Esta orden venció antes de completarse el pago.
+          </p>
+          <Button onClick={() => router.push(eventSlug ? `/e/${eventSlug}` : "/")}>
+            Volver a intentar
+          </Button>
+        </div>
+      )}
+
       {order.status === "PAID" && <p className="text-[var(--color-mint-text)]">Confirmando…</p>}
     </main>
+  );
+}
+
+export default function PayPage() {
+  // `useSearchParams` obliga a un límite de Suspense para el prerender.
+  return (
+    <Suspense fallback={null}>
+      <PayScreen />
+    </Suspense>
   );
 }
