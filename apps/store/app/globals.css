@@ -25,61 +25,235 @@
   }
 }
 
-/* Formulario incrustado de Izipay (Krypton): el tema `classic-reset` no pinta
-   nada, así que lo vestimos con los tokens del design system. */
-.kr-embedded {
+/* Formulario incrustado de Izipay (Krypton). El tema `classic-reset` de Izipay
+   se carga después de este archivo y pinta los campos de blanco, así que cada
+   regla repite `div.kr-embedded` para ganarle por especificidad, y los
+   colores/fondos llevan !important porque el tema también los fija en línea.
+   Estructura: `.kr-field-element` (caja externa, sin estilo) → `.kr-field-wrapper`
+   o `.kr-select` (la caja visible) → `.kr-input-wrapper`/input (transparentes). */
+div.kr-embedded {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  width: 100%;
   color: var(--color-text);
   font-family: var(--font-sans);
 }
-.kr-embedded .kr-field-wrapper,
-.kr-embedded .kr-installment-number,
-.kr-embedded .kr-first-installment-delay {
-  background: var(--color-surface-sunken);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.75rem;
-}
-.kr-embedded .kr-field-wrapper:focus-within {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-ring);
-}
-.kr-embedded input,
-.kr-embedded select {
+
+/* Cajas externas: sin fondo, borde ni relleno propios. */
+div.kr-embedded .kr-pan,
+div.kr-embedded .kr-expiry,
+div.kr-embedded .kr-security-code,
+div.kr-embedded .kr-card-holder-name,
+div.kr-embedded .kr-card-holder-mail,
+div.kr-embedded .kr-installment-number,
+div.kr-embedded .kr-first-installment-delay,
+div.kr-embedded .kr-identity-document-type,
+div.kr-embedded .kr-identity-document-number,
+div.kr-embedded .kr-pocket-type {
   width: 100%;
-  background: transparent;
-  color: var(--color-text);
-  border: 0;
-  outline: 0;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
 }
-.kr-embedded .kr-field-element {
-  background: transparent;
-  color: var(--color-text);
+
+/* La caja visible de cada campo de texto y de cada selector. */
+div.kr-embedded .kr-field-wrapper,
+div.kr-embedded .kr-field.kr-text,
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 3rem;
+  padding: 0 var(--space-3) !important;
+  background: var(--color-surface-sunken) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text) !important;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.kr-embedded .kr-field-wrapper label,
-.kr-embedded label {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+div.kr-embedded .kr-field-wrapper:focus-within,
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select:focus-within {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px var(--color-accent-ring) !important;
 }
-.kr-embedded .kr-form-error {
-  color: var(--color-danger);
-  font-size: 0.875rem;
+/* El mismo campo aparece anidado: solo la caja más externa lleva borde. */
+div.kr-embedded .kr-field-wrapper .kr-field.kr-text,
+div.kr-embedded .kr-field.kr-text .kr-field-wrapper {
+  min-height: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-.kr-embedded .kr-payment-button {
+
+div.kr-embedded .kr-field.kr-text .kr-input-wrapper,
+div.kr-embedded .kr-field-wrapper .kr-field-component {
+  flex: 1;
+  min-width: 0;
+  background: transparent !important;
+}
+div.kr-embedded .kr-field.kr-text input.kr-theme,
+div.kr-embedded input[type="text"],
+div.kr-embedded input[type="email"] {
+  width: 100%;
+  height: 2.75rem !important;
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--color-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-base) !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+div.kr-embedded .kr-field.kr-text input.kr-theme::placeholder {
+  color: var(--color-text-subtle) !important;
+  opacity: 1;
+}
+
+/* Iconos (tarjeta, calendario, ayuda del CVV, titular). */
+div.kr-embedded .kr-icon-wrapper-root,
+div.kr-embedded .kr-help-button-wrapper,
+div.kr-embedded .kr-field.kr-text .kr-icon {
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: auto !important;
+  margin-left: var(--space-2);
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--color-text-muted) !important;
+}
+div.kr-embedded .kr-field.kr-text .kr-icon i {
+  color: var(--color-text-muted) !important;
+}
+div.kr-embedded .kr-icon-wrapper-root svg,
+div.kr-embedded .kr-field.kr-text .kr-icon svg {
+  width: 1.5rem;
+  height: auto;
+}
+div.kr-embedded .kr-icon-wrapper-root svg [fill]:not([fill="none"]),
+div.kr-embedded .kr-field.kr-text .kr-icon svg [fill]:not([fill="none"]) {
+  fill: var(--color-text-muted);
+}
+div.kr-embedded .kr-help-button {
+  background: var(--color-surface-hover) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+/* Selectores de cuotas y diferido (select propio del tema). */
+div.kr-embedded .kr-select-wrapper.kr-custom-select {
+  width: 100%;
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select {
   width: 100%;
   cursor: pointer;
-  border: 0;
+  justify-content: space-between;
+  font-size: var(--text-base);
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select,
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select span,
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option {
+  color: var(--color-text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-base) !important;
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select .kr-select-caret {
+  position: static;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-select .kr-select-caret svg {
+  fill: currentColor;
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-accent);
-  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  overflow-y: auto;
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option {
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text);
+  cursor: pointer;
+}
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option:hover,
+div.kr-embedded .kr-select-wrapper.kr-custom-select .kr-options .kr-option.kr-active-option {
+  background: var(--color-surface-hover) !important;
+}
+div.kr-embedded .kr-select-wrapper.kr-real-select select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 var(--space-3);
+  background: var(--color-surface-sunken) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md);
+}
+
+div.kr-embedded label,
+div.kr-embedded .kr-field-wrapper label {
+  color: var(--color-text-muted) !important;
+  font-size: var(--text-sm);
+}
+
+/* Error del formulario: caja suave en vez del bloque rojo sólido del tema. */
+div.kr-embedded .kr-form-error {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3) !important;
+  background: var(--color-danger-soft) !important;
+  border: 1px solid var(--color-danger) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-danger) !important;
+  font-size: var(--text-sm) !important;
+  text-align: left !important;
+}
+div.kr-embedded .kr-form-error:empty {
+  display: none;
+}
+div.kr-embedded .kr-form-error span {
+  color: var(--color-danger) !important;
+}
+
+/* Botón de pagar: el mismo primario que el resto de la tienda. */
+div.kr-embedded .kr-payment-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  border: 0 !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--color-accent) !important;
+  color: #fff !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-base) !important;
   font-weight: 600;
-  padding: 0.75rem 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0 var(--space-4) !important;
+  transition: background 0.15s;
 }
-.kr-embedded .kr-payment-button:hover {
-  background: var(--color-accent-hover);
+div.kr-embedded .kr-payment-button span {
+  color: #fff !important;
 }
-.kr-embedded .kr-payment-button:active {
-  background: var(--color-accent-active);
+div.kr-embedded .kr-payment-button:hover {
+  background: var(--color-accent-hover) !important;
+}
+div.kr-embedded .kr-payment-button:active {
+  background: var(--color-accent-active) !important;
+}
+div.kr-embedded .kr-payment-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
