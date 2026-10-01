@@ -144,6 +144,15 @@ div.kr-embedded .kr-help-button-wrapper {
   margin-left: var(--space-2);
 }
 
+/* Cuotas y pago diferido: el SDK los marca `kr-read-only` cuando la tarjeta
+   no ofrece más de una opción (p. ej. débito). Un selector que no se puede
+   abrir parece roto, así que se oculta; el SDK quita la clase y reaparece
+   en cuanto la tarjeta tiene cuotas reales para elegir. */
+div.kr-embedded .kr-field-element.kr-installment-number.kr-read-only,
+div.kr-embedded .kr-field-element.kr-first-installment-delay.kr-read-only {
+  display: none !important;
+}
+
 /* Selectores de cuotas y diferido: el `.kr-field-wrapper` ya es la caja, así
    que el botón interior no lleva borde ni fondo propios. */
 div.kr-embedded .kr-select-wrapper.kr-custom-select {

@@ -14,6 +14,7 @@ declare global {
         fields?: { all: Record<"default" | "error", FieldStyle> };
       }) => Promise<unknown>;
       onSubmit: (callback: (response: unknown) => boolean | void) => void;
+      onFormReady: (callback: () => void) => void;
       onError?: (callback: (error: unknown) => void) => void;
     };
   }
@@ -46,6 +47,46 @@ function fieldStyleConfig() {
   };
 }
 
+/** Hoja de estilos única; resuelve también si falla (el pago no depende del tema). */
+function loadStylesheet(href: string): Promise<void> {
+  return new Promise((resolve) => {
+    let link = document.querySelector<HTMLLinkElement>(`link[href="${href}"]`);
+    if (link?.dataset.loaded === "true") return resolve();
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+    }
+    const el = link;
+    el.addEventListener("load", () => ((el.dataset.loaded = "true"), resolve()), { once: true });
+    el.addEventListener("error", () => resolve(), { once: true });
+  });
+}
+
+/** Script único: si ya está en el DOM (Strict Mode, navegación previa) no se
+ *  vuelve a insertar, solo se espera a que termine de cargar. */
+function loadScript(src: string, attrs: Record<string, string> = {}): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let script = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+    if (script?.dataset.loaded === "true") return resolve();
+    if (!script) {
+      script = document.createElement("script");
+      script.src = src;
+      for (const [name, value] of Object.entries(attrs)) script.setAttribute(name, value);
+      document.head.appendChild(script);
+    }
+    const el = script;
+    el.addEventListener("load", () => ((el.dataset.loaded = "true"), resolve()), { once: true });
+    el.addEventListener("error", () => reject(new Error(`No se pudo cargar ${src}`)), { once: true });
+  });
+}
+
+/** Si `onFormReady` no llega (versión del SDK, red lenta), se muestra igual. */
+const READY_FALLBACK_MS = 8000;
+/** `onFormReady` llega justo antes de que los iframes pinten su placeholder. */
+const READY_PAINT_GRACE_MS = 400;
+
 export interface PaymentFormProps {
   session: StoredPaymentSession;
   onSubmitted: (rawResponse: Record<string, unknown>) => void;
@@ -58,11 +99,8 @@ export interface PaymentFormProps {
  * backend, que es quien verifica la firma (§8.5, §11.6: el script de la
  * pasarela solo se carga aquí, nunca antes).
  *
- * Sin credenciales reales de Izipay no se pudo probar contra el entorno de
- * pruebas del proveedor (ver docs/izipay-activacion.md); la integración
- * sigue el pseudocódigo de §8.5 del plan al pie de la letra. Cuando lleguen
- * las credenciales, este es el único archivo que debería necesitar ajustes
- * si el SDK real difiere en algún detalle menor.
+ * Probado contra el entorno de pruebas y producción de Izipay (ver
+ * docs/izipay-activacion.md).
  */
 export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -70,77 +108,54 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
 
   useEffect(() => {
     let cancelled = false;
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${session.js_url}"]`);
+    let fallback: ReturnType<typeof setTimeout> | undefined;
+    const markReady = () => {
+      if (!cancelled) setStatus("ready");
+    };
 
-    function configureForm() {
-      if (cancelled || !window.KR) return;
-      containerRef.current?.setAttribute("kr-form-token", session.form_token);
-      window.KR.setFormConfig({ formToken: session.form_token, fields: fieldStyleConfig() })
-        .then(() => {
-          if (cancelled) return;
-          setStatus("ready");
-          window.KR?.onSubmit((response) => {
-            onSubmitted(response as Record<string, unknown>);
-            return false; // evita la redirección por defecto del SDK
-          });
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setStatus("error");
-            onError?.("No se pudo iniciar el formulario de pago.");
-          }
-        });
-    }
-
-    // El SDK no trae estilos propios: Izipay los sirve como "tema" (CSS + JS)
-    // en la carpeta /ext/ de la misma versión. Sin ellos el formulario sale
-    // como HTML crudo. Si el tema no carga, el pago sigue funcionando.
+    // Orden oficial de Izipay: SDK primero y luego el tema (`classic.js`).
+    // La hoja del tema se descarga en paralelo, pero el formulario no se
+    // configura hasta que llegó: si se arma antes, sale con estilos rotos
+    // la primera visita (la segunda viene de caché y por eso sí se ve bien).
     const themeBase = session.js_url.replace(/\/[^/]+\/[^/]+$/, "/ext/");
-    function loadTheme(done: () => void) {
-      if (!document.querySelector(`link[href="${themeBase}classic.css"]`)) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = `${themeBase}classic.css`;
-        document.head.appendChild(link);
-      }
-      if (document.querySelector(`script[src="${themeBase}classic.js"]`)) {
-        done();
-        return;
-      }
-      const themeScript = document.createElement("script");
-      themeScript.src = `${themeBase}classic.js`;
-      themeScript.onload = done;
-      themeScript.onerror = done;
-      document.body.appendChild(themeScript);
+
+    async function boot() {
+      const themeCss = loadStylesheet(`${themeBase}classic.css`);
+      await loadScript(session.js_url, { "kr-public-key": session.public_key });
+      await Promise.all([themeCss, loadScript(`${themeBase}classic.js`).catch(() => undefined)]);
+      if (cancelled || !window.KR) return;
+
+      // El formulario queda oculto hasta que sus iframes están listos, para
+      // no mostrar nunca campos a medio estilar.
+      window.KR.onFormReady(() => {
+        fallback = setTimeout(markReady, READY_PAINT_GRACE_MS);
+      });
+      containerRef.current?.setAttribute("kr-form-token", session.form_token);
+      await window.KR.setFormConfig({ formToken: session.form_token, fields: fieldStyleConfig() });
+      if (cancelled) return;
+      setTimeout(markReady, READY_FALLBACK_MS);
+      window.KR.onSubmit((response) => {
+        onSubmitted(response as Record<string, unknown>);
+        return false; // evita la redirección por defecto del SDK
+      });
     }
 
-    if (existing) {
-      // En React Strict Mode (dev) el efecto corre dos veces: la segunda
-      // encuentra el script ya insertado pero quizá aún sin cargar.
-      if (window.KR) loadTheme(configureForm);
-      else existing.addEventListener("load", () => loadTheme(configureForm), { once: true });
-    } else {
-      const script = document.createElement("script");
-      script.src = session.js_url;
-      script.setAttribute("kr-public-key", session.public_key);
-      script.onload = () => loadTheme(configureForm);
-      script.onerror = () => {
-        if (!cancelled) {
-          setStatus("error");
-          onError?.("No se pudo cargar el formulario de pago.");
-        }
-      };
-      document.body.appendChild(script);
-    }
+    boot().catch(() => {
+      if (!cancelled) {
+        setStatus("error");
+        onError?.("No se pudo cargar el formulario de pago.");
+      }
+    });
 
     return () => {
       cancelled = true;
+      clearTimeout(fallback);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.form_token, session.js_url, session.public_key]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="relative flex flex-col gap-3">
       {status === "loading" && (
         <LoadingState label="Cargando el formulario de pago…" className="py-8" />
       )}
@@ -149,7 +164,16 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
           No se pudo cargar el formulario de pago. Intenta de nuevo en unos segundos.
         </p>
       )}
-      <div ref={containerRef} className="kr-embedded" />
+      {/* Krypton añade sus propias clases a `.kr-embedded`: React no debe
+          tocar su className, por eso la visibilidad va en el envoltorio.
+          Mientras carga queda superpuesto e invisible (no display:none, para
+          que los iframes se midan con el ancho real) y no empuja el loader. */}
+      <div
+        className={status === "ready" ? undefined : "pointer-events-none absolute inset-x-0 top-0 opacity-0"}
+        aria-hidden={status !== "ready"}
+      >
+        <div ref={containerRef} className="kr-embedded" />
+      </div>
     </div>
   );
 }
