@@ -97,10 +97,10 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
     // como HTML crudo. Si el tema no carga, el pago sigue funcionando.
     const themeBase = session.js_url.replace(/\/[^/]+\/[^/]+$/, "/ext/");
     function loadTheme(done: () => void) {
-      if (!document.querySelector(`link[href="${themeBase}classic-reset.css"]`)) {
+      if (!document.querySelector(`link[href="${themeBase}classic.css"]`)) {
         const link = document.createElement("link");
         link.rel = "stylesheet";
-        link.href = `${themeBase}classic-reset.css`;
+        link.href = `${themeBase}classic.css`;
         document.head.appendChild(link);
       }
       if (document.querySelector(`script[src="${themeBase}classic.js"]`)) {
