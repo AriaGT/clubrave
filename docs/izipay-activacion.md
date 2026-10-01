@@ -27,7 +27,8 @@ Contacta al comercial de Izipay / Back Office con esta lista exacta:
 - [ ] **Shop ID**, **clave pública**, **password de API REST** y **clave
       HMAC-SHA256** — pide **dos juegos completos**: uno de *pruebas* y
       otro de *producción*. Son cuatro valores por entorno, ocho en total.
-- [ ] Alta de la URL de IPN en ambos entornos:
+- [ ] Alta de la URL de IPN en ambos entornos (Back Office → Configuración →
+      Reglas de notificación → "URL de notificación al final del pago"):
       `https://api.<tudominio>/api/webhooks/izipay/`
       Confirma explícitamente que se notifica tanto el pago **aceptado**
       como el **rechazado** — algunos comercios solo activan el aceptado
@@ -35,10 +36,9 @@ Contacta al comercial de Izipay / Back Office con esta lista exacta:
 - [ ] Confirma la **versión vigente** del formulario incrustado (Krypton)
       y la URL exacta del script — puede cambiar respecto al valor por
       defecto de este repo.
-- [ ] **Tarjetas de prueba** del entorno de pruebas — las que da el Back
-      Office, no las de documentación genérica (suelen no coincidir).
-- [ ] Comportamiento de **3-D Secure** y cómo se refleja en la respuesta
-      (`kr-answer.orderStatus` y el campo de autenticación).
+- [ ] **3-D Secure activo en la tienda de pruebas** para Visa y Mastercard
+      (ver "Error 227" en el punto 3). Sin esto, toda tarjeta Visa/Mastercard
+      de prueba se rechaza aunque la documentación diga "pago aceptado".
 - [ ] Moneda **PEN** habilitada y medios de pago activos.
 - [ ] Si el proveedor filtra por IP de origen, entrega las **IP de salida**
       del servidor de producción.
@@ -96,6 +96,34 @@ es pública por diseño y sí viaja al navegador dentro de la respuesta de
    | 7 | Navegador cerrado tras pagar | Igual que el anterior: las entradas deben llegar por email sin que el navegador vuelva a abrirse |
    | 8 | Pago después de vencida la orden | Deja pasar los 15 minutos de retención antes de pagar; confirma que se acepta si hay cupo, o `FAILED` + aviso si no |
    | 9 | Pasarela caída al crear la sesión | Apaga temporalmente las credenciales (o usa una IP bloqueada); confirma `503 PAYMENT_UNAVAILABLE` y que no queda una orden fantasma |
+
+   **Tarjetas de prueba.** Lista oficial:
+   <https://secure.micuentaweb.pe/doc/es-PE/rest/V4.0/api/kb/test_cards.html>.
+   En modo test el formulario muestra además una barra de depuración
+   ("Métodos de prueba") que autocompleta la tarjeta al hacer clic. Fecha y
+   CVV son libres (p. ej. `12/30` y `123`). Las más útiles:
+
+   | Tarjeta | Resultado esperado |
+   |---|---|
+   | `4970 1100 0000 1029` (Visa) | aceptado, 3DS2 sin interacción |
+   | `4970 1100 0000 1003` (Visa) | aceptado, 3DS2 con challenge |
+   | `4970 1000 0000 0063` (Visa) | rechazado, falla la autenticación 3DS |
+   | `4970 1000 0000 0071` (Visa) | rechazado, fondos insuficientes |
+   | `36000000000008` (Diners) | aceptado, sin 3DS de Visa/Mastercard |
+
+   **Error 227 / `PSP_727` "Unable to authenticate".** Si *todas* las
+   Visa/Mastercard se rechazan con este código, incluidas las de "pago
+   aceptado", y Diners sí pasa, el problema no está en el código: la tienda
+   de pruebas exige 3DS y su autenticación 3DS no está habilitada. Lo
+   resuelve Izipay; pásales el UUID de una transacción rechazada (Back
+   Office → Gestión → Transacciones de TEST).
+
+   **En local el IPN no llega** (Izipay no alcanza `localhost`). La orden
+   se confirma por el retorno del navegador: `KR.onSubmit` entrega
+   `{rawClientAnswer, hash, hashKey}`, que la pantalla reenvía a
+   `POST /api/checkout/orders/{code}/confirm/`. Un pago rechazado no
+   dispara `onSubmit`, así que en local la orden queda `PENDING` hasta
+   vencer; el `FAILED` llega solo por IPN.
 
    Los cinco primeros ya están automatizados contra `FakeGateway`
    (`backend/tests/test_payments.py`) y corren en cada commit; en este paso

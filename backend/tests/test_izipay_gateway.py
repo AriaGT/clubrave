@@ -51,13 +51,17 @@ def _sign(raw_answer: str, key: str) -> str:
 
 def _kr_answer(order_code: str, *, amount_cents: int, status: str = "PAID", currency: str = "PEN") -> str:
     # La cadena cruda importa: se firma tal cual, nunca el dict re-serializado.
+    # Misma forma que el objeto V4/Payment real: importe y moneda van dentro
+    # de `orderDetails`, no en la raíz.
     return json.dumps(
         {
             "orderStatus": status,
-            "orderTotalAmount": amount_cents,
-            "currency": currency,
-            "orderDetails": {"orderId": order_code},
-            "transactions": [{"uuid": "txn-abc-123"}],
+            "orderDetails": {
+                "orderId": order_code,
+                "orderTotalAmount": amount_cents,
+                "orderCurrency": currency,
+            },
+            "transactions": [{"uuid": "txn-abc-123", "amount": amount_cents, "currency": currency}],
         }
     )
 
@@ -113,6 +117,40 @@ class TestBrowserReturnSignature:
         }
         result = IzipayGateway().verify_browser_return(order, payload)
         assert not result.signature_valid
+
+
+class TestBrowserReturnFromOnSubmit:
+    """`KR.onSubmit` entrega `{rawClientAnswer, hash, hashKey}` en vez de los
+    campos `kr-*` del POST de formulario: es lo que manda nuestra pantalla."""
+
+    def test_valid_onsubmit_payload_is_accepted(self, order):
+        raw = _kr_answer(order.code, amount_cents=6000)
+        payload = {
+            "clientAnswer": json.loads(raw),
+            "rawClientAnswer": raw,
+            "hash": _sign(raw, "test-hmac-sha256-key"),
+            "hashAlgorithm": "sha256_hmac",
+            "hashKey": "sha256_hmac",
+            "_type": "V4/Charge/ProcessPaymentAnswer",
+        }
+        result = IzipayGateway().verify_browser_return(order, payload)
+        assert result.signature_valid
+        assert result.approved
+        assert result.order_code == order.code
+
+    def test_tampered_onsubmit_answer_is_rejected(self, order):
+        raw = _kr_answer(order.code, amount_cents=6000)
+        payload = {
+            "rawClientAnswer": raw.replace("6000", "1"),
+            "hash": _sign(raw, "test-hmac-sha256-key"),
+            "hashKey": "sha256_hmac",
+        }
+        assert not IzipayGateway().verify_browser_return(order, payload).signature_valid
+
+    def test_onsubmit_signed_with_ipn_key_is_rejected(self, order):
+        raw = _kr_answer(order.code, amount_cents=6000)
+        payload = {"rawClientAnswer": raw, "hash": _sign(raw, "test-rest-password"), "hashKey": "password"}
+        assert not IzipayGateway().verify_browser_return(order, payload).signature_valid
 
 
 class TestIpnSignature:

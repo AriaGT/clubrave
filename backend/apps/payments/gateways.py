@@ -201,20 +201,39 @@ class IzipayGateway:
         transactions = answer.get("transactions", [{}])
         transaction = transactions[0] if transactions else {}
 
+        # Importe y moneda viven dentro de `orderDetails` (objeto V4/Payment),
+        # tanto en la respuesta al navegador como en el IPN.
         return PaymentResult(
             order_code=order_details.get("orderId", ""),
             approved=answer.get("orderStatus") == "PAID",
-            amount_cents=answer.get("orderTotalAmount", 0),
-            currency=answer.get("currency", "PEN"),
+            amount_cents=order_details.get("orderTotalAmount", 0),
+            currency=order_details.get("orderCurrency", ""),
             reference=transaction.get("uuid"),
             signature_valid=signature_valid,
             raw=answer,
         )
 
+    @staticmethod
+    def _browser_payload(payload: dict) -> dict:
+        """El mismo resultado firmado llega con dos formas según quién lo envíe:
+        el callback `KR.onSubmit` del formulario incrustado entrega
+        `{rawClientAnswer, hash, hashKey}`, y el POST de `kr-post-url-success`
+        entrega `{kr-answer, kr-hash, kr-hash-key}`. Se lleva todo a la segunda
+        forma; la verificación posterior es idéntica para ambas."""
+        if "rawClientAnswer" in payload:
+            return {
+                "kr-answer": payload.get("rawClientAnswer") or "",
+                "kr-hash": payload.get("hash") or "",
+                "kr-hash-key": payload.get("hashKey") or "",
+            }
+        return payload
+
     def verify_browser_return(self, order, payload: dict) -> PaymentResult:
         # Regla de oro (§8.4): la firma se verifica sobre la cadena cruda de
         # `kr-answer` tal cual llegó, nunca sobre el JSON re-serializado.
-        return self._parse_signed_payload(payload, key=self.hmac_key, expected_hash_key="sha256_hmac")
+        return self._parse_signed_payload(
+            self._browser_payload(payload), key=self.hmac_key, expected_hash_key="sha256_hmac"
+        )
 
     def verify_ipn(self, request: HttpRequest) -> PaymentResult:
         raw = request.body.decode("utf-8")
