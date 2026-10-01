@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.orders.services.cancellation import CANCELLATION_REASON_CODES
+from apps.payments.gateways import payments_disabled
 
 from .image_processing import process_event_image
 from .models import Event, EventImage, TicketType
@@ -101,14 +102,19 @@ class EventPublicDetailSerializer(serializers.ModelSerializer):
     images = EventImageSerializer(many=True, read_only=True)
     ticket_types = serializers.SerializerMethodField()
     sales_paused = serializers.BooleanField(read_only=True)
+    payments_disabled = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = [
             "id", "title", "slug", "description", "starts_at", "ends_at",
             "venue_name", "address", "city", "maps_url", "min_age", "currency",
-            "images", "ticket_types", "sales_paused",
+            "images", "ticket_types", "sales_paused", "payments_disabled",
         ]
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_payments_disabled(self, obj):
+        return payments_disabled()
 
     @extend_schema_field(TicketTypePublicSerializer(many=True))
     def get_ticket_types(self, obj):

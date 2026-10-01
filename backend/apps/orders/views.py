@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCustomer, IsOrganizer
 from apps.common.errors import DomainError
 from apps.events.models import Event
-from apps.payments.gateways import PaymentUnavailable, get_gateway
+from apps.payments.gateways import PaymentUnavailable, get_gateway, payments_disabled
 from apps.payments.models import PaymentEvent
 
 from .models import GuestCode, Order, Ticket
@@ -59,6 +59,9 @@ class CheckoutCreateView(APIView):
         serializer = CheckoutCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+
+        if payments_disabled():  # antes de retener inventario
+            raise DomainError("PAYMENT_DISABLED")
 
         event = get_object_or_404(Event, id=data["event_id"])
         release_expired_orders()  # autolimpieza oportunista (§5.5)

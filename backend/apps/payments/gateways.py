@@ -197,7 +197,16 @@ class IzipayGateway:
         return self._parse_signed_payload(body, key=self.rest_password, expected_hash_key="password")
 
 
+def payments_disabled() -> bool:
+    """`PAYMENT_GATEWAY=disabled`: la tienda no cobra ni crea órdenes. Sirve
+    para publicar el sitio antes de tener la pasarela habilitada."""
+    return settings.PAYMENT_GATEWAY == "disabled"
+
+
 def get_gateway() -> PaymentGateway:
+    if payments_disabled():
+        # Falla cerrado: nunca caer en FakeGateway, que aprueba cualquier cosa.
+        raise PaymentUnavailable("Los pagos están deshabilitados temporalmente.")
     if settings.PAYMENT_GATEWAY == "izipay":
         return IzipayGateway()
     return FakeGateway()

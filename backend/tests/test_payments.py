@@ -129,3 +129,36 @@ def test_checkout_view_ignores_client_supplied_price(client, published_event, ti
     )
     assert response.status_code == 201
     assert response.json()["order"]["total"] == "50.00"
+
+
+def test_checkout_is_blocked_when_payments_are_disabled(client, published_event, ticket_type, settings):
+    settings.PAYMENT_GATEWAY = "disabled"
+    response = client.post(
+        "/api/checkout/orders/",
+        data={
+            "event_id": str(published_event.id),
+            "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1}],
+            "buyer": {"email": "a@test.pe", "full_name": "A"},
+            "terms_accepted": True,
+        },
+        format="json",
+    )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "PAYMENT_DISABLED"
+    assert not Order.objects.exists()
+
+    detail = client.get(f"/api/events/{published_event.slug}/")
+    assert detail.status_code == 200
+    assert detail.json()["payments_disabled"] is True
+
+
+def test_confirm_and_ipn_fail_closed_when_payments_are_disabled(client, pending_order, settings):
+    settings.PAYMENT_GATEWAY = "disabled"
+    confirm = client.post(
+        f"/api/checkout/orders/{pending_order.code}/confirm/",
+        data={"order_code": pending_order.code, "approved": True},
+        format="json",
+    )
+    assert confirm.status_code == 503
+    pending_order.refresh_from_db()
+    assert pending_order.status == Order.Status.PENDING

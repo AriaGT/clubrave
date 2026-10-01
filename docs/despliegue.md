@@ -148,6 +148,10 @@ real de §2.3.
   sangrado mientras se investiga — ver
   [`izipay-activacion.md`](./izipay-activacion.md#5-volver-atrás-sin-drama).
   El checkout sigue funcionando (sin cobrar) mientras se resuelve.
+- **Publicar sin pasarela habilitada**: pon `PAYMENT_GATEWAY=disabled`. La
+  tienda muestra "compras deshabilitadas temporalmente por problemas
+  técnicos", el backend responde `503 PAYMENT_DISABLED` y no retiene
+  inventario. Los códigos de invitado (gratis) siguen funcionando.
 - **La API cae en la puerta**: el escáner exige red porque la validación es
   siempre en vivo (a propósito, ver §5.6 del plan) — no hay modo sin
   conexión en este MVP. Ten un plan B manual (lista impresa de compradores)

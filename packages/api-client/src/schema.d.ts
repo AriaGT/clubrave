@@ -1247,6 +1247,7 @@ SiteSettings: {
             readonly images: components["schemas"]["EventImage"][];
             readonly ticket_types: components["schemas"]["TicketTypePublic"][];
             readonly sales_paused: boolean;
+            readonly payments_disabled: boolean;
         };
         EventPublicList: {
             /** Format: uuid */

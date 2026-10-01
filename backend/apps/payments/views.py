@@ -9,10 +9,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.common.errors import DomainError
 from apps.orders.models import Order
 from apps.orders.services.fulfillment import mark_failed, mark_paid
 
-from .gateways import amounts_match, get_gateway
+from .gateways import PaymentUnavailable, amounts_match, get_gateway
 from .models import PaymentEvent
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,10 @@ class IzipayWebhookView(APIView):
 
     @extend_schema(request=OpenApiTypes.OBJECT, responses={200: None, 400: None})
     def post(self, request, *args, **kwargs):
-        gateway = get_gateway()
+        try:
+            gateway = get_gateway()
+        except PaymentUnavailable:
+            return Response(status=503)  # el proveedor reintenta más tarde
         result = gateway.verify_ipn(request)
 
         order = Order.objects.filter(code=result.order_code).first()
@@ -74,7 +78,10 @@ class IzipayWebhookView(APIView):
 def confirm_from_browser(request, code: str):
     """Retorno del navegador: feedback inmediato, NO autoritativo (§7.2)."""
     order = get_object_or_404(Order, code=code)
-    gateway = get_gateway()
+    try:
+        gateway = get_gateway()
+    except PaymentUnavailable as exc:
+        raise DomainError("PAYMENT_DISABLED") from exc
     result = gateway.verify_browser_return(request.data)
 
     PaymentEvent.objects.get_or_create(

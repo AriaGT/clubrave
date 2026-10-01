@@ -42,7 +42,8 @@ export default function CheckoutPage() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
 
-  const salesPaused = event?.sales_paused === true;
+  const paymentsDisabled = event?.payments_disabled === true;
+  const salesPaused = event?.sales_paused === true || paymentsDisabled;
 
   useEffect(() => {
     if (rememberedEmail) setEmail(rememberedEmail);
@@ -117,7 +118,7 @@ export default function CheckoutPage() {
     } catch (err) {
       if (isApiError(err)) {
         setOrderError(err.error.message);
-        if (err.error.code === "SALES_PAUSED") setStep("email");
+        if (err.error.code === "SALES_PAUSED" || err.error.code === "PAYMENT_DISABLED") setStep("email");
       } else {
         setOrderError(err instanceof Error ? err.message : "No se pudo completar la compra.");
       }
@@ -141,9 +142,13 @@ export default function CheckoutPage() {
 
       {salesPaused && (
         <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-3">
-          <span className="font-medium text-[var(--color-warning)]">Venta pausada temporalmente</span>
+          <span className="font-medium text-[var(--color-warning)]">
+            {paymentsDisabled ? "Compras deshabilitadas temporalmente" : "Venta pausada temporalmente"}
+          </span>
           <span className="text-sm text-[var(--color-text-muted)]">
-            No se pueden completar compras hasta que el organizador reanude la venta.
+            {paymentsDisabled
+              ? "Estamos presentando problemas técnicos y no se pueden completar compras por ahora. Vuelve a intentarlo en un rato."
+              : "No se pueden completar compras hasta que el organizador reanude la venta."}
           </span>
         </div>
       )}

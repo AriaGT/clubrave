@@ -23,7 +23,8 @@ export function FeaturedEvent({ event, detail }: { event: EventListItem; detail:
   useParallax(backdropRef, 0.35);
 
   const price = priceLabel(event.price_from, event.currency);
-  const salesPaused = detail?.sales_paused === true;
+  const paymentsDisabled = detail?.payments_disabled === true;
+  const salesPaused = detail?.sales_paused === true || paymentsDisabled;
   const zones = detail ? selectedImageOfKind(detail.images, "ZONES") : null;
   const tickets = detail?.ticket_types ?? [];
 
@@ -64,7 +65,7 @@ export function FeaturedEvent({ event, detail }: { event: EventListItem; detail:
                 Próximo evento
               </span>
               {salesPaused ? (
-                <Badge variant="warning">Venta pausada</Badge>
+                <Badge variant="warning">{paymentsDisabled ? "Compras no disponibles" : "Venta pausada"}</Badge>
               ) : (
                 <Badge variant="mint">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-mint)]" />

@@ -29,6 +29,7 @@ ORDER_EXPIRED = "ORDER_EXPIRED"
 ORDER_ALREADY_PAID = "ORDER_ALREADY_PAID"
 PAYMENT_REJECTED = "PAYMENT_REJECTED"
 PAYMENT_UNAVAILABLE = "PAYMENT_UNAVAILABLE"
+PAYMENT_DISABLED = "PAYMENT_DISABLED"
 TICKET_ALREADY_USED = "TICKET_ALREADY_USED"
 TICKET_INVALID = "TICKET_INVALID"
 TICKET_WRONG_EVENT = "TICKET_WRONG_EVENT"
@@ -57,6 +58,7 @@ _STATUS_BY_CODE = {
     ORDER_ALREADY_PAID: status.HTTP_409_CONFLICT,
     PAYMENT_REJECTED: status.HTTP_402_PAYMENT_REQUIRED,
     PAYMENT_UNAVAILABLE: status.HTTP_503_SERVICE_UNAVAILABLE,
+    PAYMENT_DISABLED: status.HTTP_503_SERVICE_UNAVAILABLE,
     TICKET_ALREADY_USED: status.HTTP_409_CONFLICT,
     TICKET_INVALID: status.HTTP_404_NOT_FOUND,
     TICKET_WRONG_EVENT: status.HTTP_409_CONFLICT,
@@ -86,6 +88,10 @@ _DEFAULT_MESSAGES = {
     ORDER_ALREADY_PAID: "La orden ya fue pagada.",
     PAYMENT_REJECTED: "El pago fue rechazado.",
     PAYMENT_UNAVAILABLE: "La pasarela de pago no está disponible.",
+    PAYMENT_DISABLED: (
+        "Las compras están deshabilitadas temporalmente por problemas técnicos. "
+        "Estamos trabajando para restablecerlas; vuelve a intentarlo en un rato."
+    ),
     TICKET_ALREADY_USED: "Esta entrada ya fue utilizada.",
     TICKET_INVALID: "Entrada inválida.",
     TICKET_WRONG_EVENT: "Esta entrada corresponde a otro evento.",

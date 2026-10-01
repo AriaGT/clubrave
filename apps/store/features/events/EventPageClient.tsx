@@ -19,7 +19,8 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
   const { eventId, lines, setEvent, setQuantity, totalItems } = useCartStore();
   const [cartOpen, setCartOpen] = useState(false);
 
-  const salesPaused = event.sales_paused === true;
+  const paymentsDisabled = event.payments_disabled === true;
+  const salesPaused = event.sales_paused === true || paymentsDisabled;
 
   useEffect(() => {
     setEvent(event.id, event.slug ?? "");
@@ -66,9 +67,13 @@ export function EventPageClient({ event: initialEvent }: { event: EventDetail })
         <h2 className="font-display text-xl font-semibold">Entradas</h2>
         {salesPaused && (
           <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-3">
-            <span className="font-medium text-[var(--color-warning)]">Venta pausada temporalmente</span>
+            <span className="font-medium text-[var(--color-warning)]">
+              {paymentsDisabled ? "Compras deshabilitadas temporalmente" : "Venta pausada temporalmente"}
+            </span>
             <span className="text-sm text-[var(--color-text-muted)]">
-              El organizador suspendió la venta de entradas. Vuelve en un momento.
+              {paymentsDisabled
+                ? "Estamos presentando problemas técnicos y las compras no están disponibles por ahora. Vuelve a intentarlo en un rato."
+                : "El organizador suspendió la venta de entradas. Vuelve en un momento."}
             </span>
           </div>
         )}
