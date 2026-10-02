@@ -4,6 +4,7 @@ import { Badge, IconButton } from "@repo/ui";
 import { CalendarDays, Check, Copy, ExternalLink, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { countdownLabel } from "@/features/events/format";
 import { copyText } from "@/features/guests/share";
 import { PUBLIC_STORE_URL } from "@/lib/env";
 
@@ -14,19 +15,6 @@ const STATUS: Record<OrganizerEvent["status"], { label: string; variant: "mint" 
   DRAFT: { label: "Borrador", variant: "neutral" },
   CANCELLED: { label: "Cancelado", variant: "danger" },
 };
-
-/** «Hoy», «Mañana», «En 5 días», «Finalizado»: cuánto falta, de un vistazo. */
-function countdownLabel(startsAt: string): string {
-  const start = new Date(startsAt);
-  const today = new Date();
-  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-  const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const days = Math.round((startDay - todayDay) / 86_400_000);
-  if (days < 0) return "Finalizado";
-  if (days === 0) return "Hoy";
-  if (days === 1) return "Mañana";
-  return `En ${days} días`;
-}
 
 /** Identidad del evento: estado, cuándo, dónde y su enlace público. */
 export function EventPanelHeader({ event }: { event: OrganizerEvent }) {
