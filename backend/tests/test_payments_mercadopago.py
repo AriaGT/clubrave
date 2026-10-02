@@ -306,7 +306,7 @@ def test_checkout_creates_a_mercadopago_order_and_returns_the_checkout_url(
         data={
             "event_id": str(published_event.id),
             "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1}],
-            "buyer": {"email": "a@test.pe", "full_name": "A"},
+            "buyer": {"email": "a@test.pe", "full_name": "A", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",
@@ -362,7 +362,7 @@ def test_checkout_fails_closed_when_mercadopago_rejects_the_order(
         data={
             "event_id": str(published_event.id),
             "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1}],
-            "buyer": {"email": "a@test.pe", "full_name": "A"},
+            "buyer": {"email": "a@test.pe", "full_name": "A", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",

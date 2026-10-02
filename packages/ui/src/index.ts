@@ -30,6 +30,7 @@ export * from "./composition/Stepper";
 export * from "./composition/TopBar";
 export * from "./domain/ActivityItem";
 export * from "./domain/CartSheet";
+export * from "./domain/DocumentField";
 export * from "./domain/DangerZone";
 export * from "./domain/EventCard";
 export * from "./domain/EventHero";

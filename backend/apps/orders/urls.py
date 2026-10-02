@@ -51,6 +51,17 @@ urlpatterns = [
         name="org-order-resend-tickets",
     ),
     path("org/tickets/<str:code>/void/", views.TicketVoidView.as_view(), name="org-ticket-void"),
+    path(
+        "org/events/<uuid:event_pk>/manual-sales/",
+        views.ManualSaleCreateView.as_view(),
+        name="org-event-manual-sale",
+    ),
+    path(
+        "org/orders/<str:code>/tickets.pdf",
+        views.OrgOrderTicketsPdfView.as_view(),
+        name="org-order-tickets-pdf",
+    ),
+    path("org/tickets/<str:code>/image.png", views.OrgTicketImageView.as_view(), name="org-ticket-image"),
     # Códigos de invitado
     path(
         "org/events/<uuid:event_pk>/guest-codes/",

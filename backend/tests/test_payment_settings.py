@@ -219,7 +219,7 @@ def _checkout(client, event, ticket_type):
         data={
             "event_id": str(event.id),
             "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1}],
-            "buyer": {"email": "a@test.pe", "full_name": "Ana Pérez"},
+            "buyer": {"email": "a@test.pe", "full_name": "Ana Pérez", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",

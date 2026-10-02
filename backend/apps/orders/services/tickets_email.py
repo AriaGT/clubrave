@@ -80,7 +80,7 @@ def resends_today(order_id: UUID) -> int:
     ).count()
 
 
-def resend_tickets_email(*, order: Order, actor) -> dict:
+def resend_tickets_email(*, order: Order, actor, email: str = "") -> dict:
     """Reenviar el email de entradas de una orden pagada (H10).
 
     Solo aplica sobre `PAID` (un QR de otra orden jamás sale al correo), siempre
@@ -89,6 +89,13 @@ def resend_tickets_email(*, order: Order, actor) -> dict:
     """
     if order.status != Order.Status.PAID:
         raise DomainError("VALIDATION_ERROR", "Esta orden no tiene entradas emitidas.")
+
+    if not order.buyer_email:
+        # Venta manual registrada sin correo: se puede agregar una sola vez.
+        if not email:
+            raise DomainError("VALIDATION_ERROR", "Esta venta no tiene correo: escribe a cuál enviarla.")
+        order.buyer_email = email.lower()
+        order.save(update_fields=["buyer_email", "updated_at"])
 
     if resends_today(order.id) >= MAX_RESENDS_PER_ORDER_PER_DAY:
         raise DomainError(

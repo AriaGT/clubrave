@@ -36,7 +36,7 @@ def _ensure_capacity_or_fail(order: Order) -> None:
 
 
 @transaction.atomic
-def mark_paid(*, order_id: UUID, gateway_reference: str | None = None) -> Order:
+def mark_paid(*, order_id: UUID, gateway_reference: str | None = None, send_email: bool = True) -> Order:
     order = Order.objects.select_for_update().get(id=order_id)
 
     if order.status == Order.Status.PAID:
@@ -72,7 +72,8 @@ def mark_paid(*, order_id: UUID, gateway_reference: str | None = None) -> Order:
     order.gateway_reference = gateway_reference or order.gateway_reference
     order.save(update_fields=["status", "paid_at", "gateway_reference", "updated_at"])
 
-    transaction.on_commit(lambda: _send_tickets_email_safely(order.id))
+    if send_email and order.buyer_email:
+        transaction.on_commit(lambda: _send_tickets_email_safely(order.id))
     return order
 
 

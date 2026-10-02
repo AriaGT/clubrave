@@ -1,13 +1,30 @@
 from rest_framework import serializers
 
+from apps.orders.documents import DocumentType, InvalidDocument, normalize_document
+
 from .models import User
 
 
 class MeSerializer(serializers.ModelSerializer):
+    document_type = serializers.ChoiceField(choices=DocumentType.choices, required=False, allow_blank=True)
+
     class Meta:
         model = User
-        fields = ["id", "email", "full_name", "phone", "document_id", "marketing_consent"]
+        fields = ["id", "email", "full_name", "phone", "document_type", "document_id", "marketing_consent"]
         read_only_fields = ["id", "email"]
+
+    def validate(self, attrs):
+        # El perfil puede quedar sin documento, pero si lo tiene debe ser válido:
+        # se usa para precargar el checkout, donde es obligatorio.
+        doc_type = attrs.get("document_type", getattr(self.instance, "document_type", "")) or DocumentType.DNI
+        number = attrs.get("document_id", getattr(self.instance, "document_id", ""))
+        if number:
+            try:
+                attrs["document_id"] = normalize_document(doc_type, number)
+            except InvalidDocument as exc:
+                raise serializers.ValidationError({"document_id": str(exc)}) from exc
+            attrs["document_type"] = doc_type
+        return attrs
 
 
 class TokenPairSerializer(serializers.Serializer):

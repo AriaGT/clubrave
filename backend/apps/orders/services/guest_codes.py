@@ -185,6 +185,7 @@ def redeem_guest_code(
         buyer_email=buyer.email.lower(),
         buyer_name=buyer.full_name,
         buyer_phone=buyer.phone,
+        buyer_document_type=buyer.document_type,
         buyer_document=buyer.document_id,
         expires_at=now,
         paid_at=now,

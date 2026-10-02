@@ -664,6 +664,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/events/{event_pk}/manual-sales/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Venta manual (p. ej. por WhatsApp): la orden sale pagada con sus
+         *     entradas emitidas. El correo es opcional; las entradas se comparten
+         *     después como PDF o imagen.
+         */
+        post: operations["org_events_manual_sales_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/org/events/{event_pk}/orders/": {
         parameters: {
             query?: never;
@@ -961,6 +982,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/orders/{code}/tickets.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description PDF con todas las entradas de una venta, para compartirlo por el medio
+         *     que el organizador quiera (venta manual, cliente sin correo).
+         */
+        get: operations["org_orders_tickets.pdf_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/org/orders/{code}/void/": {
         parameters: {
             query?: never;
@@ -1059,6 +1100,23 @@ export interface paths {
         head?: never;
         /** @description Regla A6: la organización se deriva del JWT, nunca del cuerpo/query. */
         patch: operations["org_ticket_types_partial_update"];
+        trace?: never;
+    };
+    "/api/org/tickets/{code}/image.png": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Una entrada como imagen PNG (formato vertical para WhatsApp). */
+        get: operations["org_tickets_image.png_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/org/tickets/{code}/undo-checkin/": {
@@ -1183,6 +1241,7 @@ export interface components {
          *     * `PAYMENT_SETTINGS_UPDATED` - Payment Settings Updated
          *     * `ORDER_VOIDED` - Order Voided
          *     * `ORDER_REFUND_MARKED` - Order Refund Marked
+         *     * `ORDER_MANUAL_SALE` - Order Manual Sale
          *     * `TICKETS_RESENT` - Tickets Resent
          *     * `TICKET_VOIDED` - Ticket Voided
          *     * `CHECKIN_UNDONE` - Checkin Undone
@@ -1198,7 +1257,7 @@ export interface components {
          *     * `TICKET_CHECKED_IN` - Ticket Checked In
          * @enum {string}
          */
-        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "PAYMENT_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
+        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "PAYMENT_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "ORDER_MANUAL_SALE" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
         Announce: {
             subject: string;
             message: string;
@@ -1224,15 +1283,25 @@ export interface components {
             readonly reason: string;
             readonly metadata: unknown;
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         Buyer: {
             /** Format: email */
             email: string;
             full_name: string;
             /** @default  */
             phone?: string;
-            /** @default  */
-            document_id?: string;
+            /** @default DNI */
+            document_type?: components["schemas"]["DocumentTypeEnum"];
+            document_id: string;
         };
+        /**
+         * @description * `DNI` - DNI
+         *     * `CE` - Carné de extranjería
+         *     * `PASSPORT` - Pasaporte
+         * @enum {string}
+         */
+        BuyerDocumentTypeEnum: "DNI" | "CE" | "PASSPORT";
         CancelEvent: {
             reason_code: components["schemas"]["CancelEventReasonCodeEnum"];
             /** @default  */
@@ -1303,6 +1372,13 @@ export interface components {
             secret: boolean;
             help: string;
         };
+        /**
+         * @description * `DNI` - DNI
+         *     * `CE` - Carné de extranjería
+         *     * `PASSPORT` - Pasaporte
+         * @enum {string}
+         */
+        DocumentTypeEnum: "DNI" | "CE" | "PASSPORT";
         DoorEvent: {
             /** Format: uuid */
             readonly id: string;
@@ -1549,6 +1625,38 @@ export interface components {
             orders: number;
             tickets: number;
         };
+        /**
+         * @description * `CASH` - Efectivo
+         *     * `YAPE_PLIN` - Yape / Plin
+         *     * `TRANSFER` - Transferencia
+         *     * `OTHER` - Otro
+         * @enum {string}
+         */
+        ManualPaymentMethodEnum: "CASH" | "YAPE_PLIN" | "TRANSFER" | "OTHER";
+        /**
+         * @description En la venta manual el correo es opcional: sin él, las entradas se
+         *     comparten como PDF o imagen desde el panel.
+         */
+        ManualSaleBuyer: {
+            email?: string;
+            full_name: string;
+            /** @default  */
+            phone?: string;
+            /** @default DNI */
+            document_type?: components["schemas"]["DocumentTypeEnum"];
+            document_id: string;
+        };
+        ManualSaleCreate: {
+            items: components["schemas"]["CartLine"][];
+            buyer: components["schemas"]["ManualSaleBuyer"];
+            payment_method: components["schemas"]["PaymentMethodEnum"];
+            /** @default  */
+            payment_reference?: string;
+            /** Format: decimal */
+            total?: string | null;
+            /** @default false */
+            send_email?: boolean;
+        };
         Me: {
             /** Format: uuid */
             readonly id: string;
@@ -1556,6 +1664,7 @@ export interface components {
             readonly email: string;
             full_name?: string;
             phone?: string;
+            document_type?: components["schemas"]["DocumentTypeEnum"] | components["schemas"]["BlankEnum"];
             document_id?: string;
             marketing_consent?: boolean;
         };
@@ -1570,6 +1679,7 @@ export interface components {
             code: string;
             status?: components["schemas"]["Status7d7Enum"];
             is_guest?: boolean;
+            is_manual?: boolean;
             currency?: string;
             /** Format: decimal */
             subtotal: string;
@@ -1581,9 +1691,10 @@ export interface components {
             expires_at: string;
             /** Format: date-time */
             paid_at?: string | null;
-            /** Format: email */
-            buyer_email: string;
+            buyer_email?: string;
             buyer_name: string;
+            buyer_document_type?: components["schemas"]["BuyerDocumentTypeEnum"] | components["schemas"]["BlankEnum"];
+            buyer_document?: string;
             /** Format: date-time */
             voided_at?: string | null;
             void_reason?: string;
@@ -1623,13 +1734,16 @@ export interface components {
             refund_reference?: string;
             /** Format: date-time */
             refunded_at?: string | null;
-            /** Format: email */
-            buyer_email: string;
+            buyer_email?: string;
             buyer_name: string;
             buyer_phone?: string;
+            buyer_document_type?: components["schemas"]["BuyerDocumentTypeEnum"] | components["schemas"]["BlankEnum"];
             buyer_document?: string;
             gateway?: string;
             gateway_reference?: string;
+            is_manual?: boolean;
+            manual_payment_method?: components["schemas"]["ManualPaymentMethodEnum"] | components["schemas"]["BlankEnum"];
+            readonly sold_by_email: string | null;
             /** Format: date-time */
             tickets_email_sent_at?: string | null;
             readonly resends_today: number;
@@ -1668,6 +1782,9 @@ export interface components {
         OrderRefund: {
             /** @default  */
             refund_reference?: string;
+        };
+        OrderResendTickets: {
+            email?: string;
         };
         /**
          * @description Una fila de entradas para el detalle de la orden (H07): el código, su
@@ -1886,6 +2003,7 @@ export interface components {
             readonly email?: string;
             full_name?: string;
             phone?: string;
+            document_type?: components["schemas"]["DocumentTypeEnum"] | components["schemas"]["BlankEnum"];
             document_id?: string;
             marketing_consent?: boolean;
         };
@@ -1947,6 +2065,14 @@ export interface components {
             id: string;
             label: string;
         };
+        /**
+         * @description * `CASH` - Efectivo
+         *     * `YAPE_PLIN` - Yape / Plin
+         *     * `TRANSFER` - Transferencia
+         *     * `OTHER` - Otro
+         * @enum {string}
+         */
+        PaymentMethodEnum: "CASH" | "YAPE_PLIN" | "TRANSFER" | "OTHER";
         PaymentMethods: {
             methods: components["schemas"]["PaymentMethod"][];
         };
@@ -3279,6 +3405,33 @@ export interface operations {
             };
         };
     };
+    org_events_manual_sales_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualSaleCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["ManualSaleCreate"];
+                "multipart/form-data": components["schemas"]["ManualSaleCreate"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetail"];
+                };
+            };
+        };
+    };
     org_events_orders_list: {
         parameters: {
             query?: {
@@ -3286,7 +3439,7 @@ export interface operations {
                 page?: number;
                 /** @description Número de resultados a devolver por página. */
                 page_size?: number;
-                /** @description Coincidencia parcial sobre código, email o nombre del comprador (H11). */
+                /** @description Coincidencia parcial sobre código, email, nombre o documento del comprador. */
                 q?: string;
                 /** @description PENDING, PAID, FAILED, EXPIRED, CANCELLED o REFUNDED. */
                 status?: string;
@@ -3776,7 +3929,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OrderResendTickets"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrderResendTickets"];
+                "multipart/form-data": components["schemas"]["OrderResendTickets"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -3786,6 +3945,27 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    "org_orders_tickets.pdf_retrieve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
         };
@@ -4020,6 +4200,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketType"];
+                };
+            };
+        };
+    };
+    "org_tickets_image.png_retrieve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
         };

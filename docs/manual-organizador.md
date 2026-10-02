@@ -78,19 +78,55 @@ por evento al día.
 
 En el resumen del evento verás, actualizado cada 30 segundos: recaudado
 total, entradas vendidas por tipo, y cuántas ya ingresaron. En **Ventas**
-puedes buscar una orden por email o código, y exportar todo a CSV para
-contabilidad. En **Asistentes** ves quién ya entró y quién no.
+puedes buscar una orden por nombre, documento, email o código, y exportar
+todo a CSV para contabilidad (incluye el documento de cada comprador). En
+**Asistentes** ves quién ya entró y quién no.
+
+### Documento de identidad obligatorio
+
+Toda compra pide **DNI** (o carné de extranjería / pasaporte para
+extranjeros), también los canjes de códigos de invitado y las ventas
+manuales. Lo ves en el detalle de cada venta y en el CSV. Si sospechas de
+alguien, búscalo por su número en **Ventas** y pide el documento en la puerta
+para compararlo.
 
 ### Buscar una venta con alguien esperando
 
-En **Ventas**, el buscador de arriba filtra por **código, email o nombre** a
-medida que escribes. Las pestañas de estado (Todas · Pagadas · Pendientes ·
+En **Ventas**, el buscador de arriba filtra por **nombre, documento, email o
+código** a medida que escribes. Las pestañas de estado (Todas · Pagadas · Pendientes ·
 Anuladas) traen el número de cada una.
 
 Toca cualquier fila para abrir el **detalle de la orden**: comprador completo,
 qué compró, cuánto pagó, por qué pasarela, si le llegó el email de entradas y
 cuándo, y la lista de entradas emitidas con su estado (Válida / Ingresó /
 Anulada) y, si ingresó, la hora y quién la validó.
+
+## Ventas manuales (WhatsApp, en persona)
+
+Si alguien te compra por fuera de la web, en **Ventas → Venta manual**:
+
+1. Elige las entradas y cantidades. Puedes vender tipos ocultos y aunque la
+   venta web esté pausada; lo único que se respeta es el cupo.
+2. Datos del cliente: nombre y **documento** (obligatorio). Teléfono y email
+   son opcionales.
+3. Cómo te pagó (Yape/Plin, efectivo, transferencia u otro), el **monto que
+   realmente cobraste** (por defecto el precio de lista; cámbialo si hiciste
+   descuento) y una referencia opcional, como el número de operación.
+4. **Registrar venta**: queda pagada y las entradas se emiten al instante.
+
+El email es opcional: si lo pusiste, puedes activar el envío por correo. Si
+no, en el detalle de la venta, sección **Entregar entradas**:
+
+- **Compartir** el PDF con todas las entradas: en el celular abre el menú de
+  compartir para mandarlo directo por WhatsApp; en la computadora se
+  descarga para que lo adjuntes.
+- **Imagen** de cada entrada (formato vertical, ideal para WhatsApp). Si el
+  cliente compró varias, puedes mandar una imagen a cada acompañante.
+- **Enviar por correo**: si la venta no tenía email, lo escribes ahí (se
+  guarda una sola vez y luego no se puede cambiar).
+
+Las ventas manuales aparecen con la etiqueta **Manual** en la lista y suman
+al recaudado por el monto que cobraste.
 
 ## Escanear en la puerta
 
@@ -244,9 +280,12 @@ para tu contador.
 ### Reenviar las entradas a alguien que dice que no le llegaron
 
 Es el reclamo más común y casi siempre está en spam. En el detalle de la
-orden, **Reenviar entradas**. Se manda al mismo email de la compra (no se
-puede cambiar el destinatario, por seguridad) y te muestra cuándo se envió la
-última vez. Máximo 5 reenvíos por orden al día.
+orden, sección **Entregar entradas → Enviar por correo**. Se manda al mismo
+email de la compra (no se puede cambiar el destinatario, por seguridad) y te
+muestra cuándo se envió la última vez. Máximo 5 reenvíos por orden al día.
+
+Si el problema es el correo, desde la misma sección puedes mandarle el PDF o
+la imagen de la entrada por WhatsApp.
 
 Si aun así insiste, recuérdale que **las entradas siempre están en "Mi cuenta"
 de la tienda**, aunque el email se haya perdido.
@@ -331,6 +370,24 @@ puede cambiarlo.
 
 Lo que dejes en blanco no se muestra. Los cambios tardan hasta 5 minutos en
 verse en la tienda.
+
+## Medios de pago
+
+En **Ajustes → Configuración avanzada → Medios de pago** (solo el dueño)
+eliges cómo cobra la tienda:
+
+- **Pasarelas reales**: activa Izipay (tarjeta), Mercado Pago o ambas. Si hay
+  más de una, el comprador elige con cuál pagar y puede cambiar si una le
+  falla.
+- **Simulador**: solo para pruebas; aprueba sin cobrar. Nunca lo dejes en
+  producción.
+- **Deshabilitado**: corta las ventas al instante (la tienda avisa de un
+  problema técnico). Útil si algo falla con los cobros.
+
+Al activar una pasarela te pide sus credenciales (las sacas del panel del
+proveedor). Se validan con el proveedor al guardar y se guardan cifradas:
+después solo verás los últimos 4 caracteres. Copia la **URL de
+notificaciones** que muestra cada pasarela y regístrala en su panel.
 
 ## ¿Algo no cuadra?
 

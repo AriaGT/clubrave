@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge, Button, EmptyState, FilterChips, Input, Skeleton, TopBar } from "@repo/ui";
-import { ChevronRight, Download, Receipt, Search } from "lucide-react";
+import { ChevronRight, Download, HandCoins, Receipt, Search } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -65,9 +65,14 @@ export default function EventSalesPage() {
         subtitle={event?.title}
         onBack={() => router.push(`/events/${id}`)}
         action={
-          <Button size="sm" variant="secondary" loading={downloadCsv.isPending} onClick={() => downloadCsv.mutate()}>
-            <Download className="h-4 w-4" aria-hidden /> Exportar
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" loading={downloadCsv.isPending} onClick={() => downloadCsv.mutate()}>
+              <Download className="h-4 w-4" aria-hidden /> Exportar
+            </Button>
+            <Button size="sm" onClick={() => router.push(`/events/${id}/sales/new`)}>
+              <HandCoins className="h-4 w-4" aria-hidden /> Venta manual
+            </Button>
+          </div>
         }
       />
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 p-[var(--space-4)]">
@@ -76,7 +81,7 @@ export default function EventSalesPage() {
           <Input
             className="pl-9"
             aria-label="Buscar ventas"
-            placeholder="Buscar por email, código o nombre…"
+            placeholder="Buscar por nombre, documento, email o código…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -108,6 +113,7 @@ export default function EventSalesPage() {
               <span className="font-mono text-sm">{order.code}</span>
               <span className="truncate text-sm text-[var(--color-text-muted)]">
                 {order.buyer_name || order.buyer_email}
+                {order.buyer_document ? ` · ${order.buyer_document}` : ""}
               </span>
               <span className="text-xs text-[var(--color-text-muted)]">{formatDate(order.created_at)}</span>
             </div>
@@ -115,7 +121,10 @@ export default function EventSalesPage() {
               {order.is_guest ? (
                 <Badge variant="accent">Invitado</Badge>
               ) : (
-                <span className="font-mono text-sm">S/ {order.total}</span>
+                <>
+                  {order.is_manual && <Badge variant="neutral">Manual</Badge>}
+                  <span className="font-mono text-sm">S/ {order.total}</span>
+                </>
               )}
               <Badge variant={STATUS_VARIANT[order.status ?? ""] ?? "neutral"}>
                 {STATUS_LABEL[order.status ?? ""] ?? order.status}

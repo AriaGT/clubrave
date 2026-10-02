@@ -46,6 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=16, choices=Role.choices, default=Role.CUSTOMER)
     full_name = models.CharField(max_length=150, blank=True)
     phone = models.CharField(max_length=32, blank=True)
+    document_type = models.CharField(max_length=10, blank=True)  # DNI | CE | PASSPORT
     document_id = models.CharField(max_length=32, blank=True)
     marketing_consent = models.BooleanField(default=False)
 

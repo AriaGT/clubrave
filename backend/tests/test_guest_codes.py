@@ -487,7 +487,7 @@ def test_redeem_endpoint_requires_customer_session(published_event, vip, organiz
         {
             "code": guest_code.code,
             "event_id": str(published_event.id),
-            "buyer": {"email": "x@test.pe", "full_name": "X"},
+            "buyer": {"email": "x@test.pe", "full_name": "X", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",

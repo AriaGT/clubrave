@@ -6,6 +6,7 @@ import {
   Badge,
   Button,
   ConfirmDialog,
+  documentLabel,
   FieldError,
   Input,
   Label,
@@ -16,8 +17,8 @@ import {
   TopBar,
   type ConfirmDialogValues,
 } from "@repo/ui";
-import { Ban, CircleCheck, CreditCard, Gift, Receipt, Send, Ticket, Undo2, User } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { Ban, CircleCheck, CreditCard, Gift, HandCoins, Receipt, Share2, Ticket, Undo2, User } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type * as React from "react";
 
@@ -26,11 +27,12 @@ import {
   useEvent,
   useEventOrder,
   useMarkRefunded,
-  useResendTickets,
   useVoidOrder,
   type OrderVoidReasonCode,
 } from "@/features/events/hooks";
 import { TicketActions } from "@/features/events/TicketActions";
+import { manualPaymentLabel } from "@/features/sales/hooks";
+import { ShareTickets } from "@/features/sales/ShareTickets";
 
 const STATUS_VARIANT: Record<string, "neutral" | "mint" | "danger" | "warning"> = {
   PENDING: "warning",
@@ -63,8 +65,6 @@ const VOID_REASONS: { value: OrderVoidReasonCode; label: string }[] = [
   { value: "ORGANIZER_ERROR", label: "Error del organizador" },
   { value: "OTHER", label: "Otro" },
 ];
-
-const RESEND_LIMIT_PER_DAY = 5;
 
 function formatDate(value?: string | null): string {
   if (!value) return "—";
@@ -107,12 +107,13 @@ function Section({
 export default function OrderDetailPage() {
   const { id, code } = useParams<{ id: string; code: string }>();
   const router = useRouter();
+  // Recién registrada desde «Venta manual»: se destaca cómo entregar las entradas.
+  const justCreated = useSearchParams().get("nueva") === "1";
   const { data: order, isLoading } = useEventOrder(id, code);
   const { data: event } = useEvent(id);
 
   const voidOrder = useVoidOrder(code);
   const markRefunded = useMarkRefunded(code);
-  const resendTickets = useResendTickets(code);
 
   const [voidOpen, setVoidOpen] = useState(false);
   const [restock, setRestock] = useState(true);
@@ -122,8 +123,6 @@ export default function OrderDetailPage() {
   const [refundReference, setRefundReference] = useState("");
   const [refundSuccess, setRefundSuccess] = useState(false);
 
-  const [resendSentAt, setResendSentAt] = useState<string | null>(null);
-  const [resendNotice, setResendNotice] = useState(false);
 
   const checkedIn = useMemo(
     () => order?.tickets.filter((t) => t.status === "CHECKED_IN").length ?? 0,
@@ -167,17 +166,8 @@ export default function OrderDetailPage() {
     );
   }
 
-  async function handleResend() {
-    await resendTickets.mutateAsync(undefined, {
-      onSuccess: () => {
-        setResendSentAt(new Date().toISOString());
-        setResendNotice(true);
-      },
-    });
-  }
-
   const voidable = order.status === "PAID" || order.status === "PENDING";
-  const canResend = order.status === "PAID";
+  const canShare = order.status === "PAID";
 
   return (
     <>
@@ -202,10 +192,21 @@ export default function OrderDetailPage() {
             Reembolso registrado. La venta pasó a <strong>Reembolsada</strong>.
           </p>
         )}
-        {resendNotice && resendSentAt && (
+        {justCreated && (
           <p role="status" className="rounded-[var(--radius-md)] border border-[var(--color-mint)]/40 bg-[var(--color-mint-soft)] p-3 text-sm">
-            Entradas reenviadas al email del comprador ({formatDate(resendSentAt)}).
+            Venta registrada y entradas emitidas. Compártelas con el cliente desde «Entregar entradas».
           </p>
+        )}
+        {order.is_manual && (
+          <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 text-sm">
+            <HandCoins className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-text-subtle)]" aria-hidden />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium">Venta manual · {manualPaymentLabel(order.manual_payment_method)}</span>
+              <span className="text-[var(--color-text-muted)]">
+                Cobrada fuera de la plataforma{order.sold_by_email ? ` · registrada por ${order.sold_by_email}` : ""}
+              </span>
+            </div>
+          </div>
         )}
         {order.is_guest && (
           <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] p-3 text-sm">
@@ -231,21 +232,21 @@ export default function OrderDetailPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
-          <ActionGroup title="Acciones">
-            <ActionRow
-              icon={<Send />}
-              title="Reenviar entradas"
-              description={
-                canResend
-                  ? `Al email del comprador · ${order.resends_today} de ${RESEND_LIMIT_PER_DAY} reenvíos usados hoy`
-                  : "Solo se puede reenviar en ventas pagadas"
-              }
-              disabled={!canResend}
-              loading={resendTickets.isPending}
-              hideChevron
-              onClick={handleResend}
+        {canShare && (
+          <Section icon={<Share2 aria-hidden />} title="Entregar entradas">
+            <ShareTickets
+              orderCode={order.code}
+              eventTitle={event?.title ?? ""}
+              buyerName={order.buyer_name}
+              buyerEmail={order.buyer_email ?? ""}
+              resendsToday={order.resends_today}
+              tickets={order.tickets}
             />
+          </Section>
+        )}
+
+        {(voidable || order.status === "CANCELLED") && (
+          <ActionGroup title="Acciones">
             {order.status === "CANCELLED" && (
               <ActionRow
                 icon={<Undo2 />}
@@ -264,21 +265,18 @@ export default function OrderDetailPage() {
               />
             )}
           </ActionGroup>
-          {resendTickets.error && (
-            <p className="px-1 text-sm text-[var(--color-danger)]">{apiErrorMessage(resendTickets.error)}</p>
-          )}
-        </div>
+        )}
 
         <Section icon={<User aria-hidden />} title="Comprador">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
             <dt className="text-[var(--color-text-muted)]">Nombre</dt>
             <dd>{order.buyer_name}</dd>
+            <dt className="text-[var(--color-text-muted)]">{documentLabel(order.buyer_document_type)}</dt>
+            <dd className="font-mono">{order.buyer_document || "—"}</dd>
             <dt className="text-[var(--color-text-muted)]">Email</dt>
-            <dd className="break-all">{order.buyer_email}</dd>
+            <dd className="break-all">{order.buyer_email || "—"}</dd>
             <dt className="text-[var(--color-text-muted)]">Teléfono</dt>
             <dd>{order.buyer_phone || "—"}</dd>
-            <dt className="text-[var(--color-text-muted)]">Documento</dt>
-            <dd>{order.buyer_document || "—"}</dd>
           </dl>
         </Section>
 
@@ -303,7 +301,7 @@ export default function OrderDetailPage() {
               </div>
             ) : null}
             <div className="flex items-center justify-between text-base font-medium">
-              <span>Total</span>
+              <span>{order.is_manual && order.total !== order.subtotal ? "Cobrado" : "Total"}</span>
               <span className="font-mono">S/ {order.total}</span>
             </div>
           </div>
@@ -312,8 +310,8 @@ export default function OrderDetailPage() {
         {(order.gateway || order.gateway_reference || order.paid_at) && (
           <Section icon={<CreditCard aria-hidden />} title="Pago">
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-              <dt className="text-[var(--color-text-muted)]">Pasarela</dt>
-              <dd>{order.gateway || "—"}</dd>
+              <dt className="text-[var(--color-text-muted)]">{order.is_manual ? "Medio" : "Pasarela"}</dt>
+              <dd>{order.is_manual ? manualPaymentLabel(order.manual_payment_method) : order.gateway || "—"}</dd>
               <dt className="text-[var(--color-text-muted)]">Referencia</dt>
               <dd className="break-all font-mono">{order.gateway_reference || "—"}</dd>
               <dt className="text-[var(--color-text-muted)]">Pagada</dt>

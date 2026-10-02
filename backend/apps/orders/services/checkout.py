@@ -32,6 +32,7 @@ class BuyerData:
     full_name: str
     phone: str = ""
     document_id: str = ""
+    document_type: str = ""
 
 
 @transaction.atomic
@@ -42,14 +43,22 @@ def create_order(
     buyer: BuyerData,
     customer=None,
     terms_accepted: bool,
+    manual: bool = False,
 ) -> Order:
+    """Orden `PENDING` con el inventario retenido.
+
+    `manual=True` es la venta que registra el organizador (ver
+    `manual_sales.py`): solo exige evento publicado y cupo. Puede vender con
+    la venta web pausada, fuera de su ventana, tipos ocultos y más del máximo
+    por compra; quien vende es el dueño del evento, no un comprador anónimo.
+    """
     if event.status == Event.Status.CANCELLED:
         raise DomainError("EVENT_CANCELLED", "Este evento fue cancelado y la venta está cerrada.")
     if event.status != Event.Status.PUBLISHED:
         raise DomainError("EVENT_NOT_PUBLISHED")
-    if event.sales_paused:
+    if event.sales_paused and not manual:
         raise DomainError("SALES_PAUSED")
-    if not terms_accepted:
+    if not terms_accepted and not manual:
         raise DomainError("VALIDATION_ERROR", "Debes aceptar los términos.")
     if not items:
         raise DomainError("VALIDATION_ERROR", "El carrito está vacío.")
@@ -69,11 +78,11 @@ def create_order(
 
     for line in items:
         tt = ticket_types.get(str(line.ticket_type_id))
-        if tt is None or not tt.is_active:
+        if tt is None or (not tt.is_active and not manual):
             raise DomainError("TICKET_INVALID")
-        if not tt.sales_open_now():
+        if not manual and not tt.sales_open_now():
             raise DomainError("SALES_CLOSED", f"La venta de {tt.name} no está abierta.")
-        if line.quantity < 1 or line.quantity > tt.max_per_order:
+        if line.quantity < 1 or (line.quantity > tt.max_per_order and not manual):
             raise DomainError(
                 "VALIDATION_ERROR", f"Máximo {tt.max_per_order} por compra en {tt.name}."
             )
@@ -111,10 +120,11 @@ def create_order(
         buyer_email=buyer.email.lower(),
         buyer_name=buyer.full_name,
         buyer_phone=buyer.phone,
+        buyer_document_type=buyer.document_type,
         buyer_document=buyer.document_id,
         expires_at=timezone.now() + timedelta(minutes=settings.ORDER_HOLD_MINUTES),
-        terms_accepted_at=timezone.now(),
-        terms_version=settings.TERMS_VERSION,
+        terms_accepted_at=None if manual else timezone.now(),
+        terms_version="" if manual else settings.TERMS_VERSION,
     )
     for item in order_items:
         item.order = order

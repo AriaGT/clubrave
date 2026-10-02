@@ -343,9 +343,11 @@ export function useResendTickets(code: string) {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    /** `email` solo se usa si la venta no tiene correo (venta manual sin email). */
+    mutationFn: async (email?: string) => {
       const { data, error } = await api.POST("/api/org/orders/{code}/resend-tickets/", {
         params: { path: { code } },
+        body: { email: email ?? "" },
       });
       if (error) throw error as ApiErrorShape;
       return data as { sent: boolean; resends_today: number };

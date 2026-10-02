@@ -17,12 +17,16 @@ def client():
 
 @pytest.fixture
 def pending_order(published_event, ticket_type):
-    return create_order(
+    order = create_order(
         event=published_event,
         items=[CartLine(ticket_type_id=str(ticket_type.id), quantity=2)],
         buyer=BUYER,
         terms_accepted=True,
     )
+    # Con la sesión del simulador ya abierta, como tras el checkout.
+    order.gateway = "fake"
+    order.save(update_fields=["gateway"])
+    return order
 
 
 def _ipn(client, order, approved, amount_cents=None, currency="PEN"):
@@ -90,7 +94,7 @@ def test_checkout_view_creates_pending_order_with_fake_gateway_session(client, p
         data={
             "event_id": str(published_event.id),
             "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1}],
-            "buyer": {"email": "a@test.pe", "full_name": "A"},
+            "buyer": {"email": "a@test.pe", "full_name": "A", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",
@@ -122,7 +126,7 @@ def test_checkout_view_ignores_client_supplied_price(client, published_event, ti
         data={
             "event_id": str(published_event.id),
             "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1, "unit_price": "0.01"}],
-            "buyer": {"email": "a@test.pe", "full_name": "A"},
+            "buyer": {"email": "a@test.pe", "full_name": "A", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",
@@ -140,7 +144,7 @@ def test_checkout_is_blocked_when_payments_are_disabled(
         data={
             "event_id": str(published_event.id),
             "items": [{"ticket_type_id": str(ticket_type.id), "quantity": 1}],
-            "buyer": {"email": "a@test.pe", "full_name": "A"},
+            "buyer": {"email": "a@test.pe", "full_name": "A", "document_id": "12345678"},
             "terms_accepted": True,
         },
         format="json",

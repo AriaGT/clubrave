@@ -23,7 +23,12 @@ export function useUpdateMe() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { full_name?: string; phone?: string; document_id?: string }) => {
+    mutationFn: async (body: {
+      full_name?: string;
+      phone?: string;
+      document_type?: "DNI" | "CE" | "PASSPORT";
+      document_id?: string;
+    }) => {
       const { data, error } = await api.PATCH("/api/me/", { body });
       if (error) throw error;
       return data;

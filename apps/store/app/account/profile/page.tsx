@@ -1,6 +1,15 @@
 "use client";
 
-import { Button, FieldError, Input, Label } from "@repo/ui";
+import {
+  Button,
+  DocumentField,
+  type DocumentType,
+  documentError,
+  FieldError,
+  Input,
+  Label,
+  normalizeDocument,
+} from "@repo/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -16,7 +25,9 @@ export default function AccountProfilePage() {
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [documentType, setDocumentType] = useState<DocumentType>("DNI");
   const [documentId, setDocumentId] = useState("");
+  const [documentInvalid, setDocumentInvalid] = useState<string>();
   const [saved, setSaved] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -24,13 +35,24 @@ export default function AccountProfilePage() {
     if (me) {
       setFullName(me.full_name ?? "");
       setPhone(me.phone ?? "");
+      setDocumentType((me.document_type as DocumentType) || "DNI");
       setDocumentId(me.document_id ?? "");
     }
   }, [me]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    await updateMe.mutateAsync({ full_name: fullName, phone, document_id: documentId });
+    // Vacío se permite (no es obligatorio tenerlo en el perfil); si se
+    // escribe, tiene que ser válido porque se usa para precargar el checkout.
+    const invalid = documentId.trim() ? documentError(documentType, documentId) : undefined;
+    setDocumentInvalid(invalid);
+    if (invalid) return;
+    await updateMe.mutateAsync({
+      full_name: fullName,
+      phone,
+      document_type: documentType,
+      document_id: normalizeDocument(documentId),
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -59,10 +81,14 @@ export default function AccountProfilePage() {
           <Label htmlFor="profile-name">Nombre completo</Label>
           <Input id="profile-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="profile-doc">DNI</Label>
-          <Input id="profile-doc" value={documentId} onChange={(e) => setDocumentId(e.target.value)} />
-        </div>
+        <DocumentField
+          id="profile-doc"
+          type={documentType}
+          onTypeChange={setDocumentType}
+          inputProps={{ value: documentId, onChange: (e) => setDocumentId(e.target.value) }}
+          error={documentInvalid}
+          hint="Se completa solo al comprar tus entradas."
+        />
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="profile-phone">Teléfono</Label>
           <Input id="profile-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />

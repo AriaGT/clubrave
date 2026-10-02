@@ -6,10 +6,14 @@ import {
   Badge,
   Button,
   Checkbox,
+  DocumentField,
+  type DocumentType,
+  documentError,
   EmptyState,
   FieldError,
   Input,
   Label,
+  normalizeDocument,
   Skeleton,
   useAsyncAction,
 } from "@repo/ui";
@@ -31,9 +35,14 @@ const emailSchema = z.string().email("Escribe un email válido.");
 // Los mismos datos del asistente que en el checkout normal.
 const attendeeSchema = z.object({
   full_name: z.string().min(2, "Falta tu nombre."),
-  document_id: z.string().optional(),
+  // Obligatorio: eventos nocturnos, el organizador revisa quién entra.
+  document_type: z.enum(["DNI", "CE", "PASSPORT"]),
+  document_id: z.string(),
   phone: z.string().optional(),
   terms: z.boolean().refine((v) => v === true, { message: "Debes aceptar los términos." }),
+}).superRefine((values, ctx) => {
+  const message = documentError(values.document_type, values.document_id);
+  if (message) ctx.addIssue({ code: "custom", path: ["document_id"], message });
 });
 
 type AttendeeValues = z.infer<typeof attendeeSchema>;
@@ -87,12 +96,20 @@ export function GuestRedeemFlow() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
-  } = useForm<AttendeeValues>({ resolver: zodResolver(attendeeSchema) });
+  } = useForm<AttendeeValues>({
+    resolver: zodResolver(attendeeSchema),
+    defaultValues: { document_type: "DNI", document_id: "" },
+  });
+  const documentType = watch("document_type");
 
   useEffect(() => {
     if (me?.full_name) setValue("full_name", me.full_name);
-    if (me?.document_id) setValue("document_id", me.document_id);
+    if (me?.document_id) {
+      setValue("document_type", (me.document_type as DocumentType) || "DNI");
+      setValue("document_id", me.document_id);
+    }
     if (me?.phone) setValue("phone", me.phone);
   }, [me, setValue]);
 
@@ -131,7 +148,8 @@ export function GuestRedeemFlow() {
           email: me?.email ?? email,
           full_name: values.full_name,
           phone: values.phone,
-          document_id: values.document_id,
+          document_type: values.document_type,
+          document_id: normalizeDocument(values.document_id),
         },
       });
       router.push(`/checkout/${order.code}/success`);
@@ -260,10 +278,13 @@ export function GuestRedeemFlow() {
             <Input id="full_name" {...register("full_name")} />
             <FieldError>{errors.full_name?.message}</FieldError>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="document_id">DNI (opcional)</Label>
-            <Input id="document_id" {...register("document_id")} />
-          </div>
+          <DocumentField
+            type={documentType}
+            onTypeChange={(type) => setValue("document_type", type, { shouldValidate: !!errors.document_id })}
+            inputProps={register("document_id")}
+            error={errors.document_id?.message}
+            hint="Lo pedimos en la puerta junto con tu entrada."
+          />
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="phone">Teléfono (opcional)</Label>
             <Input id="phone" {...register("phone")} />

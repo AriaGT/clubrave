@@ -28,9 +28,11 @@ from .serializers import (
     GuestCodeValidateResponseSerializer,
     GuestCodeValidateSerializer,
     GuestCodeVoidSerializer,
+    ManualSaleCreateSerializer,
     OrderDetailSerializer,
     OrderPublicStatusSerializer,
     OrderRefundSerializer,
+    OrderResendTicketsSerializer,
     OrderSerializer,
     OrderVoidSerializer,
     PaymentMethodsSerializer,
@@ -46,6 +48,7 @@ from .services.guest_codes import (
     validate_guest_code,
     void_guest_code,
 )
+from .services.manual_sales import create_manual_sale
 from .services.tickets_email import resend_tickets_email
 from .services.void import mark_refunded, void_order, void_ticket
 
@@ -140,13 +143,20 @@ class CheckoutCreateView(APIView):
         release_expired_orders()  # autolimpieza oportunista (§5.5)
 
         customer = request.user if request.user.is_authenticated else None
+        buyer = BuyerData(**data["buyer"])
         order = create_order(
             event=event,
             items=[CartLine(**item) for item in data["items"]],
-            buyer=BuyerData(**data["buyer"]),
+            buyer=buyer,
             customer=customer,
             terms_accepted=data["terms_accepted"],
         )
+        if customer is not None and not customer.document_id:
+            # Primera compra con sesión: el documento queda en el perfil para
+            # precargar las siguientes.
+            customer.document_type = buyer.document_type
+            customer.document_id = buyer.document_id
+            customer.save(update_fields=["document_type", "document_id"])
 
         # Un solo medio: la sesión se abre ya, como siempre. Varios: el
         # comprador elige en la pantalla de pago (PaymentSessionCreateView).
@@ -262,7 +272,7 @@ class MyTicketsView(generics.ListAPIView):
                 "q",
                 str,
                 required=False,
-                description="Coincidencia parcial sobre código, email o nombre del comprador (H11).",
+                description="Coincidencia parcial sobre código, email, nombre o documento del comprador.",
             ),
         ]
     )
@@ -301,7 +311,10 @@ class OrganizerEventOrdersView(generics.ListAPIView):
         q = (self.request.query_params.get("q") or "").strip()
         if q:
             qs = qs.filter(
-                Q(code__icontains=q) | Q(buyer_email__icontains=q) | Q(buyer_name__icontains=q)
+                Q(code__icontains=q)
+                | Q(buyer_email__icontains=q)
+                | Q(buyer_name__icontains=q)
+                | Q(buyer_document__icontains=q.replace(" ", "").upper())
             )
 
         statuses = [
@@ -376,7 +389,7 @@ class OrderResendTicketsView(APIView):
 
     permission_classes = [IsOrganizer]
 
-    @extend_schema(request=None, responses=OpenApiTypes.OBJECT)
+    @extend_schema(request=OrderResendTicketsSerializer, responses=OpenApiTypes.OBJECT)
     def post(self, request, code):
         order = get_object_or_404(
             Order.objects.select_related("event__organization").filter(
@@ -384,8 +397,90 @@ class OrderResendTicketsView(APIView):
             ),
             code=code,
         )
-        result = resend_tickets_email(order=order, actor=request.user)
+        serializer = OrderResendTicketsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = resend_tickets_email(
+            order=order, actor=request.user, email=serializer.validated_data["email"]
+        )
         return Response(result, status=status.HTTP_200_OK)
+
+
+def _org_paid_order(request, code: str) -> Order:
+    order = get_object_or_404(
+        Order.objects.select_related("event").filter(event__organization_id=request.auth["organization_id"]),
+        code=code,
+    )
+    if order.status != Order.Status.PAID:
+        raise DomainError("VALIDATION_ERROR", "Esta orden no tiene entradas emitidas.")
+    return order
+
+
+class ManualSaleCreateView(APIView):
+    """Venta manual (p. ej. por WhatsApp): la orden sale pagada con sus
+    entradas emitidas. El correo es opcional; las entradas se comparten
+    después como PDF o imagen."""
+
+    permission_classes = [IsOrganizer]
+
+    @extend_schema(request=ManualSaleCreateSerializer, responses={201: OrderDetailSerializer})
+    def post(self, request, event_pk):
+        event = get_object_or_404(
+            Event.objects.select_related("organization"),
+            pk=event_pk,
+            organization_id=request.auth["organization_id"],
+        )
+        serializer = ManualSaleCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        order = create_manual_sale(
+            event=event,
+            items=[CartLine(**item) for item in data["items"]],
+            buyer=BuyerData(**data["buyer"]),
+            payment_method=data["payment_method"],
+            payment_reference=data["payment_reference"],
+            total=data.get("total"),
+            send_email=data["send_email"],
+            actor=request.user,
+        )
+        return Response(OrderDetailSerializer(order).data, status=status.HTTP_201_CREATED)
+
+
+class OrgOrderTicketsPdfView(APIView):
+    """PDF con todas las entradas de una venta, para compartirlo por el medio
+    que el organizador quiera (venta manual, cliente sin correo)."""
+
+    permission_classes = [IsOrganizer]
+
+    @extend_schema(responses={200: OpenApiTypes.BINARY})
+    def get(self, request, code):
+        from .services.tickets_pdf import build_tickets_pdf
+
+        order = _org_paid_order(request, code)
+        response = HttpResponse(build_tickets_pdf(order), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="entradas-{order.code}.pdf"'
+        return response
+
+
+class OrgTicketImageView(APIView):
+    """Una entrada como imagen PNG (formato vertical para WhatsApp)."""
+
+    permission_classes = [IsOrganizer]
+
+    @extend_schema(responses={200: OpenApiTypes.BINARY})
+    def get(self, request, code):
+        from .services.tickets_pdf import build_ticket_image
+
+        ticket = get_object_or_404(
+            Ticket.objects.select_related("order__event", "ticket_type").filter(
+                order__event__organization_id=request.auth["organization_id"],
+                order__status=Order.Status.PAID,
+                status=Ticket.Status.VALID,
+            ),
+            code=code,
+        )
+        response = HttpResponse(build_ticket_image(ticket), content_type="image/png")
+        response["Content-Disposition"] = f'attachment; filename="entrada-{ticket.code}.png"'
+        return response
 
 
 class TicketVoidView(APIView):
@@ -421,16 +516,20 @@ class OrganizerEventOrdersCsvView(APIView):
         writer = csv.writer(response)
         writer.writerow(
             [
-                "codigo", "estado", "email", "nombre", "total", "moneda",
+                "codigo", "estado", "email", "nombre", "tipo_documento", "documento", "telefono",
+                "total", "moneda", "canal", "medio_pago_manual",
                 "referencia_pasarela", "creado", "motivo_anulacion", "anulada_en",
                 "referencia_reembolso", "invitado",
             ]
         )
         for order in orders:
+            channel = "invitado" if order.is_guest else "manual" if order.is_manual else "web"
             writer.writerow(
                 [
-                    order.code, order.status, order.buyer_email, order.buyer_name, order.total,
-                    order.currency, order.gateway_reference, order.created_at.isoformat(),
+                    order.code, order.status, order.buyer_email, order.buyer_name,
+                    order.buyer_document_type, order.buyer_document, order.buyer_phone,
+                    order.total, order.currency, channel, order.get_manual_payment_method_display(),
+                    order.gateway_reference, order.created_at.isoformat(),
                     order.void_reason,
                     order.voided_at.isoformat() if order.voided_at else "",
                     order.refund_reference,

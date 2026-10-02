@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiErrorShape } from "@repo/api-client";
+import type { DocumentType } from "@repo/ui";
 import { useMutation } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api";
@@ -18,7 +19,7 @@ export function useRequestCode() {
 export interface CreateOrderInput {
   eventId: string;
   items: { ticket_type_id: string; quantity: number }[];
-  buyer: { email: string; full_name: string; phone?: string; document_id?: string };
+  buyer: { email: string; full_name: string; phone?: string; document_type: DocumentType; document_id: string };
   termsAccepted: boolean;
 }
 
@@ -34,7 +35,8 @@ export function useCreateOrder() {
             email: input.buyer.email,
             full_name: input.buyer.full_name,
             phone: input.buyer.phone ?? "",
-            document_id: input.buyer.document_id ?? "",
+            document_type: input.buyer.document_type,
+            document_id: input.buyer.document_id,
           },
           terms_accepted: input.termsAccepted,
         },

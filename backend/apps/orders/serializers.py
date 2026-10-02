@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from .documents import DocumentType, InvalidDocument, normalize_document
 from .models import GuestCode, Order, OrderItem, Ticket
 from .services.checkout import BuyerData, CartLine
 from .services.codes import sign_ticket_code
@@ -92,8 +93,8 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            "code", "status", "is_guest", "currency", "subtotal", "service_fee", "total",
-            "expires_at", "paid_at", "buyer_email", "buyer_name",
+            "code", "status", "is_guest", "is_manual", "currency", "subtotal", "service_fee", "total",
+            "expires_at", "paid_at", "buyer_email", "buyer_name", "buyer_document_type", "buyer_document",
             "voided_at", "void_reason", "refunded_at", "refund_reference",
             "items", "tickets", "created_at",
         ]
@@ -122,6 +123,9 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     tickets = OrderTicketSerializer(many=True, read_only=True)
     resends_today = serializers.SerializerMethodField()
     guest_code = serializers.SerializerMethodField()
+    sold_by_email = serializers.CharField(
+        source="sold_by.email", read_only=True, allow_null=True, default=None
+    )
 
     class Meta:
         model = Order
@@ -129,8 +133,9 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "code", "status", "is_guest", "guest_code", "currency", "subtotal", "service_fee", "total",
             "created_at", "paid_at", "voided_at", "void_reason_code", "void_reason",
             "refund_reference", "refunded_at",
-            "buyer_email", "buyer_name", "buyer_phone", "buyer_document",
+            "buyer_email", "buyer_name", "buyer_phone", "buyer_document_type", "buyer_document",
             "gateway", "gateway_reference",
+            "is_manual", "manual_payment_method", "sold_by_email",
             "tickets_email_sent_at", "resends_today",
             "items", "tickets",
         ]
@@ -181,7 +186,16 @@ class BuyerSerializer(serializers.Serializer):
     email = serializers.EmailField()
     full_name = serializers.CharField(max_length=150)
     phone = serializers.CharField(max_length=32, required=False, allow_blank=True, default="")
-    document_id = serializers.CharField(max_length=32, required=False, allow_blank=True, default="")
+    # Obligatorio en toda venta (ver documents.py). DNI por defecto.
+    document_type = serializers.ChoiceField(choices=DocumentType.choices, default=DocumentType.DNI)
+    document_id = serializers.CharField(max_length=32)
+
+    def validate(self, attrs):
+        try:
+            attrs["document_id"] = normalize_document(attrs["document_type"], attrs["document_id"])
+        except InvalidDocument as exc:
+            raise serializers.ValidationError({"document_id": str(exc)}) from exc
+        return attrs
 
     def to_buyer_data(self) -> BuyerData:
         return BuyerData(**self.validated_data)
@@ -297,3 +311,28 @@ class GuestCodeRedeemSerializer(serializers.Serializer):
     event_id = serializers.UUIDField()
     buyer = BuyerSerializer()
     terms_accepted = serializers.BooleanField()
+
+
+class ManualSaleBuyerSerializer(BuyerSerializer):
+    """En la venta manual el correo es opcional: sin él, las entradas se
+    comparten como PDF o imagen desde el panel."""
+
+    email = serializers.EmailField(required=False, allow_blank=True, default="")
+
+
+class ManualSaleCreateSerializer(serializers.Serializer):
+    items = CartLineSerializer(many=True)
+    buyer = ManualSaleBuyerSerializer()
+    payment_method = serializers.ChoiceField(choices=Order.ManualPaymentMethod.choices)
+    payment_reference = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    # Monto realmente cobrado. Omitido = el precio publicado de las entradas.
+    total = serializers.DecimalField(
+        max_digits=10, decimal_places=2, min_value=0, required=False, allow_null=True
+    )
+    send_email = serializers.BooleanField(default=False)
+
+
+class OrderResendTicketsSerializer(serializers.Serializer):
+    # Solo se acepta si la orden no tiene correo (venta manual sin email):
+    # nunca reemplaza uno existente, que sería una vía de fuga de entradas.
+    email = serializers.EmailField(required=False, allow_blank=True, default="")

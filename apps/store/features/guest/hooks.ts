@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApiComponents, ApiErrorShape } from "@repo/api-client";
+import type { DocumentType } from "@repo/ui";
 import { useMutation } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api";
@@ -32,7 +33,7 @@ export function useValidateGuestCode() {
 export interface RedeemGuestCodeInput {
   code: string;
   eventId: string;
-  buyer: { email: string; full_name: string; phone?: string; document_id?: string };
+  buyer: { email: string; full_name: string; phone?: string; document_type: DocumentType; document_id: string };
 }
 
 export function useRedeemGuestCode() {
@@ -47,7 +48,8 @@ export function useRedeemGuestCode() {
             email: input.buyer.email,
             full_name: input.buyer.full_name,
             phone: input.buyer.phone ?? "",
-            document_id: input.buyer.document_id ?? "",
+            document_type: input.buyer.document_type,
+            document_id: input.buyer.document_id,
           },
           terms_accepted: true,
         },

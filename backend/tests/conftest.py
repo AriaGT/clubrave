@@ -102,3 +102,11 @@ def configure_provider(db, set_payment_mode):
         return row
 
     return _configure
+
+
+@pytest.fixture(autouse=True)
+def _never_send_real_email(settings):
+    """Con RESEND_API_KEY en el .env local, los tests mandarían correos de
+    verdad por la API de Resend. Siempre al backend de memoria de Django."""
+    settings.RESEND_API_KEY = ""
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

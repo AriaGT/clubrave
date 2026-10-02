@@ -5,6 +5,8 @@ from django.utils import timezone
 from apps.common.models import TimeStampedModel
 from apps.events.models import Event, TicketType
 
+from .documents import DocumentType
+
 
 class Order(TimeStampedModel):
     class Status(models.TextChoices):
@@ -37,9 +39,13 @@ class Order(TimeStampedModel):
     total = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default="PEN")
 
-    buyer_email = models.EmailField()
+    # Vacío solo en ventas manuales sin correo (el QR se comparte por otro medio).
+    buyer_email = models.EmailField(blank=True)
     buyer_name = models.CharField(max_length=150)
     buyer_phone = models.CharField(max_length=32, blank=True)
+    # Obligatorio en toda venta nueva (ver documents.py); vacío solo en
+    # órdenes anteriores a la regla.
+    buyer_document_type = models.CharField(max_length=10, choices=DocumentType.choices, blank=True)
     buyer_document = models.CharField(max_length=32, blank=True)
 
     expires_at = models.DateTimeField()
@@ -48,7 +54,9 @@ class Order(TimeStampedModel):
     terms_accepted_at = models.DateTimeField(null=True, blank=True)
     terms_version = models.CharField(max_length=16, blank=True)
 
-    gateway = models.CharField(max_length=32, default="fake")
+    # Pasarela con la que se abrió la última sesión de pago ("" = todavía
+    # ninguna: con varios medios, el comprador aún no eligió).
+    gateway = models.CharField(max_length=32, blank=True, default="")
     gateway_reference = models.CharField(max_length=100, blank=True)
     # Id de la orden del lado de la pasarela, guardado al abrir la sesión de
     # pago. Es lo que permite volver a preguntarle a la pasarela cuál fue el
@@ -61,6 +69,25 @@ class Order(TimeStampedModel):
     # redimir un `GuestCode`. Ocupa cupo como una venta, pero nunca suma a
     # ingresos (ver `services/stats.py`).
     is_guest = models.BooleanField(default=False)
+
+    # Venta manual: la registra el organizador (p. ej. por WhatsApp) y cobra
+    # fuera de la plataforma. Sale pagada al instante y suma a ingresos por
+    # `total`, que puede diferir del precio publicado (descuento, 2x1).
+    class ManualPaymentMethod(models.TextChoices):
+        CASH = "CASH", "Efectivo"
+        YAPE_PLIN = "YAPE_PLIN", "Yape / Plin"
+        TRANSFER = "TRANSFER", "Transferencia"
+        OTHER = "OTHER", "Otro"
+
+    is_manual = models.BooleanField(default=False)
+    manual_payment_method = models.CharField(max_length=12, choices=ManualPaymentMethod.choices, blank=True)
+    sold_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="manual_sales",
+    )
 
     # H08 — anulación de una venta (el email y el CSV leen estos campos
     # denormalizados; el detalle vive además en la bitácora, ver §5.2).

@@ -193,6 +193,9 @@ def confirm_from_browser(request, code: str):
     orden (`order.gateway`), nunca de lo que diga el cliente.
     """
     order = get_object_or_404(Order, code=code)
+    if not order.gateway:
+        # Todavía no se abrió ninguna sesión de pago: no hay nada que consultar.
+        return Response({"status": order.status})
     try:
         gateway = get_gateway(order.gateway)
     except PaymentUnavailable as exc:

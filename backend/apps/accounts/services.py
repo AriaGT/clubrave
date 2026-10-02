@@ -39,6 +39,7 @@ def anonymize_account(user: User) -> None:
     user.email = anonymous_email
     user.full_name = ""
     user.phone = ""
+    user.document_type = ""
     user.document_id = ""
     user.marketing_consent = False
     user.is_active = False
@@ -48,6 +49,7 @@ def anonymize_account(user: User) -> None:
             "email",
             "full_name",
             "phone",
+            "document_type",
             "document_id",
             "marketing_consent",
             "is_active",
