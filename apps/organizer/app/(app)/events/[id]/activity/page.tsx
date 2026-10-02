@@ -1,22 +1,24 @@
 "use client";
 
 import { ActivityItem, EmptyState, Skeleton, TopBar } from "@repo/ui";
+import { History } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import type { AuditLog } from "@/features/events/hooks";
-import { useEventAudit } from "@/features/events/hooks";
+import { useEvent, useEventAudit } from "@/features/events/hooks";
 
 export default function EventActivityPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data, isLoading } = useEventAudit(id);
+  const { data: event } = useEvent(id);
 
   const entries: AuditLog[] = data?.results ?? [];
 
   return (
     <>
-      <TopBar title="Actividad del evento" onBack={() => router.push(`/events/${id}`)} />
-      <div className="flex flex-col gap-3 p-[var(--space-4)]">
+      <TopBar title="Historial de cambios" subtitle={event?.title} onBack={() => router.push(`/events/${id}`)} />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 p-[var(--space-4)]">
         {isLoading && (
           <div className="flex flex-col gap-3">
             <Skeleton className="h-16 w-full" />
@@ -25,8 +27,9 @@ export default function EventActivityPage() {
         )}
         {!isLoading && entries.length === 0 && (
           <EmptyState
-            title="Todavía no hay actividad"
-            description="Los cambios de este evento quedarán registrados aquí."
+            icon={<History className="h-8 w-8" />}
+            title="Todavía no hay cambios"
+            description="Cada cambio de este evento (quién, qué y cuándo) quedará registrado aquí."
           />
         )}
         <ol className="flex flex-col gap-2">

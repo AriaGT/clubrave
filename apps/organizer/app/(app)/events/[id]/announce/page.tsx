@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, ConfirmDialog, Input, Label, Textarea, TopBar } from "@repo/ui";
+import { CircleCheck, Mail, Send } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -39,11 +40,14 @@ export default function AnnouncePage() {
 
   return (
     <>
-      <TopBar title="Enviar comunicado" onBack={() => router.push(`/events/${id}`)} />
-      <div className="flex flex-col gap-5 p-[var(--space-4)]">
+      <TopBar title="Enviar comunicado" subtitle={event.title} onBack={() => router.push(`/events/${id}`)} />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-[var(--space-4)]">
         {result ? (
           <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <p className="font-medium">Comunicado enviado a {result.recipients} compradores.</p>
+            <p className="flex items-center gap-2 font-medium">
+              <CircleCheck className="h-5 w-5 text-[var(--color-mint-text)]" aria-hidden />
+              Comunicado enviado a {result.recipients} {result.recipients === 1 ? "comprador" : "compradores"}.
+            </p>
             <p className="text-sm text-[var(--color-text-muted)]">
               <span className="font-medium">{subject}</span>
             </p>
@@ -59,11 +63,19 @@ export default function AnnouncePage() {
                 {apiErrorMessage(announce.error)}
               </p>
             )}
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Llega por email a cada comprador con entradas pagadas de este evento
-              {typeof impact?.distinct_buyers === "number" ? ` (${impact.distinct_buyers} ahora mismo)` : ""}.
-              Se permite un máximo de 3 comunicados por día.
-            </p>
+            <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-[var(--space-4)] text-sm">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-text-subtle)]" aria-hidden />
+              <p className="text-[var(--color-text-muted)]">
+                Llega por email a cada comprador con entradas pagadas
+                {typeof impact?.distinct_buyers === "number" ? (
+                  <>
+                    {" "}
+                    (<span className="font-medium text-[var(--color-text)]">{impact.distinct_buyers} ahora mismo</span>)
+                  </>
+                ) : null}
+                . Úsalo para cambios de horario, de puerta u otros avisos importantes. Máximo 3 por día.
+              </p>
+            </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="subject">Asunto</Label>
               <Input
@@ -88,7 +100,7 @@ export default function AnnouncePage() {
               <span className="text-right text-xs text-[var(--color-text-muted)]">{message.length}/2000</span>
             </div>
             <Button className="self-end" onClick={() => setPreviewOpen(true)} disabled={!canReview}>
-              Revisar y enviar
+              <Send className="h-4 w-4" aria-hidden /> Revisar y enviar
             </Button>
           </>
         )}

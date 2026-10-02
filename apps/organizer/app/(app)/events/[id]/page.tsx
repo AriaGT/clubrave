@@ -1,351 +1,203 @@
 "use client";
 
+import { ActionGroup, ActionRow, Skeleton, TopBar } from "@repo/ui";
 import {
-  Badge,
-  Button,
-  ConfirmDialog,
-  DangerZone,
-  Skeleton,
-  StatTile,
-  Switch,
-  TopBar,
-} from "@repo/ui";
-import { QrCode } from "lucide-react";
+  FileText,
+  Gift,
+  History,
+  ImageIcon,
+  Megaphone,
+  QrCode,
+  Receipt,
+  ScanLine,
+  Ticket,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { downloadDoorPoster } from "@/features/events/doorPoster";
+import { useEvent, useEventStats } from "@/features/events/hooks";
+import { EventAdvancedActions } from "@/features/events/panel/EventAdvancedActions";
+import { EventPanelHeader } from "@/features/events/panel/EventPanelHeader";
+import { EventSummary } from "@/features/events/panel/EventSummary";
+import { PublishChecklist } from "@/features/events/panel/PublishChecklist";
+import { SalesControl } from "@/features/events/panel/SalesControl";
 import { PUBLIC_STORE_URL } from "@/lib/env";
-import {
-  apiErrorMessage,
-  useChangeImpact,
-  useDeleteEvent,
-  useEvent,
-  useEventStats,
-  usePauseSales,
-  usePublishEvent,
-  useUnpublishEvent,
-} from "@/features/events/hooks";
 
+/**
+ * Panel del evento. Arriba lo que se mira (estado, venta, números); debajo lo
+ * que se hace, agrupado por tarea: vender y atender al público, la puerta, la
+ * configuración y, plegado al final, los cambios de estado delicados.
+ */
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: event, isLoading } = useEvent(id);
   const { data: stats } = useEventStats(id);
-  const { data: impact } = useChangeImpact(id);
-  const pauseSales = usePauseSales(id);
-  const unpublish = useUnpublishEvent(id);
-  const publish = usePublishEvent(id);
-  const deleteEvent = useDeleteEvent(id);
-  const [unpublishOpen, setUnpublishOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [posterBusy, setPosterBusy] = useState(false);
   const [posterError, setPosterError] = useState<string | null>(null);
-
-  const isCancelled = event?.status === "CANCELLED";
-  const isPublished = event?.status === "PUBLISHED";
-  const isDraft = event?.status === "DRAFT";
-
-  function handleTogglePause() {
-    if (!event || pauseSales.isPending) return;
-    pauseSales.mutate(!event.sales_paused);
-  }
 
   if (isLoading || !event) {
     return (
       <>
         <TopBar title="Evento" onBack={() => router.push("/events")} />
-        <div className="flex flex-col gap-4 p-[var(--space-4)]">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 p-[var(--space-4)]">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-56 w-full" />
         </div>
       </>
     );
   }
 
+  const base = `/events/${id}`;
+  const isCancelled = event.status === "CANCELLED";
+  const isPublished = event.status === "PUBLISHED";
+  const isDraft = event.status === "DRAFT";
+  const issued = stats ? stats.tickets.sold + stats.tickets.guests : 0;
+
+  async function handlePoster() {
+    if (!event) return;
+    setPosterBusy(true);
+    setPosterError(null);
+    try {
+      await downloadDoorPoster({
+        url: `${PUBLIC_STORE_URL}/e/${event.slug}`,
+        slug: event.slug,
+        title: event.title,
+        startsAt: event.starts_at,
+        venue: event.venue_name,
+      });
+    } catch {
+      setPosterError("No se pudo generar la imagen. Inténtalo de nuevo.");
+    } finally {
+      setPosterBusy(false);
+    }
+  }
+
   return (
     <>
-      <TopBar title={event.title} onBack={() => router.push("/events")} />
-      <div className="flex flex-col gap-6 p-[var(--space-4)]">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={event.status === "PUBLISHED" ? "mint" : event.status === "DRAFT" ? "neutral" : "danger"}>
-            {event.status === "PUBLISHED" ? "Publicado" : event.status === "DRAFT" ? "Borrador" : "Cancelado"}
-          </Badge>
-          {event.sales_paused && <Badge variant="warning">Venta pausada</Badge>}
-          <span className="text-sm text-[var(--color-text-muted)]">
-            {new Date(event.starts_at).toLocaleString("es-PE", { dateStyle: "long", timeStyle: "short" })}
-          </span>
-        </div>
+      <TopBar title={event.title} subtitle="Panel del evento" onBack={() => router.push("/events")} />
+      <div className="mx-auto grid w-full max-w-5xl gap-6 p-[var(--space-4)] lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:items-start lg:gap-8">
+        <div className="flex min-w-0 flex-col gap-5">
+          <EventPanelHeader event={event} />
 
-        {isCancelled && (
-          <div className="rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4 text-sm">
-            Este evento fue cancelado y no se modificará más.
-            {event.cancellation_reason && <p className="mt-1 text-[var(--color-danger)]">{event.cancellation_reason}</p>}
-          </div>
-        )}
-
-        {stats && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label="Recaudado" value={`S/ ${stats.revenue.gross}`} hint={`${stats.revenue.orders_paid} órdenes`} />
-            <StatTile
-              label="Vendidas"
-              value={`${stats.tickets.sold}/${stats.tickets.capacity}`}
-              hint={stats.tickets.guests > 0 ? `+${stats.tickets.guests} invitados` : undefined}
-            />
-            <StatTile label="Ingresaron" value={stats.tickets.checked_in} />
-            <StatTile label="Últimas 24h" value={stats.last_24h.tickets} hint={`${stats.last_24h.orders} órdenes`} />
-          </div>
-        )}
-
-        {isPublished && (
-          <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium">Venta de entradas</span>
-                <span className="text-sm text-[var(--color-text-muted)]">
-                  {event.sales_paused
-                    ? "Pausada: los compradores no pueden empezar una compra."
-                    : "Activa: los compradores pueden comprar entrada."}
-                </span>
-              </div>
-              <Switch
-                checked={pauseSales.isPending ? !!pauseSales.variables : event.sales_paused}
-                disabled={pauseSales.isPending}
-                aria-busy={pauseSales.isPending || undefined}
-                onCheckedChange={handleTogglePause}
-                aria-label="Pausar o reanudar la venta"
-              />
-            </div>
-            {pauseSales.error && (
-              <p className="text-sm text-[var(--color-danger)]">{apiErrorMessage(pauseSales.error)}</p>
-            )}
-          </div>
-        )}
-
-        {isPublished && (
-          <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium">Impacto de un cambio</span>
-              <span className="text-sm text-[var(--color-text-muted)]">
-                {impact ? (
-                  <>
-                    {impact.paid_orders} órdenes pagadas · {impact.distinct_buyers} compradores distintos
-                  </>
-                ) : (
-                  "Consultando…"
-                )}
-              </span>
-            </div>
-            {impact && impact.paid_orders > 0 && (
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Si despublicas, las compras en curso pueden terminar; no se pueden crear otras nuevas.
+          {isCancelled && (
+            <div className="rounded-[var(--radius-lg)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-soft)] p-[var(--space-4)] text-sm">
+              <p className="font-medium text-[var(--color-danger)]">Este evento fue cancelado</p>
+              <p className="mt-1 text-[var(--color-text-muted)]">
+                Las entradas quedaron anuladas y ya no admite cambios.
+                {event.cancellation_reason ? ` Motivo: ${event.cancellation_reason}` : ""}
               </p>
-            )}
-          </div>
-        )}
-
-        {stats && stats.by_ticket_type.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <h3 className="font-display text-base font-semibold">Por tipo de entrada</h3>
-            {stats.by_ticket_type.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] p-3"
-              >
-                <span>{t.name}</span>
-                <span className="font-mono text-sm text-[var(--color-text-muted)]">
-                  {t.sold}/{t.total}
-                  {t.guests > 0 ? ` · ${t.guests} inv.` : ""} · S/ {t.revenue}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {!isCancelled && (
-            <Link href={`/events/${id}/edit`}>
-              <Button variant="secondary" className="w-full">
-                Editar
-              </Button>
-            </Link>
+            </div>
           )}
-          {!isCancelled && (
-            <Link href={`/events/${id}/images`}>
-              <Button variant="secondary" className="w-full">
-                Imágenes
-              </Button>
-            </Link>
-          )}
-          <Link href={`/events/${id}/activity`}>
-            <Button variant="secondary" className="w-full">
-              Actividad
-            </Button>
-          </Link>
-          <Link href={`/events/${id}/tickets`}>
-            <Button variant="secondary" className="w-full">
-              Entradas
-            </Button>
-          </Link>
-          <Link href={`/events/${id}/sales`}>
-            <Button variant="secondary" className="w-full">
-              Ventas
-            </Button>
-          </Link>
-          <Link href={`/events/${id}/attendees`}>
-            <Button variant="secondary" className="w-full">
-              Asistentes
-            </Button>
-          </Link>
-          <Link href={`/events/${id}/guests`}>
-            <Button variant="secondary" className="w-full">
-              Invitados
-            </Button>
-          </Link>
+          {isDraft && <PublishChecklist event={event} />}
+          {isPublished && <SalesControl event={event} />}
+
+          <EventSummary eventId={id} stats={stats} />
         </div>
 
-        {isDraft && (
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="primary"
-              className="w-full"
-              loading={publish.isPending}
-              onClick={() => publish.mutate()}
-            >
-              Publicar
-            </Button>
-            {publish.error && (
-              <p className="text-sm text-[var(--color-danger)]">{apiErrorMessage(publish.error)}</p>
-            )}
-          </div>
-        )}
-
-        {isPublished && (
-          <div className="flex flex-col gap-3">
-            <Link href={`/events/${id}/announce`}>
-              <Button variant="secondary" className="w-full">
-                Enviar comunicado
-              </Button>
-            </Link>
-            <Button
-              variant="secondary"
-              className="w-full"
-              loading={posterBusy}
-              onClick={async () => {
-                setPosterBusy(true);
-                setPosterError(null);
-                try {
-                  await downloadDoorPoster({
-                    url: `${PUBLIC_STORE_URL}/e/${event.slug}`,
-                    slug: event.slug,
-                    title: event.title,
-                    startsAt: event.starts_at,
-                    venue: event.venue_name,
-                  });
-                } catch {
-                  setPosterError("No se pudo generar la imagen. Inténtalo de nuevo.");
-                } finally {
-                  setPosterBusy(false);
-                }
-              }}
-            >
-              <QrCode className="h-4 w-4" aria-hidden />
-              Descargar QR para la puerta
-            </Button>
-            {posterError && <p className="text-sm text-[var(--color-danger)]">{posterError}</p>}
-            <Link href={`/scan/${id}`}>
-              <Button variant="primary" className="w-full">
-                Escanear
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {!isCancelled && (
-          <DangerZone description="Estas acciones no se pueden deshacer.">
+        <div className="flex min-w-0 flex-col gap-5">
+          <ActionGroup title="Ventas y asistentes">
+            <ActionRow
+              icon={<Receipt />}
+              title="Ventas"
+              description="Órdenes, reembolsos y reenvío de entradas"
+              meta={stats && stats.revenue.orders_paid > 0 ? stats.revenue.orders_paid : undefined}
+              href={`${base}/sales`}
+              linkComponent={Link}
+            />
+            <ActionRow
+              icon={<Users />}
+              title="Asistentes"
+              description="Quién tiene entrada y quién ya ingresó"
+              meta={stats && issued > 0 ? `${stats.tickets.checked_in}/${issued}` : undefined}
+              href={`${base}/attendees`}
+              linkComponent={Link}
+            />
+            <ActionRow
+              icon={<Gift />}
+              title="Invitados"
+              description="Códigos de cortesía para prensa, DJs o listas"
+              meta={stats && stats.guest_codes.total > 0 ? stats.guest_codes.total : undefined}
+              href={`${base}/guests`}
+              linkComponent={Link}
+            />
             {isPublished && (
-              <Button
-                variant="danger"
-                className="w-full"
-                loading={unpublish.isPending}
-                onClick={() => setUnpublishOpen(true)}
-              >
-                Despublicar
-              </Button>
+              <ActionRow
+                icon={<Megaphone />}
+                title="Enviar comunicado"
+                description="Email a todos los compradores"
+                href={`${base}/announce`}
+                linkComponent={Link}
+              />
             )}
-            {isPublished && (
-              <Link href={`/events/${id}/cancel`}>
-                <Button variant="danger" className="w-full">
-                  Cancelar evento
-                </Button>
-              </Link>
+          </ActionGroup>
+
+          {isPublished && (
+            <div className="flex flex-col gap-2">
+              <ActionGroup title="Día del evento">
+                <ActionRow
+                  icon={<ScanLine />}
+                  tone="accent"
+                  title="Escanear entradas"
+                  description="Valida los QR en la puerta"
+                  href={`/scan/${id}`}
+                  linkComponent={Link}
+                />
+                <ActionRow
+                  icon={<QrCode />}
+                  title="Afiche con QR de venta"
+                  description="Para imprimir: quien lo escanea compra su entrada"
+                  loading={posterBusy}
+                  onClick={handlePoster}
+                />
+              </ActionGroup>
+              {posterError && <p className="px-1 text-sm text-[var(--color-danger)]">{posterError}</p>}
+            </div>
+          )}
+
+          <ActionGroup title="Configuración">
+            {!isCancelled && (
+              <ActionRow
+                icon={<FileText />}
+                title="Información del evento"
+                description="Nombre, fecha, lugar y descripción"
+                href={`${base}/edit`}
+                linkComponent={Link}
+              />
             )}
-            <Button
-              variant="danger"
-              className="w-full"
-              loading={deleteEvent.isPending}
-              onClick={() => setDeleteOpen(true)}
-            >
-              Eliminar evento
-            </Button>
-            {unpublish.error && (
-              <p className="text-sm text-[var(--color-danger)]">{apiErrorMessage(unpublish.error)}</p>
+            <ActionRow
+              icon={<Ticket />}
+              title="Tipos de entrada"
+              description="Precios, cupos y zonas"
+              meta={event.ticket_types.length > 0 ? event.ticket_types.length : undefined}
+              href={`${base}/tickets`}
+              linkComponent={Link}
+            />
+            {!isCancelled && (
+              <ActionRow
+                icon={<ImageIcon />}
+                title="Imágenes"
+                description="Flyer, mapa de zonas y ubicación"
+                href={`${base}/images`}
+                linkComponent={Link}
+              />
             )}
-            {deleteEvent.error && (
-              <p className="text-sm text-[var(--color-danger)]">{apiErrorMessage(deleteEvent.error)}</p>
-            )}
-          </DangerZone>
-        )}
+            <ActionRow
+              icon={<History />}
+              title="Historial de cambios"
+              description="Quién hizo qué y cuándo"
+              href={`${base}/activity`}
+              linkComponent={Link}
+            />
+          </ActionGroup>
+
+          {!isCancelled && <EventAdvancedActions event={event} stats={stats} />}
+        </div>
       </div>
-
-      <ConfirmDialog
-        open={unpublishOpen}
-        onOpenChange={setUnpublishOpen}
-        title="¿Despublicar el evento?"
-        description="Estará oculto para los compradores hasta que lo vuelvas a publicar."
-        impact={
-          impact
-            ? `${impact.paid_orders} órdenes pagadas · ${impact.distinct_buyers} compradores distintos`
-            : undefined
-        }
-        reasons={[
-          { value: "NO_MORE_SALES", label: "No quiero más ventas" },
-          { value: "ORGANIZER_ERROR", label: "Error del organizador" },
-          { value: "OTHER", label: "Otro" },
-        ]}
-        confirmLabel="Despublicar"
-        loading={unpublish.isPending}
-        onConfirm={({ reasonCode, reason }) => {
-          const detail = [reasonCode, reason].filter(Boolean).join(": ");
-          setUnpublishOpen(false);
-          unpublish.mutate({ reason: detail });
-        }}
-      />
-
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Eliminar el evento"
-        destructive
-        description="Se borrará el evento y sus imágenes. Solo puedes borrar eventos sin ventas."
-        impact="Esta acción no se puede deshacer."
-        reasons={[
-          { value: "DUPLICATED", label: "Cargado por duplicado" },
-          { value: "ORGANIZER_ERROR", label: "Error del organizador" },
-          { value: "OTHER", label: "Otro" },
-        ]}
-        confirmPhrase={event.title}
-        confirmLabel="Eliminar evento"
-        loading={deleteEvent.isPending}
-        onConfirm={({ reasonCode, reason }) => {
-          const detail = [reasonCode, reason].filter(Boolean).join(": ");
-          deleteEvent.mutate(
-            { reason: detail || "Sin motivo", confirm_title: event.title },
-            { onSuccess: () => router.push("/events") }
-          );
-        }}
-      />
     </>
   );
 }

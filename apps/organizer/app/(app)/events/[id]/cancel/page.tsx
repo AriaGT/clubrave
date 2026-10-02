@@ -14,6 +14,7 @@ import {
   Textarea,
   TopBar,
 } from "@repo/ui";
+import { AlertTriangle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -57,14 +58,18 @@ export default function CancelEventPage() {
 
   return (
     <>
-      <TopBar title="Cancelar evento" onBack={() => router.push(`/events/${id}`)} />
-      <div className="flex flex-col gap-5 p-[var(--space-4)]">
-        <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-soft)] p-4">
-          <p className="font-medium text-[var(--color-danger)]">Esto anula todas las entradas vendidas.</p>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Cada comprador recibe un email con el motivo y el contacto de la organización para coordinar
-            el reembolso. No se puede deshacer.
-          </p>
+      <TopBar title="Cancelar evento" subtitle={event.title} onBack={() => router.push(`/events/${id}`)} />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-[var(--space-4)]">
+        <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-danger)]/40 bg-[var(--color-danger-soft)] p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-danger)]" aria-hidden />
+          <div className="flex flex-col gap-1">
+            <p className="font-medium text-[var(--color-danger)]">Esto anula todas las entradas vendidas</p>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Cada comprador recibe un email con el motivo y el contacto de tu organización para coordinar
+              el reembolso. No se puede deshacer. Si solo quieres frenar las compras, pausa la venta desde
+              el panel del evento.
+            </p>
+          </div>
         </div>
 
         {previewLoading || !preview ? (

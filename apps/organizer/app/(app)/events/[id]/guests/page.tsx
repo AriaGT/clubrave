@@ -6,6 +6,7 @@ import {
   ConfirmDialog,
   EmptyState,
   FieldError,
+  FilterChips,
   IconButton,
   Input,
   Label,
@@ -14,11 +15,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Sheet,
+  SheetContent,
   Skeleton,
-  StatTile,
   TopBar,
 } from "@repo/ui";
-import { Copy, Download, Share2, Ticket } from "lucide-react";
+import { Copy, Download, Gift, Plus, Share2, Ticket } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -44,16 +46,9 @@ import {
 
 const STATUS_META: Record<GuestCodeStatus, { label: string; variant: "mint" | "accent" | "danger" }> = {
   AVAILABLE: { label: "Disponible", variant: "mint" },
-  REDEEMED: { label: "Redimido", variant: "accent" },
+  REDEEMED: { label: "Canjeado", variant: "accent" },
   VOIDED: { label: "Anulado", variant: "danger" },
 };
-
-const TABS: { label: string; status?: GuestCodeStatus }[] = [
-  { label: "Todos" },
-  { label: "Disponibles", status: "AVAILABLE" },
-  { label: "Redimidos", status: "REDEEMED" },
-  { label: "Anulados", status: "VOIDED" },
-];
 
 const MAX_PER_BATCH = 500;
 
@@ -69,6 +64,7 @@ export default function EventGuestCodesPage() {
   const generate = useGenerateGuestCodes(id);
   const voidCode = useVoidGuestCode(id);
 
+  const [generateOpen, setGenerateOpen] = useState(false);
   const [ticketTypeId, setTicketTypeId] = useState("");
   const [quantity, setQuantity] = useState("10");
   const [label, setLabel] = useState("");
@@ -80,6 +76,7 @@ export default function EventGuestCodesPage() {
 
   const ticketTypes = useMemo(() => event?.ticket_types ?? [], [event?.ticket_types]);
   const isCancelled = event?.status === "CANCELLED";
+  const canGenerate = !isCancelled && ticketTypes.length > 0;
   const slug = event?.slug ?? "";
   const title = event?.title ?? "";
 
@@ -125,6 +122,7 @@ export default function EventGuestCodesPage() {
       const batch = await generate.mutateAsync({ ticket_type_id: ticketTypeId, quantity: n, label: label.trim() });
       setLastBatch(batch);
       setLabel("");
+      setGenerateOpen(false);
     } catch (err) {
       setFormError(apiErrorMessage(err));
     }
@@ -160,9 +158,9 @@ export default function EventGuestCodesPage() {
     return (
       <>
         <TopBar title="Invitados" onBack={() => router.push(`/events/${id}`)} />
-        <div className="flex flex-col gap-4 p-[var(--space-4)]">
-          <Skeleton className="h-40 w-full" />
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-[var(--space-4)]">
           <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-40 w-full" />
         </div>
       </>
     );
@@ -170,8 +168,19 @@ export default function EventGuestCodesPage() {
 
   return (
     <>
-      <TopBar title="Invitados" onBack={() => router.push(`/events/${id}`)} />
-      <div className="flex flex-col gap-5 p-[var(--space-4)]">
+      <TopBar
+        title="Invitados"
+        subtitle={event.title}
+        onBack={() => router.push(`/events/${id}`)}
+        action={
+          canGenerate && counts.total > 0 ? (
+            <Button size="sm" onClick={() => setGenerateOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden /> Generar
+            </Button>
+          ) : undefined
+        }
+      />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-[var(--space-4)]">
         {ticketTypes.length === 0 ? (
           <EmptyState
             icon={<Ticket className="h-8 w-8" />}
@@ -184,63 +193,25 @@ export default function EventGuestCodesPage() {
             }
           />
         ) : (
-          !isCancelled && (
-            <section className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-4">
-              <div className="flex flex-col gap-0.5">
-                <h2 className="font-display text-base font-semibold">Generar códigos</h2>
-                <p className="text-sm text-[var(--color-text-muted)]">
-                  Cada código da una entrada gratis del tipo elegido y reserva su cupo desde ya.
-                </p>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="guest-ticket-type">Tipo de entrada / zona</Label>
-                <Select value={ticketTypeId} onValueChange={setTicketTypeId}>
-                  <SelectTrigger id="guest-ticket-type">
-                    <SelectValue placeholder="Elige un tipo de entrada" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ticketTypes.map((tt) => (
-                      <SelectItem key={tt.id} value={tt.id}>
-                        {tt.name} · {tt.available} libres{tt.is_active === false ? " · oculta" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="guest-quantity">Cantidad</Label>
-                  <Input
-                    id="guest-quantity"
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={Math.min(MAX_PER_BATCH, selectedType?.available ?? MAX_PER_BATCH)}
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="guest-label">Etiqueta (opcional)</Label>
-                  <Input
-                    id="guest-label"
-                    maxLength={80}
-                    placeholder="Prensa, lista DJ…"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                  />
-                </div>
-              </div>
-              <FieldError>{formError}</FieldError>
-              <Button loading={generate.isPending} onClick={handleGenerate}>
-                Generar {Number(quantity) > 0 ? quantity : ""} código{Number(quantity) === 1 ? "" : "s"}
-              </Button>
-            </section>
+          !isLoading &&
+          counts.total === 0 && (
+            <EmptyState
+              icon={<Gift className="h-8 w-8" />}
+              title="Invita sin cobrar"
+              description="Genera códigos de cortesía para prensa, DJs o tu lista. Cada código da una entrada gratis del tipo que elijas y reserva su cupo."
+              action={
+                canGenerate ? (
+                  <Button onClick={() => setGenerateOpen(true)}>
+                    <Plus className="h-4 w-4" aria-hidden /> Generar códigos
+                  </Button>
+                ) : undefined
+              }
+            />
           )
         )}
 
         {lastBatch && lastBatch.codes.length > 0 && (
-          <section className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-accent)] bg-[var(--color-accent-soft)] p-4">
+          <section className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] p-[var(--space-4)]">
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">
                 {lastBatch.codes.length} código{lastBatch.codes.length === 1 ? "" : "s"} generado
@@ -256,17 +227,17 @@ export default function EventGuestCodesPage() {
                 variant="secondary"
                 onClick={() => copy(batchShareText(title, slug, lastBatch.codes), "Lote")}
               >
-                <Copy className="h-4 w-4" /> Copiar lote
+                <Copy className="h-4 w-4" aria-hidden /> Copiar lote
               </Button>
               <Button size="sm" variant="secondary" onClick={() => share(batchShareText(title, slug, lastBatch.codes))}>
-                <Share2 className="h-4 w-4" /> Compartir lote
+                <Share2 className="h-4 w-4" aria-hidden /> Compartir lote
               </Button>
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => exportCsv(lastBatch.codes, `invitados-${slug}-lote.csv`)}
               >
-                <Download className="h-4 w-4" /> CSV
+                <Download className="h-4 w-4" aria-hidden /> CSV
               </Button>
             </div>
           </section>
@@ -279,55 +250,45 @@ export default function EventGuestCodesPage() {
         )}
 
         {counts.total > 0 && (
-          <div className="grid grid-cols-3 gap-3">
-            <StatTile label="Disponibles" value={counts.AVAILABLE} />
-            <StatTile label="Redimidos" value={counts.REDEEMED} />
-            <StatTile label="Anulados" value={counts.VOIDED} />
-          </div>
-        )}
+          <>
+            <FilterChips
+              aria-label="Filtrar por estado"
+              value={tab}
+              onChange={setTab}
+              options={[
+                { label: "Todos", value: undefined, count: counts.total },
+                { label: "Disponibles", value: "AVAILABLE", count: counts.AVAILABLE },
+                { label: "Canjeados", value: "REDEEMED", count: counts.REDEEMED },
+                { label: "Anulados", value: "VOIDED", count: counts.VOIDED },
+              ]}
+            />
 
-        {available.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => copy(batchShareText(title, slug, available), "Listado")}>
-              <Copy className="h-4 w-4" /> Copiar disponibles ({available.length})
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => share(batchShareText(title, slug, available))}>
-              <Share2 className="h-4 w-4" /> Compartir disponibles
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => exportCsv(codes ?? [], `invitados-${slug}.csv`)}>
-              <Download className="h-4 w-4" /> Exportar todo
-            </Button>
-          </div>
-        )}
-
-        {counts.total > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {TABS.map((t) => (
-              <button
-                key={t.label}
-                onClick={() => setTab(t.status)}
-                className={
-                  "rounded-[var(--radius-full)] px-3 py-1.5 text-sm font-medium transition-colors " +
-                  (tab === t.status
-                    ? "bg-[var(--color-accent)] text-white"
-                    : "border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]")
-                }
-              >
-                {t.label} ({t.status ? counts[t.status] : counts.total})
-              </button>
-            ))}
-          </div>
+            {available.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-auto text-sm text-[var(--color-text-muted)]">
+                  {available.length} sin usar
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copy(batchShareText(title, slug, available), "Listado")}
+                >
+                  <Copy className="h-4 w-4" aria-hidden /> Copiar
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => share(batchShareText(title, slug, available))}>
+                  <Share2 className="h-4 w-4" aria-hidden /> Compartir
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => exportCsv(codes ?? [], `invitados-${slug}.csv`)}>
+                  <Download className="h-4 w-4" aria-hidden /> Exportar
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {isLoading && <Skeleton className="h-24 w-full" />}
-        {!isLoading && counts.total === 0 && ticketTypes.length > 0 && (
-          <EmptyState
-            title="Todavía no hay códigos"
-            description="Genera un lote arriba: aparecerán aquí con su estado y quién los usó."
-          />
-        )}
         {!isLoading && counts.total > 0 && visible.length === 0 && (
-          <EmptyState title="Nada en este filtro" description="Prueba con otra pestaña." />
+          <EmptyState title="Nada en este filtro" description="Prueba con otro estado." />
         )}
 
         <ul className="flex flex-col gap-2">
@@ -370,12 +331,17 @@ export default function EventGuestCodesPage() {
                 {guest.status === "AVAILABLE" && (
                   <div className="flex items-center justify-end gap-1">
                     <IconButton
+                      size="sm"
                       label="Copiar invitación"
                       onClick={() => copy(singleShareText(title, slug, guest), "Código")}
                     >
                       <Copy className="h-4 w-4" />
                     </IconButton>
-                    <IconButton label="Compartir invitación" onClick={() => share(singleShareText(title, slug, guest))}>
+                    <IconButton
+                      size="sm"
+                      label="Compartir invitación"
+                      onClick={() => share(singleShareText(title, slug, guest))}
+                    >
                       <Share2 className="h-4 w-4" />
                     </IconButton>
                     <Button variant="danger" size="sm" onClick={() => setToVoid(guest)}>
@@ -388,6 +354,59 @@ export default function EventGuestCodesPage() {
           })}
         </ul>
       </div>
+
+      <Sheet open={generateOpen} onOpenChange={setGenerateOpen}>
+        <SheetContent title="Generar códigos de invitado">
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Cada código da una entrada gratis del tipo elegido y reserva su cupo desde ya.
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="guest-ticket-type">Tipo de entrada / zona</Label>
+              <Select value={ticketTypeId} onValueChange={setTicketTypeId}>
+                <SelectTrigger id="guest-ticket-type">
+                  <SelectValue placeholder="Elige un tipo de entrada" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ticketTypes.map((tt) => (
+                    <SelectItem key={tt.id} value={tt.id}>
+                      {tt.name} · {tt.available} libres{tt.is_active === false ? " · oculta" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="guest-quantity">Cantidad</Label>
+                <Input
+                  id="guest-quantity"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={Math.min(MAX_PER_BATCH, selectedType?.available ?? MAX_PER_BATCH)}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="guest-label">Etiqueta (opcional)</Label>
+                <Input
+                  id="guest-label"
+                  maxLength={80}
+                  placeholder="Prensa, lista DJ…"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                />
+              </div>
+            </div>
+            <FieldError>{formError}</FieldError>
+            <Button loading={generate.isPending} onClick={handleGenerate}>
+              Generar {Number(quantity) > 0 ? quantity : ""} código{Number(quantity) === 1 ? "" : "s"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <ConfirmDialog
         open={toVoid !== null}

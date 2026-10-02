@@ -20,7 +20,7 @@ export default function EditEventPage() {
   const updateEvent = useUpdateEvent(id);
 
   if (!event) {
-    return <TopBar title="Editar evento" onBack={() => router.push(`/events/${id}`)} />;
+    return <TopBar title="Información del evento" onBack={() => router.push(`/events/${id}`)} />;
   }
 
   async function handleSubmit(values: EventInfoValues) {
@@ -41,8 +41,8 @@ export default function EditEventPage() {
 
   return (
     <>
-      <TopBar title="Editar evento" onBack={() => router.push(`/events/${id}`)} />
-      <div className="flex flex-col gap-4 p-[var(--space-4)]">
+      <TopBar title="Información del evento" subtitle={event.title} onBack={() => router.push(`/events/${id}`)} />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 p-[var(--space-4)]">
         {updateEvent.error && (
           <p className="rounded-[var(--radius-md)] border border-[var(--color-danger)] bg-[var(--color-danger-soft)] p-3 text-sm text-[var(--color-danger)]">
             {apiErrorMessage(updateEvent.error)}

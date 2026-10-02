@@ -5,12 +5,14 @@ import { cn } from "../lib/cn";
 export interface StatTileProps extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
   value: React.ReactNode;
-  hint?: string;
+  hint?: React.ReactNode;
+  /** Ícono discreto junto a la etiqueta. */
+  icon?: React.ReactNode;
 }
 
 /** Métrica grande + etiqueta + variación. Usado en el resumen del evento. */
 export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
-  ({ label, value, hint, className, ...props }, ref) => (
+  ({ label, value, hint, icon, className, children, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
@@ -19,9 +21,13 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
       )}
       {...props}
     >
-      <span className="text-xs uppercase tracking-wide text-[var(--color-text-subtle)]">{label}</span>
+      <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[var(--color-text-subtle)] [&>svg]:h-3.5 [&>svg]:w-3.5">
+        {icon}
+        {label}
+      </span>
       <span className="font-mono text-2xl font-semibold tabular-nums">{value}</span>
       {hint && <span className="text-sm text-[var(--color-text-muted)]">{hint}</span>}
+      {children}
     </div>
   )
 );

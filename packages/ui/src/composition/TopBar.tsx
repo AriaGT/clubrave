@@ -6,11 +6,13 @@ import { cn } from "../lib/cn";
 
 export interface TopBarProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
+  /** Contexto pequeño sobre el título (p. ej. el evento al que pertenece la subpantalla). */
+  subtitle?: string;
   onBack?: () => void;
   action?: React.ReactNode;
 }
 
-export function TopBar({ title, onBack, action, className, ...props }: TopBarProps) {
+export function TopBar({ title, subtitle, onBack, action, className, ...props }: TopBarProps) {
   return (
     <header
       className={cn(
@@ -25,7 +27,12 @@ export function TopBar({ title, onBack, action, className, ...props }: TopBarPro
           <ChevronLeft className="h-5 w-5" />
         </IconButton>
       )}
-      <h1 className="flex-1 truncate font-display text-lg font-semibold">{title}</h1>
+      <div className="flex min-w-0 flex-1 flex-col">
+        {subtitle && (
+          <span className="truncate text-xs leading-tight text-[var(--color-text-subtle)]">{subtitle}</span>
+        )}
+        <h1 className="truncate font-display text-lg font-semibold leading-tight">{title}</h1>
+      </div>
       {action}
     </header>
   );
