@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, cn, PriceBreakdown, useAsyncAction } from "@repo/ui";
+import { Button, cn, PriceBreakdown, Skeleton, useAsyncAction } from "@repo/ui";
 import { ArrowLeft, ChevronRight, FlaskConical } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -141,9 +141,10 @@ function PayScreen() {
 
   const isPending = order.status === "PENDING";
   const canSwitch = (methods?.length ?? 0) > 1 && !submitted;
-  const showPicker = isPending && canSwitch && (choosing || !paymentSession);
   // Paso 1: elegir medio. Paso 2: pagar con el elegido. El 3 es la pantalla
-  // de éxito. Con un solo medio habilitado el paso 1 se resuelve solo.
+  // de éxito. Sin sesión abierta se está en el paso 1 aunque la lista de
+  // medios aún no haya llegado; con un solo medio, se abre sola.
+  const showPicker = isPending && !submitted && (choosing || !paymentSession);
   const step = showPicker ? 1 : 2;
 
   const summary = (
@@ -162,7 +163,24 @@ function PayScreen() {
         {showPicker ? "¿Cómo quieres pagar?" : isPending ? "Completa tu pago" : "Estado de tu pago"}
       </h1>
 
-      {showPicker && methods && (
+      {showPicker && !methods && (
+        <div className="flex flex-col gap-3" aria-busy>
+          <Skeleton className="h-[4.75rem] w-full" />
+          <Skeleton className="h-[4.75rem] w-full" />
+        </div>
+      )}
+
+      {showPicker && methods && methods.length === 0 && (
+        <p className="text-sm text-[var(--color-danger)]">
+          No hay medios de pago disponibles por ahora. Intenta de nuevo en unos minutos.
+        </p>
+      )}
+
+      {showPicker && methods && methods.length === 1 && (
+        <p className="text-sm text-[var(--color-text-muted)]">Preparando tu pago…</p>
+      )}
+
+      {showPicker && methods && methods.length > 1 && (
         <div className="flex flex-col gap-3">
           {methods.map((m) => {
             const current = paymentGateway === m.id;

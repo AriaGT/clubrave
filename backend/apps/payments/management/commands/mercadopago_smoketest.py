@@ -45,8 +45,6 @@ class Command(BaseCommand):
                     "title": "Smoke test",
                     "unit_price": amount,
                     "quantity": 1,
-                    "unit_measure": "unit",
-                    "total_amount": amount,
                 }
             ],
             "config": {

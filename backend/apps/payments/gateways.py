@@ -289,8 +289,6 @@ class MercadoPagoGateway:
                 "title": item.ticket_type_name,
                 "unit_price": self._money(item.unit_price),
                 "quantity": item.quantity,
-                "unit_measure": "unit",
-                "total_amount": self._money(item.subtotal),
             }
             for item in order.items.all()
         ]
@@ -300,8 +298,6 @@ class MercadoPagoGateway:
                     "title": "Cargo por servicio",
                     "unit_price": self._money(order.service_fee),
                     "quantity": 1,
-                    "unit_measure": "unit",
-                    "total_amount": self._money(order.service_fee),
                 }
             )
         return items

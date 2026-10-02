@@ -348,8 +348,21 @@ def test_items_sum_matches_the_order_total(published_event, ticket_type, mp_api)
         terms_accepted=True,
     )
     items = MercadoPagoGateway(MP_CREDS)._items(order)
-    total = sum(float(item["total_amount"]) for item in items)
+    total = sum(float(item["unit_price"]) * item["quantity"] for item in items)
     assert total == float(order.total)
+
+
+def test_items_only_carry_fields_the_orders_api_accepts(published_event, ticket_type, mp_api):
+    """Mercado Pago rechazó la order con `additionalProperties 'total_amount',
+    'unit_measure' not allowed`: cada ítem lleva solo título, precio y cantidad."""
+    order = create_order(
+        event=published_event,
+        items=[CartLine(ticket_type_id=str(ticket_type.id), quantity=2)],
+        buyer=BUYER,
+        terms_accepted=True,
+    )
+    for item in MercadoPagoGateway(MP_CREDS)._items(order):
+        assert set(item) == {"title", "unit_price", "quantity"}
 
 
 def test_checkout_fails_closed_when_mercadopago_rejects_the_order(
