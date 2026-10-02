@@ -1,12 +1,15 @@
 "use client";
 
-import { Badge, Button, Skeleton, TicketCard } from "@repo/ui";
+import { Badge, Button, cn, Skeleton, TicketCard } from "@repo/ui";
+import { Check } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
 import { useMyOrder } from "@/features/account/hooks";
+import { CheckoutShell } from "@/features/checkout/CheckoutShell";
+import { CheckoutSteps } from "@/features/checkout/CheckoutSteps";
 
 export default function CheckoutSuccessPage() {
   const { orderCode } = useParams<{ orderCode: string }>();
@@ -24,32 +27,42 @@ export default function CheckoutSuccessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.tickets]);
 
+  const steps = <CheckoutSteps current={3} complete />;
+
   if (isLoading) {
     return (
-      <main className="mx-auto flex max-w-md flex-col gap-4 p-[var(--space-6)]">
+      <CheckoutShell header={steps} className="max-w-3xl">
         <Skeleton className="h-64 w-full" />
-      </main>
+      </CheckoutShell>
     );
   }
 
   if (!order) return null;
 
+  const tickets = order.tickets ?? [];
+
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 p-[var(--space-6)]">
-      <div className="flex flex-col items-center gap-2 text-center">
+    <CheckoutShell header={steps} className="max-w-3xl">
+      <div className="flex flex-col items-center gap-3 pb-2 text-center">
+        <span
+          aria-hidden
+          className="success-pop flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-mint)] text-[var(--color-bg,#09090b)] shadow-[var(--glow-mint)]"
+        >
+          <Check className="h-8 w-8" strokeWidth={3} />
+        </span>
         {order.is_guest && <Badge variant="accent">Invitado</Badge>}
-        <h1 className="font-display text-2xl font-bold text-[var(--color-mint-text)]">
+        <h1 className="font-display text-2xl font-bold text-[var(--color-mint-text)] sm:text-3xl">
           {order.is_guest ? "¡Estás en la lista!" : "¡Ya estás dentro!"}
         </h1>
-        <p className="text-[var(--color-text-muted)]">
+        <p className="max-w-md text-[var(--color-text-muted)]">
           {order.is_guest
             ? `Tu entrada de invitado llegó a ${order.buyer_email}. También está aquí.`
             : `Te enviamos tus entradas a ${order.buyer_email}. También están aquí.`}
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {order.tickets?.map((ticket) =>
+      <div className={cn(tickets.length === 1 ? "mx-auto w-full max-w-md" : "grid gap-4 md:grid-cols-2")}>
+        {tickets.map((ticket) =>
           qrByTicket[ticket.id] ? (
             <TicketCard
               key={ticket.id}
@@ -68,11 +81,11 @@ export default function CheckoutSuccessPage() {
         )}
       </div>
 
-      <Link href="/account/tickets">
+      <Link href="/account/tickets" className="mx-auto w-full max-w-md">
         <Button size="lg" className="w-full">
           Ver mis entradas
         </Button>
       </Link>
-    </main>
+    </CheckoutShell>
   );
 }

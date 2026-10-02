@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, Card, CardContent, cn, useAsyncAction } from "@repo/ui";
-import { FlaskConical } from "lucide-react";
+import { Button, cn, PriceBreakdown, useAsyncAction } from "@repo/ui";
+import { ArrowLeft, ChevronRight, FlaskConical } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -17,6 +17,8 @@ import {
   savePaymentSession,
   type StoredPaymentSession,
 } from "@/features/checkout/payment-session-storage";
+import { CheckoutShell, HoldCountdown, SummaryCard } from "@/features/checkout/CheckoutShell";
+import { CheckoutSteps } from "@/features/checkout/CheckoutSteps";
 import { PaymentForm } from "@/features/checkout/PaymentForm";
 import { ProviderLogo, ProviderPanel } from "@/features/checkout/ProviderPanel";
 import { BRAND_NAME } from "@/lib/site";
@@ -140,20 +142,28 @@ function PayScreen() {
   const isPending = order.status === "PENDING";
   const canSwitch = (methods?.length ?? 0) > 1 && !submitted;
   const showPicker = isPending && canSwitch && (choosing || !paymentSession);
+  // Paso 1: elegir medio. Paso 2: pagar con el elegido. El 3 es la pantalla
+  // de éxito. Con un solo medio habilitado el paso 1 se resuelve solo.
+  const step = showPicker ? 1 : 2;
+
+  const summary = (
+    <SummaryCard title="Resumen de tu compra">
+      <p className="text-sm text-[var(--color-text-muted)]">
+        Orden <span className="font-mono text-[var(--color-text)]">{order.code}</span>
+      </p>
+      <PriceBreakdown subtotal={order.subtotal} serviceFee={order.service_fee} total={order.total} />
+      {isPending && <HoldCountdown expiresAt={order.expires_at} />}
+    </SummaryCard>
+  );
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 px-[var(--space-4)] py-[var(--space-6)] sm:px-[var(--space-6)]">
-      <h1 className="font-display text-2xl font-bold">Pago</h1>
-      <Card>
-        <CardContent className="flex flex-col gap-2 pt-4">
-          <p className="text-[var(--color-text-muted)]">Orden {order.code}</p>
-          <p className="font-mono text-2xl font-semibold">S/ {order.total}</p>
-        </CardContent>
-      </Card>
+    <CheckoutShell header={<CheckoutSteps current={step} />} aside={summary}>
+      <h1 className="font-display text-2xl font-bold">
+        {showPicker ? "¿Cómo quieres pagar?" : isPending ? "Completa tu pago" : "Estado de tu pago"}
+      </h1>
 
       {showPicker && methods && (
         <div className="flex flex-col gap-3">
-          <p className="font-medium">¿Cómo quieres pagar?</p>
           {methods.map((m) => {
             const current = paymentGateway === m.id;
             return (
@@ -163,11 +173,11 @@ function PayScreen() {
                 disabled={openSession.isPending}
                 onClick={() => (current ? setChoosing(false) : void chooseMethod(m.id).catch(() => undefined))}
                 className={cn(
-                  "flex items-center gap-3 rounded-[var(--radius-md)] border p-4 text-left transition-colors duration-[var(--duration-fast)]",
+                  "group flex items-center gap-3 rounded-[var(--radius-md)] border p-4 text-left transition-colors duration-[var(--duration-fast)]",
                   "focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] disabled:opacity-60",
                   current
                     ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]"
-                    : "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)]"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong,var(--color-border))] hover:bg-[var(--color-surface-hover)]"
                 )}
               >
                 {/* Los logos están hechos para fondo claro. */}
@@ -178,14 +188,19 @@ function PayScreen() {
                     fallback={<FlaskConical className="h-5 w-5" aria-label="Simulador" />}
                   />
                 </span>
-                <span className="flex flex-1 flex-col">
+                <span className="flex min-w-0 flex-1 flex-col">
                   <span className="font-medium">{m.label}</span>
                   {METHOD_HINTS[m.id] && (
                     <span className="text-sm text-[var(--color-text-muted)]">{METHOD_HINTS[m.id]}</span>
                   )}
                 </span>
-                {openSession.isPending && openSession.variables === m.id && (
+                {openSession.isPending && openSession.variables === m.id ? (
                   <span className="text-sm text-[var(--color-text-muted)]">Abriendo…</span>
+                ) : (
+                  <ChevronRight
+                    className="h-5 w-5 shrink-0 text-[var(--color-text-subtle)] transition-transform group-hover:translate-x-0.5"
+                    aria-hidden
+                  />
                 )}
               </button>
             );
@@ -195,6 +210,16 @@ function PayScreen() {
               Ese medio de pago no está disponible ahora. Prueba con otro.
             </p>
           )}
+          {paymentSession && (
+            <button
+              type="button"
+              onClick={() => setChoosing(false)}
+              className="flex items-center gap-1.5 self-start text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Volver al pago
+            </button>
+          )}
         </div>
       )}
 
@@ -202,9 +227,10 @@ function PayScreen() {
         <button
           type="button"
           onClick={() => setChoosing(true)}
-          className="-mt-3 self-start text-sm text-[var(--color-accent-text)] underline-offset-4 hover:underline"
+          className="-mt-2 flex items-center gap-1.5 self-start text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
         >
-          Pagar con otro medio
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Cambiar medio de pago
         </button>
       )}
 
@@ -316,7 +342,7 @@ function PayScreen() {
       )}
 
       {order.status === "PAID" && <p className="text-[var(--color-mint-text)]">Confirmando…</p>}
-    </main>
+    </CheckoutShell>
   );
 }
 

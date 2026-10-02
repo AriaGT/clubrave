@@ -23,6 +23,7 @@ import { z } from "zod";
 
 import { useMe } from "@/features/account/hooks";
 import { useCartStore } from "@/features/cart/store";
+import { CheckoutShell, SummaryCard } from "@/features/checkout/CheckoutShell";
 import { useCreateOrder, useRequestCode } from "@/features/checkout/hooks";
 import { savePaymentSession } from "@/features/checkout/payment-session-storage";
 import { useEventDetail } from "@/features/events/hooks";
@@ -161,12 +162,30 @@ export default function CheckoutPage() {
 
   if (!event) return null;
 
-  return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 p-[var(--space-6)]">
-      <h1 className="font-display text-2xl font-bold">Checkout</h1>
-      <p className="text-[var(--color-text-muted)]">{event.title}</p>
+  const summary = (
+    <SummaryCard title="Tu compra">
+      <p className="font-display text-lg font-semibold leading-snug">{event.title}</p>
+      <ul className="flex flex-col gap-2 text-sm">
+        {cartLines.map((line) => (
+          <li key={line.id} className="flex items-baseline justify-between gap-3">
+            <span className="min-w-0">
+              <span className="font-mono text-[var(--color-text-muted)]">{line.quantity}×</span> {line.name}
+            </span>
+            <span className="shrink-0 font-mono">S/ {(Number(line.price) * line.quantity).toFixed(2)}</span>
+          </li>
+        ))}
+      </ul>
+      <PriceBreakdown
+        className="border-t border-[var(--color-border-subtle)] pt-3"
+        subtotal={subtotal.toFixed(2)}
+        total={subtotal.toFixed(2)}
+      />
+    </SummaryCard>
+  );
 
-      <PriceBreakdown subtotal={subtotal.toFixed(2)} total={subtotal.toFixed(2)} />
+  return (
+    <CheckoutShell aside={summary}>
+      <h1 className="font-display text-2xl font-bold">Tus datos</h1>
 
       {salesPaused && (
         <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[var(--color-warning-soft)] p-3">
@@ -258,6 +277,6 @@ export default function CheckoutPage() {
           </Button>
         </form>
       )}
-    </main>
+    </CheckoutShell>
   );
 }
