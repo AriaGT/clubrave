@@ -40,9 +40,13 @@ falta reiniciar nada. Los códigos de invitado (gratis) siguen funcionando.
   pública, password REST y clave HMAC; Mercado Pago: access token y clave
   del webhook).
 - **Al guardar se validan con el proveedor**: Izipay con `Charge/SDKTest`
-  (llamada autenticada que no crea ninguna operación) y comprobando que las
-  llaves sean del entorno elegido (pruebas/producción); Mercado Pago
-  consultando la cuenta del access token. Si una falla, no se guarda nada.
+  (llamada autenticada que no crea ninguna operación, comprueba Shop ID y
+  password); Mercado Pago consultando la cuenta del access token. No hay
+  reglas de formato propias sobre las llaves (los prefijos los define el
+  proveedor): si algo está mal, el proveedor lo rechaza y se muestra su
+  mensaje. Si una falla, no se guarda nada. La clave pública y la clave HMAC
+  de Izipay no se pueden comprobar sin un pago real: pruébalas con una
+  compra de S/ 1.
 - Se guardan **cifradas** (Fernet) con `PAYMENT_CREDENTIALS_KEY`, la única
   variable de pagos que queda en el entorno del servidor. Es obligatoria en
   producción (system check `payments.E010`). **No la cambies una vez en uso**:

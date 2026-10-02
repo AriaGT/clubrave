@@ -143,17 +143,43 @@ def test_saving_credentials_validates_them_and_never_returns_them(owner_client):
     assert log.metadata == {"mode": "live", "enabled": ["izipay"], "credentials_changed": ["izipay"]}
 
 
-def test_production_credentials_are_rejected_in_test_environment(owner_client):
-    prod = {**IZIPAY_TEST, "rest_password": "prodpassword_X", "public_key": "43564905:prodpublickey_X"}
+IZIPAY_PROD = {
+    "shop_id": "43564905",
+    "public_key": "43564905:publickey_fyYbfSOtt8",  # la de producción no lleva prefijo de entorno
+    "rest_password": "prodpassword_SECRET0000",
+    "hmac_key": "HMACPROD7777",
+}
+
+
+def test_production_credentials_are_accepted_in_production(owner_client):
     with _sdk_test_ok() as sdk_test:
         response = owner_client.patch(
             "/api/org/payments/",
-            {"mode": "live", "providers": {"izipay": {"enabled": True, "credentials": prod}}},
+            {
+                "mode": "live",
+                "providers": {
+                    "izipay": {"enabled": True, "environment": "production", "credentials": IZIPAY_PROD}
+                },
+            },
+            format="json",
+        )
+    assert response.status_code == 200, response.json()
+    sdk_test.assert_called_once()
+    assert PaymentProvider.objects.get(provider="izipay").environment == "production"
+
+
+def test_izipay_decides_whether_the_credentials_are_valid(owner_client):
+    """Sin reglas de formato propias: lo que Izipay rechaza, se rechaza con su mensaje."""
+    refused = Mock()
+    refused.json.return_value = {"status": "ERROR", "answer": {"errorMessage": "Authentication failed"}}
+    with patch("apps.payments.providers.requests.post", return_value=refused):
+        response = owner_client.patch(
+            "/api/org/payments/",
+            {"mode": "live", "providers": {"izipay": {"enabled": True, "credentials": IZIPAY_TEST}}},
             format="json",
         )
     assert response.status_code == 400
-    assert "pruebas" in str(response.json()["error"]["details"]["providers"]["izipay"])
-    sdk_test.assert_not_called()
+    assert "Authentication failed" in str(response.json()["error"]["details"]["providers"]["izipay"])
     assert not PaymentProvider.objects.exists()
 
 

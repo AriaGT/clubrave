@@ -53,26 +53,11 @@ class ProviderSpec:
 
 
 def _verify_izipay(creds: dict[str, str], environment: str) -> None:
+    # Sin reglas de formato propias: los prefijos de las llaves (testpassword_,
+    # prodpassword_, testpublickey_…) los define Izipay y pueden cambiar. Si
+    # algo viene mal escrito, Izipay lo rechaza abajo.
     shop_id = creds["shop_id"].strip()
-    public_key = creds["public_key"].strip()
     password = creds["rest_password"].strip()
-
-    # Izipay marca cada credencial con su entorno: mezclar una de pruebas con
-    # otra de producción es el error clásico, así que se rechaza aquí.
-    is_test = environment == PaymentProvider.Environment.TEST
-    expected = "test" if is_test else "prod"
-    if not password.startswith(f"{expected}password_"):
-        raise CredentialsInvalid(
-            f"El password de API REST no es de {'pruebas' if is_test else 'producción'} "
-            f"(debe empezar con «{expected}password_»)."
-        )
-    if f":{expected}publickey_" not in public_key:
-        raise CredentialsInvalid(
-            f"La clave pública no es de {'pruebas' if is_test else 'producción'} "
-            f"(formato «{shop_id}:{expected}publickey_…»)."
-        )
-    if not public_key.startswith(f"{shop_id}:"):
-        raise CredentialsInvalid("La clave pública no corresponde a ese Shop ID.")
 
     # SDKTest: llamada autenticada que no crea ninguna operación. Comprueba
     # Shop ID + password; la clave HMAC no se puede validar sin un pago.
@@ -124,7 +109,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
                 "public_key",
                 "Clave pública",
                 secret=False,
-                help="Formato shopId:testpublickey_… / prodpublickey_…",
+                help="Se copia tal cual del Back Office de Izipay",
             ),
             CredentialField(
                 "rest_password",
