@@ -1160,14 +1160,14 @@ export interface components {
             email: string;
             full_name: string;
             /** @default  */
-            phone: string;
+            phone?: string;
             /** @default  */
-            document_id: string;
+            document_id?: string;
         };
         CancelEvent: {
             reason_code: components["schemas"]["CancelEventReasonCodeEnum"];
             /** @default  */
-            reason: string;
+            reason?: string;
             confirm_title: string;
         };
         /**
@@ -1265,7 +1265,7 @@ export interface components {
             full_name: string;
             password: string;
             /** @default true */
-            all_events: boolean;
+            all_events?: boolean;
             event_ids?: string[];
         };
         EmployeeEvent: {
@@ -1284,14 +1284,13 @@ export interface components {
             /** Format: uuid */
             readonly event: string;
             /** @default FLYER */
-            kind: components["schemas"]["KindEnum"];
+            kind?: components["schemas"]["KindEnum"];
             /** Format: uri */
             image: string;
             alt?: string;
-            /** Format: int64 */
             position?: number;
             /** @default false */
-            is_cover: boolean;
+            is_cover?: boolean;
         };
         EventOrganizer: {
             /** Format: uuid */
@@ -1308,7 +1307,6 @@ export interface components {
             address?: string;
             city?: string;
             maps_url?: string;
-            /** Format: int64 */
             min_age?: number;
             currency?: string;
             /** Format: date-time */
@@ -1339,7 +1337,6 @@ export interface components {
             address?: string;
             city?: string;
             maps_url?: string;
-            /** Format: int64 */
             min_age?: number;
             currency?: string;
             readonly images: components["schemas"]["EventImage"][];
@@ -1358,7 +1355,6 @@ export interface components {
             ends_at?: string | null;
             city?: string;
             venue_name?: string;
-            /** Format: int64 */
             min_age?: number;
             currency?: string;
             readonly cover_image: string | null;
@@ -1417,7 +1413,7 @@ export interface components {
             ticket_type_id: string;
             quantity: number;
             /** @default  */
-            label: string;
+            label?: string;
         };
         GuestCodeRedeem: {
             code: string;
@@ -1458,7 +1454,7 @@ export interface components {
         };
         GuestCodeVoid: {
             /** @default  */
-            reason: string;
+            reason?: string;
         };
         /**
          * @description * `FLYER` - Flyer
@@ -1555,7 +1551,6 @@ export interface components {
             ticket_type_name: string;
             /** Format: decimal */
             unit_price: string;
-            /** Format: int64 */
             quantity: number;
             /** Format: decimal */
             subtotal: string;
@@ -1583,7 +1578,7 @@ export interface components {
         };
         OrderRefund: {
             /** @default  */
-            refund_reference: string;
+            refund_reference?: string;
         };
         /**
          * @description Una fila de entradas para el detalle de la orden (H07): el código, su
@@ -1606,9 +1601,9 @@ export interface components {
         OrderVoid: {
             reason_code: components["schemas"]["OrderVoidReasonCodeEnum"];
             /** @default  */
-            reason: string;
+            reason?: string;
             /** @default true */
-            restock: boolean;
+            restock?: boolean;
         };
         /**
          * @description * `FRAUD` - FRAUD
@@ -1756,14 +1751,13 @@ export interface components {
             /** Format: uuid */
             readonly event?: string;
             /** @default FLYER */
-            kind: components["schemas"]["KindEnum"];
+            kind?: components["schemas"]["KindEnum"];
             /** Format: uri */
             image?: string;
             alt?: string;
-            /** Format: int64 */
             position?: number;
             /** @default false */
-            is_cover: boolean;
+            is_cover?: boolean;
         };
         PatchedEventOrganizer: {
             /** Format: uuid */
@@ -1780,7 +1774,6 @@ export interface components {
             address?: string;
             city?: string;
             maps_url?: string;
-            /** Format: int64 */
             min_age?: number;
             currency?: string;
             /** Format: date-time */
@@ -1836,19 +1829,16 @@ export interface components {
             description?: string;
             /** Format: decimal */
             price?: string;
-            /** Format: int64 */
             quantity_total?: number;
             readonly quantity_sold?: number;
             readonly quantity_reserved?: number;
             readonly available?: number;
-            /** Format: int64 */
             max_per_order?: number;
             /** Format: date-time */
             sales_start_at?: string | null;
             /** Format: date-time */
             sales_end_at?: string | null;
             is_active?: boolean;
-            /** Format: int64 */
             position?: number;
             /** Format: date-time */
             readonly created_at?: string;
@@ -1964,19 +1954,16 @@ export interface components {
             description?: string;
             /** Format: decimal */
             price: string;
-            /** Format: int64 */
             quantity_total: number;
             readonly quantity_sold: number;
             readonly quantity_reserved: number;
             readonly available: number;
-            /** Format: int64 */
             max_per_order?: number;
             /** Format: date-time */
             sales_start_at?: string | null;
             /** Format: date-time */
             sales_end_at?: string | null;
             is_active?: boolean;
-            /** Format: int64 */
             position?: number;
             /** Format: date-time */
             readonly created_at: string;
@@ -1990,7 +1977,6 @@ export interface components {
             description?: string;
             /** Format: decimal */
             price: string;
-            /** Format: int64 */
             max_per_order?: number;
             readonly available: number;
             /** Format: date-time */
@@ -2016,7 +2002,7 @@ export interface components {
         UndoCheckIn: {
             reason_code: components["schemas"]["UndoCheckInReasonCodeEnum"];
             /** @default  */
-            reason: string;
+            reason?: string;
         };
         /**
          * @description * `MISTAKE` - MISTAKE
@@ -2028,7 +2014,7 @@ export interface components {
         /** @description H15 — nivel 2: el motivo es opcional, pero queda en la bitácora. */
         Unpublish: {
             /** @default  */
-            reason: string;
+            reason?: string;
         };
         VerifyCode: {
             email?: string;
