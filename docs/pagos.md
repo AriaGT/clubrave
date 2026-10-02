@@ -80,6 +80,22 @@ que Izipay active 3-D Secure en la afiliación → [guía](./izipay-activacion.m
 
 Pueden estar activos los dos a la vez.
 
+## Cómo se ve cada pasarela en la tienda
+
+Cada medio de pago se muestra con su **logo oficial** y su **formulario
+oficial, sin estilos de la tienda**, dentro de un panel claro que lo separa
+del resto de la página (`ProviderPanel`). Así el comprador reconoce la
+pasarela real y no un formulario imitado; además, pintar el formulario de
+Izipay con los colores de la tienda lo rompía (campos blancos sobre cajas
+oscuras, reportado por soporte de Izipay). El logo se ve aunque haya un solo
+medio habilitado.
+
+- **No se estiliza el formulario del proveedor.** Izipay usa su tema oficial
+  (`classic-reset.css` + `classic.js`). La única regla propia oculta los
+  selectores de cuotas cuando son de solo lectura.
+- Los logos están en `apps/store/public/payments/`, tal como los publica
+  cada proveedor (Izipay: portal de desarrolladores; Mercado Pago: su sitio).
+
 ## Lo que comparten todos (y no depende de la pasarela)
 
 - **El estado de la orden no lo decide el navegador.** El resultado sale de
@@ -109,6 +125,8 @@ Pueden estar activos los dos a la vez.
    de credenciales (cuáles son secretos), función de validación contra el
    proveedor y URL de su webhook.
 3. Su webhook en `backend/apps/payments/views.py`.
+4. Su logo oficial en `apps/store/public/payments/` y su entrada en `BRANDS`
+   (`apps/store/features/checkout/ProviderPanel.tsx`).
 
 El panel y la pantalla de pago la toman del registro sin más cambios.
 

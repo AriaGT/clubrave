@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent, cn, useAsyncAction } from "@repo/ui";
-import { CreditCard, Wallet } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
@@ -18,6 +18,8 @@ import {
   type StoredPaymentSession,
 } from "@/features/checkout/payment-session-storage";
 import { PaymentForm } from "@/features/checkout/PaymentForm";
+import { ProviderLogo, ProviderPanel } from "@/features/checkout/ProviderPanel";
+import { BRAND_NAME } from "@/lib/site";
 
 /**
  * Tres formas de cobrar detrás de la misma pantalla:
@@ -32,8 +34,14 @@ import { PaymentForm } from "@/features/checkout/PaymentForm";
  * Si el panel tiene varios medios habilitados, la orden llega sin sesión y el
  * comprador elige aquí cómo pagar; también puede cambiar de medio si el
  * primero le falla, sin perder la orden ni la reserva de entradas.
+ *
+ * Cada pasarela se muestra dentro de su `ProviderPanel`, con su logo y su
+ * formulario oficial, aunque haya un solo medio habilitado.
  */
-const METHOD_ICONS: Record<string, typeof CreditCard> = { izipay: CreditCard, mercadopago: Wallet };
+const METHOD_HINTS: Record<string, string> = {
+  izipay: "Pagas aquí mismo, sin salir de la página",
+  mercadopago: "Tarjeta, Yape o tu cuenta de Mercado Pago",
+};
 
 function PayScreen() {
   const { orderCode } = useParams<{ orderCode: string }>();
@@ -134,7 +142,7 @@ function PayScreen() {
   const showPicker = isPending && canSwitch && (choosing || !paymentSession);
 
   return (
-    <main className="mx-auto flex max-w-md flex-col gap-6 p-[var(--space-6)]">
+    <main className="mx-auto flex max-w-md flex-col gap-6 px-[var(--space-4)] py-[var(--space-6)] sm:px-[var(--space-6)]">
       <h1 className="font-display text-2xl font-bold">Pago</h1>
       <Card>
         <CardContent className="flex flex-col gap-2 pt-4">
@@ -147,7 +155,6 @@ function PayScreen() {
         <div className="flex flex-col gap-3">
           <p className="font-medium">¿Cómo quieres pagar?</p>
           {methods.map((m) => {
-            const Icon = METHOD_ICONS[m.id] ?? CreditCard;
             const current = paymentGateway === m.id;
             return (
               <button
@@ -163,10 +170,20 @@ function PayScreen() {
                     : "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)]"
                 )}
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-accent-soft)] text-[var(--color-accent-text)]">
-                  <Icon className="h-5 w-5" />
+                {/* Los logos están hechos para fondo claro. */}
+                <span className="flex h-11 w-24 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-white px-2.5 text-[#1f2937]">
+                  <ProviderLogo
+                    provider={m.id}
+                    className="max-h-6 max-w-full"
+                    fallback={<FlaskConical className="h-5 w-5" aria-label="Simulador" />}
+                  />
                 </span>
-                <span className="flex-1 font-medium">{m.label}</span>
+                <span className="flex flex-1 flex-col">
+                  <span className="font-medium">{m.label}</span>
+                  {METHOD_HINTS[m.id] && (
+                    <span className="text-sm text-[var(--color-text-muted)]">{METHOD_HINTS[m.id]}</span>
+                  )}
+                </span>
                 {openSession.isPending && openSession.variables === m.id && (
                   <span className="text-sm text-[var(--color-text-muted)]">Abriendo…</span>
                 )}
@@ -192,14 +209,23 @@ function PayScreen() {
       )}
 
       {!showPicker && isPending && isRedirectGateway && !mpReturn && checkoutUrl && (
-        <div className="flex flex-col gap-3">
-          <p className="text-[var(--color-text-muted)]">
-            Te estamos llevando a Mercado Pago para completar el pago…
-          </p>
-          <Button size="lg" onClick={() => (window.location.href = checkoutUrl)}>
-            Continuar a Mercado Pago
-          </Button>
-        </div>
+        <ProviderPanel
+          provider="mercadopago"
+          note={`Pagas en el sitio de Mercado Pago. ${BRAND_NAME} nunca ve los datos de tu tarjeta ni de tu cuenta.`}
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-[#4b5563]">
+              Te estamos llevando a Mercado Pago para completar el pago…
+            </p>
+            {/* Botón con los colores de marca de Mercado Pago. */}
+            <a
+              href={checkoutUrl}
+              className="flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-[#009ee3] px-4 font-semibold text-white transition-colors hover:bg-[#0089c7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#009ee3]/30"
+            >
+              Continuar a Mercado Pago
+            </a>
+          </div>
+        </ProviderPanel>
       )}
 
       {isPending && isRedirectGateway && mpReturn === "pending" && (
@@ -230,7 +256,12 @@ function PayScreen() {
 
       {!showPicker && isPending && isEmbeddedGateway && paymentSession && (
         <>
-          <PaymentForm session={paymentSession} onSubmitted={handleRealSubmit} onError={setFormError} />
+          <ProviderPanel
+            provider="izipay"
+            note={`Los datos de tu tarjeta los recibe directamente Izipay. ${BRAND_NAME} nunca los ve ni los guarda.`}
+          >
+            <PaymentForm session={paymentSession} onSubmitted={handleRealSubmit} onError={setFormError} />
+          </ProviderPanel>
           {formError && <p className="text-sm text-[var(--color-danger)]">{formError}</p>}
           {submitted && (
             <p className="text-sm text-[var(--color-text-muted)]">
@@ -241,27 +272,27 @@ function PayScreen() {
       )}
 
       {!showPicker && isPending && paymentSession?.gateway === "fake" && (
-        <div className="flex flex-col gap-3">
-          <p className="text-[var(--color-text-muted)]">
-            Entorno de pruebas: simula el resultado del banco.
-          </p>
-          <Button
-            size="lg"
-            loading={decide.pending && decision === true}
-            disabled={decide.pending}
-            onClick={() => decide.run(true)}
-          >
-            Simular pago aprobado
-          </Button>
-          <Button
-            variant="secondary"
-            loading={decide.pending && decision === false}
-            disabled={decide.pending}
-            onClick={() => decide.run(false)}
-          >
-            Simular pago rechazado
-          </Button>
-        </div>
+        <ProviderPanel provider="fake" note="Entorno de pruebas: no se cobra nada.">
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-[#4b5563]">Simula el resultado del banco.</p>
+            <Button
+              size="lg"
+              loading={decide.pending && decision === true}
+              disabled={decide.pending}
+              onClick={() => decide.run(true)}
+            >
+              Simular pago aprobado
+            </Button>
+            <Button
+              variant="secondary"
+              loading={decide.pending && decision === false}
+              disabled={decide.pending}
+              onClick={() => decide.run(false)}
+            >
+              Simular pago rechazado
+            </Button>
+          </div>
+        </ProviderPanel>
       )}
 
       {order.status === "FAILED" && (

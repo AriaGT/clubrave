@@ -1,6 +1,6 @@
 "use client";
 
-import { LoadingState } from "@repo/ui";
+import { cn, LoadingState } from "@repo/ui";
 import { useEffect, useRef, useState } from "react";
 
 import type { StoredPaymentSession } from "./payment-session-storage";
@@ -8,43 +8,12 @@ import type { StoredPaymentSession } from "./payment-session-storage";
 declare global {
   interface Window {
     KR?: {
-      setFormConfig: (config: {
-        formToken: string;
-        "kr-language"?: string;
-        fields?: { all: Record<"default" | "error", FieldStyle> };
-      }) => Promise<unknown>;
+      setFormConfig: (config: { formToken: string; "kr-language"?: string }) => Promise<unknown>;
       onSubmit: (callback: (response: unknown) => boolean | void) => void;
       onFormReady: (callback: () => void) => void;
       onError?: (callback: (error: unknown) => void) => void;
     };
   }
-}
-
-interface FieldStyle {
-  backgroundColor: string;
-  color: string;
-  iconColor: string;
-}
-
-/**
- * Tarjeta, fecha y CVV son iframes de otro origen: el CSS de la tienda no
- * los alcanza, solo se estilan con la configuración del SDK. Los valores
- * salen de los tokens del design system (`var()` no sirve dentro del iframe,
- * hay que pasar colores ya resueltos).
- */
-function fieldStyleConfig() {
-  const css = getComputedStyle(document.documentElement);
-  const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
-  const text = token("--color-text", "#f4f4f5");
-  const bg = token("--color-surface-sunken", "#141419");
-  const muted = token("--color-text-muted", "#a1a1ab");
-  const danger = token("--color-danger", "#f43f5e");
-  return {
-    all: {
-      default: { backgroundColor: bg, color: text, iconColor: muted },
-      error: { backgroundColor: bg, color: danger, iconColor: danger },
-    },
-  };
 }
 
 /** Hoja de estilos única; resuelve también si falla (el pago no depende del tema). */
@@ -99,6 +68,11 @@ export interface PaymentFormProps {
  * backend, que es quien verifica la firma (§8.5, §11.6: el script de la
  * pasarela solo se carga aquí, nunca antes).
  *
+ * Se muestra con el tema oficial de Izipay, sin estilos de la tienda: va
+ * dentro de `ProviderPanel`, que le da el fondo claro para el que está hecho.
+ * Pintar los campos con los colores de la tienda los rompía (los iframes no
+ * siempre tomaban la configuración y quedaban blancos sobre cajas oscuras).
+ *
  * Probado contra el entorno de pruebas y producción de Izipay (ver
  * docs/izipay-activacion.md).
  */
@@ -113,14 +87,15 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
       if (!cancelled) setStatus("ready");
     };
 
-    // Orden oficial de Izipay: SDK primero y luego el tema (`classic.js`).
-    // La hoja del tema se descarga en paralelo, pero el formulario no se
-    // configura hasta que llegó: si se arma antes, sale con estilos rotos
-    // la primera visita (la segunda viene de caché y por eso sí se ve bien).
+    // Tema oficial de Izipay: `classic-reset.css` (aísla el formulario de los
+    // estilos de la página) + `classic.js`, en el orden de su documentación:
+    // SDK primero y luego el tema. La hoja se descarga en paralelo, pero el
+    // formulario no se configura hasta que llegó: si se arma antes, sale con
+    // estilos rotos la primera visita.
     const themeBase = session.js_url.replace(/\/[^/]+\/[^/]+$/, "/ext/");
 
     async function boot() {
-      const themeCss = loadStylesheet(`${themeBase}classic.css`);
+      const themeCss = loadStylesheet(`${themeBase}classic-reset.css`);
       await loadScript(session.js_url, { "kr-public-key": session.public_key });
       await Promise.all([themeCss, loadScript(`${themeBase}classic.js`).catch(() => undefined)]);
       if (cancelled || !window.KR) return;
@@ -131,7 +106,7 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
         fallback = setTimeout(markReady, READY_PAINT_GRACE_MS);
       });
       containerRef.current?.setAttribute("kr-form-token", session.form_token);
-      await window.KR.setFormConfig({ formToken: session.form_token, fields: fieldStyleConfig() });
+      await window.KR.setFormConfig({ formToken: session.form_token });
       if (cancelled) return;
       setTimeout(markReady, READY_FALLBACK_MS);
       window.KR.onSubmit((response) => {
@@ -157,19 +132,23 @@ export function PaymentForm({ session, onSubmitted, onError }: PaymentFormProps)
   return (
     <div className="relative flex flex-col gap-3">
       {status === "loading" && (
-        <LoadingState label="Cargando el formulario de pago…" className="py-8" />
+        <LoadingState label="Cargando el formulario de pago…" className="py-8 text-[#6b7280]" />
       )}
       {status === "error" && (
-        <p className="text-sm text-[var(--color-danger)]">
+        <p className="text-sm text-[#b91c1c]">
           No se pudo cargar el formulario de pago. Intenta de nuevo en unos segundos.
         </p>
       )}
       {/* Krypton añade sus propias clases a `.kr-embedded`: React no debe
           tocar su className, por eso la visibilidad va en el envoltorio.
           Mientras carga queda superpuesto e invisible (no display:none, para
-          que los iframes se midan con el ancho real) y no empuja el loader. */}
+          que los iframes se midan con el ancho real) y no empuja el loader.
+          El tema oficial tiene ancho fijo: se centra en el panel. */}
       <div
-        className={status === "ready" ? undefined : "pointer-events-none absolute inset-x-0 top-0 opacity-0"}
+        className={cn(
+          "flex justify-center",
+          status !== "ready" && "pointer-events-none absolute inset-x-0 top-0 opacity-0"
+        )}
         aria-hidden={status !== "ready"}
       >
         <div ref={containerRef} className="kr-embedded" />
