@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django_filters import rest_framework as filters
@@ -61,7 +62,14 @@ class EventPublicViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = EventPublicFilter
 
     def get_queryset(self):
-        qs = Event.objects.filter(status=Event.Status.PUBLISHED, starts_at__gte=timezone.now())
+        # Visible hasta que el evento termina, no hasta que empieza: un evento
+        # nocturno sigue vendiendo (y la gente sigue buscando su entrada) pasada
+        # la hora de inicio. Misma regla que `Event.effective_ends_at`.
+        now = timezone.now()
+        still_on = Q(ends_at__gte=now) | Q(
+            ends_at__isnull=True, starts_at__gte=now - Event.DEFAULT_DURATION
+        )
+        qs = Event.objects.filter(status=Event.Status.PUBLISHED).filter(still_on)
         return qs.prefetch_related("images", "ticket_types")
 
     def get_serializer_class(self):

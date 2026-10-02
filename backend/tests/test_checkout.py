@@ -144,3 +144,45 @@ def test_concurrent_purchases_of_the_last_ticket_never_oversell(published_event,
 
     scarce_ticket_type.refresh_from_db()
     assert scarce_ticket_type.quantity_reserved == 1
+
+
+# ── Visibilidad pública durante y después del evento ─────────────────────────
+
+
+def _make_event_start(event, *, started_ago, ends_in=None):
+    from django.utils import timezone
+
+    event.starts_at = timezone.now() - started_ago
+    event.ends_at = timezone.now() + ends_in if ends_in is not None else None
+    event.save(update_fields=["starts_at", "ends_at"])
+
+
+def test_event_stays_public_after_it_starts_until_it_ends(published_event, ticket_type):
+    """Un evento nocturno sigue en la tienda pasada su hora de inicio: el 404
+    en plena noche del evento dejaba sin vender y sin que entraran a verlo."""
+    from datetime import timedelta
+
+    from rest_framework.test import APIClient
+
+    _make_event_start(published_event, started_ago=timedelta(hours=2))  # sin hora de fin: dura 8 h
+    client = APIClient()
+    assert client.get(f"/api/events/{published_event.slug}/").status_code == 200
+    assert published_event.slug in [e["slug"] for e in client.get("/api/events/").json()["results"]]
+
+
+def test_event_with_an_explicit_end_is_public_until_that_end(published_event, ticket_type):
+    from datetime import timedelta
+
+    from rest_framework.test import APIClient
+
+    _make_event_start(published_event, started_ago=timedelta(hours=10), ends_in=timedelta(hours=1))
+    assert APIClient().get(f"/api/events/{published_event.slug}/").status_code == 200
+
+
+def test_finished_event_is_no_longer_public(published_event, ticket_type):
+    from datetime import timedelta
+
+    from rest_framework.test import APIClient
+
+    _make_event_start(published_event, started_ago=timedelta(hours=9))  # pasaron las 8 h por defecto
+    assert APIClient().get(f"/api/events/{published_event.slug}/").status_code == 404

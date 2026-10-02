@@ -67,9 +67,12 @@ class Event(TimeStampedModel):
     def sales_paused(self) -> bool:
         return self.sales_paused_at is not None
 
+    # Duración que se asume cuando el organizador no puso hora de fin.
+    DEFAULT_DURATION = timedelta(hours=8)
+
     @property
     def effective_ends_at(self):
-        return self.ends_at or (self.starts_at + timedelta(hours=8))
+        return self.ends_at or (self.starts_at + self.DEFAULT_DURATION)
 
     @property
     def is_finished(self) -> bool:
