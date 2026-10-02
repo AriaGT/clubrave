@@ -1,76 +1,119 @@
-# Pagos: cómo elegir y configurar la pasarela
+# Pagos: cómo elegir y configurar los medios de pago
 
-Punto de entrada de todo lo relacionado con cobros. La pasarela es un detalle
-reemplazable detrás de una interfaz (`PaymentGateway` en
-`backend/apps/payments/gateways.py`): se cambia con **una variable de
-entorno**, sin desplegar código distinto.
+Punto de entrada de todo lo relacionado con cobros. Los medios de pago se
+configuran **desde el panel**, sin tocar variables de entorno ni desplegar:
+**Ajustes › Configuración avanzada › Medios de pago** (solo el dueño de la
+organización).
 
-## Los cuatro modos de `PAYMENT_GATEWAY`
+## Los tres modos de cobro
 
-| Valor | Para qué sirve | ¿Cobra de verdad? |
+| Modo | Para qué sirve | ¿Cobra de verdad? |
 |---|---|---|
-| `mercadopago` | **Producción.** Checkout Pro con redirección → [guía](./mercadopago-activacion.md) | Sí |
-| `izipay` | Alternativa: formulario incrustado → [guía](./izipay-activacion.md) | Sí |
-| `fake` | **Solo desarrollo y tests.** Botones de aprobar/rechazar | No |
-| `disabled` | **Interruptor de emergencia.** Bloquea las compras | No |
+| Pasarelas reales | **Producción.** Una o varias pasarelas activas a la vez | Sí |
+| Simulador | **Solo desarrollo y pruebas.** Botones de aprobar/rechazar. Desactiva las reales | No |
+| Deshabilitado | **Interruptor de emergencia.** Bloquea las compras. Desactiva todo lo demás | No |
 
-### `fake` nunca va a producción
+En «Pasarelas reales» se puede activar más de una. Si hay una sola, la
+pantalla de pago la abre directamente, como siempre. Si hay varias, el
+comprador elige en la pantalla de pago (Tarjeta / Mercado Pago) y puede
+**cambiar de medio** si el primero le falla, sin perder la orden ni la
+reserva de entradas.
 
-`FakeGateway` aprueba cualquier cosa. En producción, la pantalla de pago
-mostraría el botón «Simular pago aprobado» y **emitiría entradas reales sin
-cobrar**. Es el modo de desarrollo; existe para que todo el flujo de compra
-(retención de inventario, emisión de entradas, email, QR) se pueda ejercitar
-y testear sin credenciales de nadie.
+### El simulador nunca va a producción
 
-### `disabled` es el interruptor de emergencia
+`FakeGateway` aprueba cualquier cosa: en producción emitiría entradas reales
+sin cobrar. Existe para que todo el flujo de compra (retención de
+inventario, emisión de entradas, email, QR) se pueda ejercitar y testear sin
+credenciales de nadie. Fuera del modo «Simulador», el backend se niega a
+usarlo aunque una orden vieja lo pida (falla cerrado).
 
-Si hay que cortar los cobros en caliente: `PAYMENT_GATEWAY=disabled` y
-reiniciar. `get_gateway()` falla cerrado **antes** de retener inventario, el
-checkout responde `503 PAYMENT_DISABLED` y la tienda muestra un aviso de
-problema técnico temporal en lugar del botón de compra. No queda ninguna
-orden fantasma ocupando cupo.
+### Deshabilitado es el interruptor de emergencia
+
+Si hay que cortar los cobros en caliente: elegir «Deshabilitado» en el panel
+y guardar. El checkout responde `503 PAYMENT_DISABLED` **antes** de retener
+inventario y la tienda muestra un aviso de problema técnico temporal. No hace
+falta reiniciar nada. Los códigos de invitado (gratis) siguen funcionando.
+
+## Credenciales: cifradas y de solo escritura
+
+- Al activar una pasarela, el panel pide sus llaves (Izipay: Shop ID, clave
+  pública, password REST y clave HMAC; Mercado Pago: access token y clave
+  del webhook).
+- **Al guardar se validan con el proveedor**: Izipay con `Charge/SDKTest`
+  (llamada autenticada que no crea ninguna operación) y comprobando que las
+  llaves sean del entorno elegido (pruebas/producción); Mercado Pago
+  consultando la cuenta del access token. Si una falla, no se guarda nada.
+- Se guardan **cifradas** (Fernet) con `PAYMENT_CREDENTIALS_KEY`, la única
+  variable de pagos que queda en el entorno del servidor. Es obligatoria en
+  producción (system check `payments.E010`). **No la cambies una vez en uso**:
+  las credenciales guardadas quedarían ilegibles y habría que volver a
+  cargarlas.
+- Después de guardar, **los secretos no se vuelven a mostrar**: el panel solo
+  ve los últimos 4 caracteres (los valores públicos, como la clave pública de
+  Izipay, se muestran completos). Para cambiarlos se usa «Reemplazar».
+- Cambiar entre pruebas y producción exige volver a ingresar todas las llaves.
+- Cada cambio queda en la bitácora (`PAYMENT_SETTINGS_UPDATED`) sin valores.
+- Cada pasarela muestra en el panel su **URL de notificaciones** para darla
+  de alta en el Back Office / Tus integraciones del proveedor.
+
+### Migración desde las variables de entorno
+
+La primera vez que el sistema carga la configuración de pagos (base vacía),
+importa una sola vez `PAYMENT_GATEWAY` y las llaves `IZIPAY_*` /
+`MERCADOPAGO_*` del entorno, cifradas. Así un despliegue que ya cobraba sigue
+cobrando sin pasar por el panel. Requisito: `PAYMENT_CREDENTIALS_KEY` debe
+estar declarada **antes** de ese primer arranque. Después, esas variables
+pueden borrarse del entorno: ya no se leen.
 
 ## Cuál usar
 
-**Mercado Pago (Checkout Pro)** es el camino implementado y verificado con
-tests, y el recomendado para empezar a cobrar:
+**Mercado Pago (Checkout Pro)**: el comprador paga en el entorno de Mercado
+Pago, así que la tarjeta nunca pasa por nuestro servidor (**fuera del alcance
+PCI**). En Perú cubre tarjeta, cuenta Mercado Pago y **Yape** → [guía](./mercadopago-activacion.md).
 
-- El comprador paga en el entorno de Mercado Pago, así que la tarjeta nunca
-  pasa por nuestro servidor: **quedamos fuera del alcance PCI**.
-- En Perú cubre tarjeta de crédito/débito, cuenta Mercado Pago y **Yape**.
-- Activarlo son **dos credenciales** y dar de alta una URL de webhook.
+**Izipay**: formulario incrustado (el comprador no sale del sitio). Requiere
+que Izipay active 3-D Secure en la afiliación → [guía](./izipay-activacion.md).
 
-**Izipay** usa formulario incrustado (el comprador no sale del sitio) y pide
-cuatro credenciales por entorno más coordinación con el Back Office del
-proveedor. Tiene sentido si el organizador ya tiene comercio con Izipay o
-quiere la tarjeta dentro de su propia página.
+Pueden estar activos los dos a la vez.
 
-Los dos conviven en el código: cambiar de uno a otro es cambiar la variable.
+## Lo que comparten todos (y no depende de la pasarela)
 
-## Lo que comparten los dos (y no depende de la pasarela)
-
-Esto está construido una vez y vale para cualquier proveedor:
-
-- **El estado de la orden no lo decide el navegador.** El resultado del cobro
-  siempre sale de un canal servidor-a-servidor: el webhook/IPN firmado, y en
-  Mercado Pago además una reconsulta directa de la order. Que el comprador
-  vuelva (o no) a la pantalla de éxito es irrelevante.
+- **El estado de la orden no lo decide el navegador.** El resultado sale de
+  un canal servidor-a-servidor firmado (IPN/webhook) o de una respuesta
+  firmada que el backend verifica; en Mercado Pago además se reconsulta la
+  order.
+- **Cada orden usa la pasarela con la que se abrió su sesión** (`Order.gateway`).
+  Un rechazo de un medio que el comprador dejó no anula el intento con el
+  otro; una aprobación de cualquier medio sí paga la orden (el dinero entró).
+  Si llegan dos aprobaciones, se registra como posible doble cobro para
+  reembolsar a mano.
+- **Reintentos de Izipay.** Un rechazo con `orderCycle: OPEN` no es final (el
+  formulario deja probar otra tarjeta): la orden sigue pendiente.
 - **Idempotencia.** `PaymentEvent` es único por `order + kind + external_id`
-  y `mark_paid` corta en seco si la orden ya está `PAID`: una notificación
-  repetida no duplica entradas.
-- **Validación de importe.** Si lo que informa la pasarela no coincide
-  exactamente con el total de la orden, no se emite nada (`400`).
-- **Retención de inventario** con vencimiento (`ORDER_HOLD_MINUTES`), y
-  liberación automática cuando el pago falla o la orden vence.
-- **Bitácora.** Todo lo que ocurre con un pago queda en `PaymentEvent`, con
-  el payload crudo, para soporte y conciliación. Nunca se expone por la API.
+  y `mark_paid` corta en seco si la orden ya está `PAID`.
+- **Validación de importe.** Si lo informado no coincide con el total, no se
+  emite nada (`400`).
+- **Retención de inventario** con vencimiento (`ORDER_HOLD_MINUTES`).
+- **Bitácora.** Todo queda en `PaymentEvent`, con el payload crudo. Nunca se
+  expone por la API.
+
+## Agregar una pasarela nueva (PayPal, PagoEfectivo…)
+
+1. Una clase en `backend/apps/payments/gateways.py` que implemente
+   `PaymentGateway` y reciba sus credenciales en el constructor.
+2. Una entrada en `PROVIDERS` (`backend/apps/payments/providers.py`): campos
+   de credenciales (cuáles son secretos), función de validación contra el
+   proveedor y URL de su webhook.
+3. Su webhook en `backend/apps/payments/views.py`.
+
+El panel y la pantalla de pago la toman del registro sin más cambios.
 
 ## Antes de tocar cualquier pasarela
 
-Confirma que el flujo funciona con `PAYMENT_GATEWAY=fake` (el valor por
-defecto): crea un evento, compra una entrada, simula el pago aprobado en
-`/checkout/{code}/pay` y verifica que llegan las entradas por email. Si eso
-no funciona, el problema no es la pasarela — arréglalo primero.
+Confirma que el flujo funciona en modo «Simulador»: crea un evento, compra
+una entrada, simula el pago aprobado en `/checkout/{code}/pay` y verifica que
+llegan las entradas por email. Si eso no funciona, el problema no es la
+pasarela — arréglalo primero.
 
 ## Reutilización en otros proyectos
 

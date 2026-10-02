@@ -125,11 +125,12 @@ class IzipayGateway:
 
     name = "izipay"
 
-    def __init__(self):
-        self.shop_id = settings.IZIPAY_SHOP_ID
-        self.rest_password = settings.IZIPAY_REST_PASSWORD
-        self.public_key = settings.IZIPAY_PUBLIC_KEY
-        self.hmac_key = settings.IZIPAY_HMAC_SHA256_KEY
+    def __init__(self, credentials: dict[str, str]):
+        # Credenciales descifradas de la configuración del panel (ver providers.py).
+        self.shop_id = credentials.get("shop_id", "")
+        self.rest_password = credentials.get("rest_password", "")
+        self.public_key = credentials.get("public_key", "")
+        self.hmac_key = credentials.get("hmac_key", "")
         self.rest_url = settings.IZIPAY_REST_URL
         self.js_url = settings.IZIPAY_JS_URL
 
@@ -201,16 +202,22 @@ class IzipayGateway:
         transactions = answer.get("transactions", [{}])
         transaction = transactions[0] if transactions else {}
 
+        approved = answer.get("orderStatus") == "PAID"
         # Importe y moneda viven dentro de `orderDetails` (objeto V4/Payment),
         # tanto en la respuesta al navegador como en el IPN.
         return PaymentResult(
             order_code=order_details.get("orderId", ""),
-            approved=answer.get("orderStatus") == "PAID",
+            approved=approved,
             amount_cents=order_details.get("orderTotalAmount", 0),
             currency=order_details.get("orderCurrency", ""),
             reference=transaction.get("uuid"),
             signature_valid=signature_valid,
             raw=answer,
+            # Un rechazo con `orderCycle: OPEN` no es final: el formulario deja
+            # reintentar con otra tarjeta. Tratarlo como FAILED liberaría la
+            # retención y un segundo intento aprobado quedaría cobrado sin
+            # entradas.
+            pending=not approved and answer.get("orderCycle") == "OPEN",
         )
 
     @staticmethod
@@ -240,7 +247,9 @@ class IzipayGateway:
         try:
             body = json.loads(raw)
         except ValueError:
-            body = dict(request.POST)
+            # Izipay envía el IPN como formulario. `.dict()` y no `dict(...)`:
+            # este último deja cada valor como lista y la firma nunca valida.
+            body = request.POST.dict()
         # El IPN servidor-a-servidor se firma con el password de la API REST,
         # no con la clave HMAC-SHA256 del navegador (ver tabla §8.4).
         return self._parse_signed_payload(body, key=self.rest_password, expected_hash_key="password")
@@ -258,10 +267,10 @@ class MercadoPagoGateway:
 
     name = "mercadopago"
 
-    def __init__(self):
+    def __init__(self, credentials: dict[str, str]):
         self.client = MercadoPagoClient(
-            access_token=settings.MERCADOPAGO_ACCESS_TOKEN,
-            webhook_secret=settings.MERCADOPAGO_WEBHOOK_SECRET,
+            access_token=credentials.get("access_token", ""),
+            webhook_secret=credentials.get("webhook_secret", ""),
             api_base_url=settings.MERCADOPAGO_API_BASE_URL,
         )
 
@@ -298,8 +307,8 @@ class MercadoPagoGateway:
         return items
 
     def create_session(self, order) -> PaymentSession:
-        if not settings.MERCADOPAGO_ACCESS_TOKEN:
-            raise PaymentUnavailable("Mercado Pago no está configurado (falta MERCADOPAGO_ACCESS_TOKEN).")
+        if not self.client.access_token:
+            raise PaymentUnavailable("Mercado Pago no está configurado (falta el access token).")
 
         # Las tres URLs vuelven a la misma pantalla de pago con el resultado
         # como pista: esa pantalla pregunta al backend y el backend a Mercado
@@ -425,20 +434,52 @@ class MercadoPagoGateway:
 
 
 def payments_disabled() -> bool:
-    """`PAYMENT_GATEWAY=disabled`: la tienda no cobra ni crea órdenes. Sirve
-    para publicar el sitio antes de tener la pasarela habilitada."""
-    return settings.PAYMENT_GATEWAY == "disabled"
+    """No hay ningún medio con el que cobrar (modo «deshabilitado», o modo
+    real sin pasarelas activas): la tienda no crea órdenes."""
+    from .providers import checkout_methods
+
+    return not checkout_methods()
 
 
-def get_gateway() -> PaymentGateway:
-    if payments_disabled():
-        # Falla cerrado: nunca caer en FakeGateway, que aprueba cualquier cosa.
+GATEWAY_CLASSES = {"izipay": IzipayGateway, "mercadopago": MercadoPagoGateway}
+
+
+def get_gateway(name: str, *, for_checkout: bool = False) -> PaymentGateway:
+    """La pasarela `name` con sus credenciales guardadas.
+
+    `for_checkout=True` exige que el medio esté habilitado ahora mismo (abrir
+    una sesión de pago nueva). Sin él basta con que tenga credenciales: un
+    IPN o un retorno tardío de una orden creada antes de desactivar el medio
+    igual debe poder cerrarse.
+
+    Falla cerrado: el simulador solo existe en modo «fake», nunca como
+    respaldo de una pasarela real que falte o esté mal configurada.
+    """
+    from .crypto import CredentialsKeyMissing, CredentialsUnreadable
+    from .models import PaymentProvider, PaymentSettings
+    from .providers import FAKE, checkout_methods, credentials_of
+
+    config = PaymentSettings.load()
+    if config.mode == PaymentSettings.Mode.DISABLED:
         raise PaymentUnavailable("Los pagos están deshabilitados temporalmente.")
-    if settings.PAYMENT_GATEWAY == "mercadopago":
-        return MercadoPagoGateway()
-    if settings.PAYMENT_GATEWAY == "izipay":
-        return IzipayGateway()
-    return FakeGateway()
+    if name == FAKE:
+        if config.mode != PaymentSettings.Mode.FAKE:
+            raise PaymentUnavailable("El simulador de pagos no está activo.")
+        return FakeGateway()
+    if name not in GATEWAY_CLASSES:
+        raise PaymentUnavailable(f"Medio de pago desconocido: {name}.")
+    if for_checkout and name not in checkout_methods():
+        raise PaymentUnavailable(f"El medio de pago {name} no está habilitado.")
+
+    row = PaymentProvider.objects.filter(provider=name).exclude(credentials="").first()
+    if row is None:
+        raise PaymentUnavailable(f"{name} no tiene credenciales configuradas.")
+    try:
+        credentials = credentials_of(row)
+    except (CredentialsKeyMissing, CredentialsUnreadable) as exc:
+        logger.error("No se pudieron leer las credenciales de %s: %s", name, exc)
+        raise PaymentUnavailable(str(exc)) from exc
+    return GATEWAY_CLASSES[name](credentials)
 
 
 def amounts_match(order, result: PaymentResult) -> bool:

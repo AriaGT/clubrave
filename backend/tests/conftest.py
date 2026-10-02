@@ -57,3 +57,48 @@ def scarce_ticket_type(db, published_event):
     return TicketType.objects.create(
         event=published_event, name="Última entrada", price=Decimal("50.00"), quantity_total=1
     )
+
+
+# ── Configuración de pagos ───────────────────────────────────────────────────
+# Vive en la base (panel › Medios de pago). Los tests arrancan siempre en modo
+# simulador para no depender de lo que haya en el .env local: sin esto, la
+# primera carga importaría la pasarela del entorno de quien corre los tests.
+
+
+@pytest.fixture(autouse=True)
+def _payments_default_to_fake(request):
+    if "db" not in request.fixturenames and not request.node.get_closest_marker("django_db"):
+        return
+    request.getfixturevalue("db")
+    from apps.payments.models import PaymentSettings
+
+    PaymentSettings.objects.update_or_create(pk=PaymentSettings.SINGLETON_ID, defaults={"mode": "fake"})
+
+
+@pytest.fixture
+def set_payment_mode(db):
+    from apps.payments.models import PaymentSettings
+
+    def _set(mode: str):
+        PaymentSettings.objects.update_or_create(pk=PaymentSettings.SINGLETON_ID, defaults={"mode": mode})
+
+    return _set
+
+
+@pytest.fixture
+def configure_provider(db, set_payment_mode):
+    """Guarda una pasarela con sus credenciales (cifradas, como el panel) y
+    deja la tienda en modo real."""
+    from apps.payments.models import PaymentProvider
+    from apps.payments.providers import store_credentials
+
+    def _configure(provider: str, credentials: dict, *, enabled=True, environment="test", mode="live"):
+        row, _ = PaymentProvider.objects.get_or_create(provider=provider)
+        row.enabled = enabled
+        row.environment = environment
+        store_credentials(row, credentials)
+        row.save()
+        set_payment_mode(mode)
+        return row
+
+    return _configure

@@ -124,7 +124,9 @@ export default function CheckoutPage() {
       }
       return;
     }
-    savePaymentSession(order.order.code, order.payment);
+    // Con varios medios habilitados la sesión llega vacía: el comprador
+    // elige cómo pagar en la pantalla siguiente.
+    if (order.payment) savePaymentSession(order.order.code, order.payment);
     // El carrito se vacía en la pantalla de pago, no aquí: vaciarlo antes de
     // navegar dispara el guard de "carrito vacío → inicio" de esta misma
     // página y cancela la navegación a /pay en pleno vuelo.

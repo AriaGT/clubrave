@@ -10,18 +10,18 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests
-from django.test import override_settings
 
 from apps.orders.services.checkout import BuyerData, CartLine, create_order
 from apps.payments.gateways import IzipayGateway, PaymentUnavailable, amounts_match
 
-IZIPAY_SETTINGS = dict(
-    IZIPAY_SHOP_ID="12345678",
-    IZIPAY_REST_PASSWORD="test-rest-password",
-    IZIPAY_HMAC_SHA256_KEY="test-hmac-sha256-key",
-    IZIPAY_PUBLIC_KEY="12345678:testpublickey_xxx",
-    IZIPAY_JS_URL="https://static.example.pe/kr-payment-form.min.js",
+# Credenciales tal como las entrega la configuración del panel (descifradas).
+IZIPAY_CREDS = dict(
+    shop_id="12345678",
+    rest_password="test-rest-password",
+    hmac_key="test-hmac-sha256-key",
+    public_key="12345678:testpublickey_xxx",
 )
+IZIPAY_SETTINGS = dict(IZIPAY_JS_URL="https://static.example.pe/kr-payment-form.min.js")
 
 BUYER = BuyerData(email="comprador@test.pe", full_name="Comprador Test")
 
@@ -74,7 +74,7 @@ class TestBrowserReturnSignature:
             "kr-hash": _sign(raw, "test-hmac-sha256-key"),
             "kr-hash-key": "sha256_hmac",
         }
-        result = IzipayGateway().verify_browser_return(order, payload)
+        result = IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload)
         assert result.signature_valid
         assert result.approved
         assert result.order_code == order.code
@@ -91,7 +91,7 @@ class TestBrowserReturnSignature:
         # Cambia un solo carácter tras firmar: simula un JSON re-serializado
         # o manipulado en tránsito.
         payload["kr-answer"] = raw.replace("PAID", "PAId")
-        result = IzipayGateway().verify_browser_return(order, payload)
+        result = IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload)
         assert not result.signature_valid
 
     def test_signed_with_the_wrong_channel_key_is_rejected(self, order):
@@ -103,7 +103,7 @@ class TestBrowserReturnSignature:
             "kr-hash": _sign(raw, "test-rest-password"),
             "kr-hash-key": "sha256_hmac",  # miente sobre qué clave usó
         }
-        result = IzipayGateway().verify_browser_return(order, payload)
+        result = IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload)
         assert not result.signature_valid
 
     def test_hash_key_label_mismatch_is_rejected_even_with_correct_hmac(self, order):
@@ -115,7 +115,7 @@ class TestBrowserReturnSignature:
             "kr-hash": _sign(raw, "test-hmac-sha256-key"),
             "kr-hash-key": "password",
         }
-        result = IzipayGateway().verify_browser_return(order, payload)
+        result = IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload)
         assert not result.signature_valid
 
 
@@ -133,7 +133,7 @@ class TestBrowserReturnFromOnSubmit:
             "hashKey": "sha256_hmac",
             "_type": "V4/Charge/ProcessPaymentAnswer",
         }
-        result = IzipayGateway().verify_browser_return(order, payload)
+        result = IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload)
         assert result.signature_valid
         assert result.approved
         assert result.order_code == order.code
@@ -145,12 +145,12 @@ class TestBrowserReturnFromOnSubmit:
             "hash": _sign(raw, "test-hmac-sha256-key"),
             "hashKey": "sha256_hmac",
         }
-        assert not IzipayGateway().verify_browser_return(order, payload).signature_valid
+        assert not IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload).signature_valid
 
     def test_onsubmit_signed_with_ipn_key_is_rejected(self, order):
         raw = _kr_answer(order.code, amount_cents=6000)
         payload = {"rawClientAnswer": raw, "hash": _sign(raw, "test-rest-password"), "hashKey": "password"}
-        assert not IzipayGateway().verify_browser_return(order, payload).signature_valid
+        assert not IzipayGateway(IZIPAY_CREDS).verify_browser_return(order, payload).signature_valid
 
 
 class TestIpnSignature:
@@ -164,7 +164,7 @@ class TestIpnSignature:
             }
         ).encode("utf-8")
         request = Mock(body=body)
-        result = IzipayGateway().verify_ipn(request)
+        result = IzipayGateway(IZIPAY_CREDS).verify_ipn(request)
         assert result.signature_valid
         assert result.approved
 
@@ -181,7 +181,7 @@ class TestIpnSignature:
             }
         ).encode("utf-8")  # ...pero el hash no corresponde al password real
         request = Mock(body=body)
-        result = IzipayGateway().verify_ipn(request)
+        result = IzipayGateway(IZIPAY_CREDS).verify_ipn(request)
         assert not result.signature_valid
 
     def test_rejected_payment_is_not_approved(self, order):
@@ -190,7 +190,7 @@ class TestIpnSignature:
             {"kr-answer": raw, "kr-hash": _sign(raw, "test-rest-password"), "kr-hash-key": "password"}
         ).encode("utf-8")
         request = Mock(body=body)
-        result = IzipayGateway().verify_ipn(request)
+        result = IzipayGateway(IZIPAY_CREDS).verify_ipn(request)
         assert result.signature_valid
         assert not result.approved
 
@@ -199,20 +199,20 @@ class TestCreateSession:
     def test_raises_payment_unavailable_when_provider_is_down(self, order):
         with patch("apps.payments.gateways.requests.post", side_effect=requests.ConnectionError("down")):
             with pytest.raises(PaymentUnavailable):
-                IzipayGateway().create_session(order)
+                IzipayGateway(IZIPAY_CREDS).create_session(order)
 
     def test_raises_payment_unavailable_on_provider_error_status(self, order):
         response = Mock()
         response.json.return_value = {"status": "ERROR", "errorMessage": "Comercio inválido"}
         with patch("apps.payments.gateways.requests.post", return_value=response):
             with pytest.raises(PaymentUnavailable):
-                IzipayGateway().create_session(order)
+                IzipayGateway(IZIPAY_CREDS).create_session(order)
 
     def test_amount_is_sent_in_integer_cents_from_decimal(self, order):
         response = Mock()
         response.json.return_value = {"status": "SUCCESS", "answer": {"formToken": "tok_abc"}}
         with patch("apps.payments.gateways.requests.post", return_value=response) as mock_post:
-            session = IzipayGateway().create_session(order)
+            session = IzipayGateway(IZIPAY_CREDS).create_session(order)
 
         assert session.form_token == "tok_abc"
         sent_body = mock_post.call_args.kwargs["json"]
@@ -224,9 +224,8 @@ class TestCreateSession:
         assert sent_body["customer"]["billingDetails"]["firstName"]
 
     def test_never_creates_a_session_without_configured_credentials(self, order):
-        with override_settings(IZIPAY_SHOP_ID=""):
-            with pytest.raises(PaymentUnavailable):
-                IzipayGateway().create_session(order)
+        with pytest.raises(PaymentUnavailable):
+            IzipayGateway({**IZIPAY_CREDS, "shop_id": ""}).create_session(order)
 
 
 class TestAmountsMatch:

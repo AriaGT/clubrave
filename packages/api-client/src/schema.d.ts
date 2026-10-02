@@ -183,9 +183,49 @@ export interface paths {
          *
          *     Con Izipay el navegador trae una respuesta firmada; con Mercado Pago no
          *     trae nada y la pasarela vuelve a consultar la order. En ambos casos el
-         *     estado final sale de `gateway`, nunca de lo que diga el cliente.
+         *     estado final sale de la pasarela con la que se abrió la sesión de la
+         *     orden (`order.gateway`), nunca de lo que diga el cliente.
          */
         post: operations["checkout_orders_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/checkout/orders/{code}/session/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Abre la sesión de pago con el medio que eligió el comprador, o la
+         *     cambia a otro medio si el primero le falló. La orden y su retención de
+         *     entradas no cambian; el código de la orden es la credencial, igual que
+         *     en la confirmación del pago.
+         */
+        post: operations["checkout_orders_session_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/checkout/payment-methods/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Medios de pago habilitados ahora, para que la tienda ofrezca elegir. */
+        get: operations["checkout_payment_methods_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -938,6 +978,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/payments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Módulo «Medios de pago» del panel (Ajustes › Configuración avanzada).
+         *
+         *     Solo dueños. Las credenciales son de solo escritura: se envían al crear o
+         *     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
+         */
+        get: operations["org_payments_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Módulo «Medios de pago» del panel (Ajustes › Configuración avanzada).
+         *
+         *     Solo dueños. Las credenciales son de solo escritura: se envían al crear o
+         *     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
+         */
+        patch: operations["org_payments_partial_update"];
+        trace?: never;
+    };
     "/api/org/site/": {
         parameters: {
             query?: never;
@@ -1112,6 +1180,7 @@ export interface components {
          *     * `EVENT_ANNOUNCED` - Event Announced
          *     * `IMAGE_DELETED` - Image Deleted
          *     * `SITE_SETTINGS_UPDATED` - Site Settings Updated
+         *     * `PAYMENT_SETTINGS_UPDATED` - Payment Settings Updated
          *     * `ORDER_VOIDED` - Order Voided
          *     * `ORDER_REFUND_MARKED` - Order Refund Marked
          *     * `TICKETS_RESENT` - Tickets Resent
@@ -1129,7 +1198,7 @@ export interface components {
          *     * `TICKET_CHECKED_IN` - Ticket Checked In
          * @enum {string}
          */
-        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
+        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "PAYMENT_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
         Announce: {
             subject: string;
             message: string;
@@ -1225,7 +1294,14 @@ export interface components {
         };
         CheckoutCreateResponse: {
             order: components["schemas"]["Order"];
-            payment: components["schemas"]["PaymentSession"];
+            payment: components["schemas"]["PaymentSession"] | null;
+            payment_methods: components["schemas"]["PaymentMethod"][];
+        };
+        CredentialField: {
+            name: string;
+            label: string;
+            secret: boolean;
+            help: string;
         };
         DoorEvent: {
             /** Format: uuid */
@@ -1278,6 +1354,12 @@ export interface components {
         EmployeePasswordReset: {
             password: string;
         };
+        /**
+         * @description * `test` - Pruebas
+         *     * `production` - Producción
+         * @enum {string}
+         */
+        EnvironmentEnum: "test" | "production";
         EventImage: {
             /** Format: uuid */
             readonly id: string;
@@ -1477,6 +1559,13 @@ export interface components {
             document_id?: string;
             marketing_consent?: boolean;
         };
+        /**
+         * @description * `disabled` - Deshabilitado
+         *     * `fake` - Simulador
+         *     * `live` - Pasarelas reales
+         * @enum {string}
+         */
+        ModeEnum: "disabled" | "fake" | "live";
         Order: {
             code: string;
             status?: components["schemas"]["Status7d7Enum"];
@@ -1800,6 +1889,12 @@ export interface components {
             document_id?: string;
             marketing_consent?: boolean;
         };
+        PatchedPaymentSettingsUpdate: {
+            mode?: components["schemas"]["ModeEnum"];
+            providers?: {
+                [key: string]: components["schemas"]["ProviderUpdate"];
+            };
+        };
         /**
          * @description Lectura pública y edición desde el panel. `logo` acepta un archivo
          *     (multipart) o `null` para quitarlo.
@@ -1848,12 +1943,52 @@ export interface components {
         PauseSales: {
             paused: boolean;
         };
+        PaymentMethod: {
+            id: string;
+            label: string;
+        };
+        PaymentMethods: {
+            methods: components["schemas"]["PaymentMethod"][];
+        };
         PaymentSession: {
             gateway: string;
             form_token: string;
             public_key: string;
             js_url: string;
             checkout_url: string;
+        };
+        PaymentSessionCreate: {
+            method: string;
+        };
+        PaymentSettingsState: {
+            mode: components["schemas"]["ModeEnum"];
+            credentials_key_configured: boolean;
+            providers: components["schemas"]["ProviderState"][];
+        };
+        /**
+         * @description Lo que el panel ve de una pasarela. Nunca incluye credenciales: solo
+         *     `hints` (valores públicos completos, secretos como ••••1234).
+         */
+        ProviderState: {
+            id: string;
+            label: string;
+            enabled: boolean;
+            environment: components["schemas"]["EnvironmentEnum"];
+            configured: boolean;
+            /** Format: date-time */
+            verified_at: string | null;
+            hints: {
+                [key: string]: string;
+            };
+            fields: components["schemas"]["CredentialField"][];
+            webhook_url: string;
+        };
+        ProviderUpdate: {
+            enabled?: boolean;
+            environment?: components["schemas"]["EnvironmentEnum"];
+            credentials?: {
+                [key: string]: string;
+            };
         };
         ReorderImages: {
             order: string[];
@@ -2279,6 +2414,52 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    checkout_orders_session_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentSessionCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PaymentSessionCreate"];
+                "multipart/form-data": components["schemas"]["PaymentSessionCreate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSession"];
+                };
+            };
+        };
+    };
+    checkout_payment_methods_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethods"];
                 };
             };
         };
@@ -3634,6 +3815,50 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    org_payments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsState"];
+                };
+            };
+        };
+    };
+    org_payments_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPaymentSettingsUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPaymentSettingsUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedPaymentSettingsUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsState"];
                 };
             };
         };

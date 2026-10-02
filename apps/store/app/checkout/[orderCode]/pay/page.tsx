@@ -1,12 +1,22 @@
 "use client";
 
-import { Button, Card, CardContent, useAsyncAction } from "@repo/ui";
+import { Button, Card, CardContent, cn, useAsyncAction } from "@repo/ui";
+import { CreditCard, Wallet } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/features/cart/store";
-import { useConfirmPayment, useOrderStatus } from "@/features/checkout/pay-hooks";
-import { loadPaymentSession } from "@/features/checkout/payment-session-storage";
+import {
+  useConfirmPayment,
+  useOpenPaymentSession,
+  useOrderStatus,
+  usePaymentMethods,
+} from "@/features/checkout/pay-hooks";
+import {
+  loadPaymentSession,
+  savePaymentSession,
+  type StoredPaymentSession,
+} from "@/features/checkout/payment-session-storage";
 import { PaymentForm } from "@/features/checkout/PaymentForm";
 
 /**
@@ -18,13 +28,25 @@ import { PaymentForm } from "@/features/checkout/PaymentForm";
  *   reconsulte el cobro a Mercado Pago (ver `confirm_from_browser`).
  * - `izipay` — formulario incrustado real (`PaymentForm`).
  * - `fake` — simulador de desarrollo, que ejercita el mismo camino de código.
+ *
+ * Si el panel tiene varios medios habilitados, la orden llega sin sesión y el
+ * comprador elige aquí cómo pagar; también puede cambiar de medio si el
+ * primero le falla, sin perder la orden ni la reserva de entradas.
  */
+const METHOD_ICONS: Record<string, typeof CreditCard> = { izipay: CreditCard, mercadopago: Wallet };
+
 function PayScreen() {
   const { orderCode } = useParams<{ orderCode: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [submitted, setSubmitted] = useState(false);
-  const paymentGateway = loadPaymentSession(orderCode)?.gateway;
+  const [paymentSession, setPaymentSession] = useState<StoredPaymentSession | null>(() =>
+    loadPaymentSession(orderCode)
+  );
+  const [choosing, setChoosing] = useState(false);
+  const { data: methods } = usePaymentMethods();
+  const openSession = useOpenPaymentSession(orderCode);
+  const paymentGateway = paymentSession?.gateway;
   // Con el formulario incrustado el pago no existe hasta que el comprador lo
   // envía: sondear antes solo golpea el backend sin nada que esperar.
   const { data: order, refetch } = useOrderStatus(orderCode, {
@@ -35,7 +57,6 @@ function PayScreen() {
   const eventSlug = useCartStore((s) => s.eventSlug);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const paymentSession = loadPaymentSession(orderCode);
   const mpReturn = searchParams.get("mp");
   const isRedirectGateway = paymentSession?.gateway === "mercadopago";
   const isEmbeddedGateway = paymentSession?.gateway === "izipay";
@@ -87,9 +108,30 @@ function PayScreen() {
     await refetch();
   }
 
+  async function chooseMethod(method: string) {
+    const session = await openSession.mutateAsync(method);
+    savePaymentSession(orderCode, session);
+    setFormError(null);
+    setChoosing(false);
+    setPaymentSession(session);
+  }
+
+  // Sin sesión y con un único medio (p. ej. la página se abrió en otra
+  // pestaña y no hay sesión guardada): se abre sola, no hay nada que elegir.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (paymentSession || !methods || methods.length !== 1 || autoOpened.current) return;
+    if (order?.status !== "PENDING") return;
+    autoOpened.current = true;
+    void chooseMethod(methods[0]!.id).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentSession, methods, order?.status]);
+
   if (!order) return null;
 
   const isPending = order.status === "PENDING";
+  const canSwitch = (methods?.length ?? 0) > 1 && !submitted;
+  const showPicker = isPending && canSwitch && (choosing || !paymentSession);
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 p-[var(--space-6)]">
@@ -101,7 +143,55 @@ function PayScreen() {
         </CardContent>
       </Card>
 
-      {isPending && isRedirectGateway && !mpReturn && checkoutUrl && (
+      {showPicker && methods && (
+        <div className="flex flex-col gap-3">
+          <p className="font-medium">¿Cómo quieres pagar?</p>
+          {methods.map((m) => {
+            const Icon = METHOD_ICONS[m.id] ?? CreditCard;
+            const current = paymentGateway === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                disabled={openSession.isPending}
+                onClick={() => (current ? setChoosing(false) : void chooseMethod(m.id).catch(() => undefined))}
+                className={cn(
+                  "flex items-center gap-3 rounded-[var(--radius-md)] border p-4 text-left transition-colors duration-[var(--duration-fast)]",
+                  "focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] disabled:opacity-60",
+                  current
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)]"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)]"
+                )}
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-accent-soft)] text-[var(--color-accent-text)]">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="flex-1 font-medium">{m.label}</span>
+                {openSession.isPending && openSession.variables === m.id && (
+                  <span className="text-sm text-[var(--color-text-muted)]">Abriendo…</span>
+                )}
+              </button>
+            );
+          })}
+          {openSession.isError && (
+            <p className="text-sm text-[var(--color-danger)]">
+              Ese medio de pago no está disponible ahora. Prueba con otro.
+            </p>
+          )}
+        </div>
+      )}
+
+      {!showPicker && isPending && canSwitch && paymentSession && (
+        <button
+          type="button"
+          onClick={() => setChoosing(true)}
+          className="-mt-3 self-start text-sm text-[var(--color-accent-text)] underline-offset-4 hover:underline"
+        >
+          Pagar con otro medio
+        </button>
+      )}
+
+      {!showPicker && isPending && isRedirectGateway && !mpReturn && checkoutUrl && (
         <div className="flex flex-col gap-3">
           <p className="text-[var(--color-text-muted)]">
             Te estamos llevando a Mercado Pago para completar el pago…
@@ -138,7 +228,7 @@ function PayScreen() {
         </div>
       )}
 
-      {isPending && isEmbeddedGateway && paymentSession && (
+      {!showPicker && isPending && isEmbeddedGateway && paymentSession && (
         <>
           <PaymentForm session={paymentSession} onSubmitted={handleRealSubmit} onError={setFormError} />
           {formError && <p className="text-sm text-[var(--color-danger)]">{formError}</p>}
@@ -150,7 +240,7 @@ function PayScreen() {
         </>
       )}
 
-      {isPending && !isRedirectGateway && !isEmbeddedGateway && (
+      {!showPicker && isPending && paymentSession?.gateway === "fake" && (
         <div className="flex flex-col gap-3">
           <p className="text-[var(--color-text-muted)]">
             Entorno de pruebas: simula el resultado del banco.

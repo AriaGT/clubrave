@@ -63,9 +63,8 @@ evento y en la puerta — escalar es sumar workers, no rediseñar nada.
 | `AWS_S3_CUSTOM_DOMAIN` | `cdn.clubrave.pe` — **sin** `https://` delante |
 | `DEFAULT_FROM_EMAIL`, `EMAIL_HOST*` | Del proveedor de email transaccional (Resend/Brevo por SMTP) |
 | `FRONTEND_STORE_URL` / `FRONTEND_PANEL_URL` | `https://clubrave.pe` / `https://panel.clubrave.pe` |
-| `PAYMENT_GATEWAY` | `mercadopago` para cobrar con Checkout Pro; `fake` mientras no haya credenciales; `disabled` para bloquear compras |
-| `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `MERCADOPAGO_MODE` | Ver [`mercadopago-activacion.md`](./mercadopago-activacion.md). El dinero entra en la cuenta dueña del access token |
-| `IZIPAY_*` | Ver [`izipay-activacion.md`](./izipay-activacion.md) — alternativa a Mercado Pago |
+| `PAYMENT_CREDENTIALS_KEY` | **Obligatoria.** Cifra las credenciales de las pasarelas en la base. Generar con `python -c "import secrets; print(secrets.token_urlsafe(48))"` y **no cambiarla** después. Los medios de pago y sus llaves se configuran desde el panel — ver [`pagos.md`](./pagos.md) |
+| `PAYMENT_GATEWAY`, `IZIPAY_*`, `MERCADOPAGO_*` (llaves y `_MODE`) | Heredadas: solo se importan una vez al primer arranque. Después se pueden borrar |
 | `SENTRY_DSN` | Del proyecto de Sentry (sección 6), opcional |
 
 **Frontends** (ambas apps)
@@ -146,14 +145,15 @@ real de §2.3.
 
 ## 8. Si algo sale mal el día del evento
 
-- **Los cobros fallan**: cambia `PAYMENT_GATEWAY` a `fake` para cortar el
-  sangrado mientras se investiga — ver
-  [`izipay-activacion.md`](./izipay-activacion.md#5-volver-atrás-sin-drama).
-  El checkout sigue funcionando (sin cobrar) mientras se resuelve.
-- **Publicar sin pasarela habilitada**: pon `PAYMENT_GATEWAY=disabled`. La
-  tienda muestra "compras deshabilitadas temporalmente por problemas
-  técnicos", el backend responde `503 PAYMENT_DISABLED` y no retiene
-  inventario. Los códigos de invitado (gratis) siguen funcionando.
+- **Una pasarela falla**: si hay otra activa, desactiva solo la que falla en
+  el panel (Ajustes › Medios de pago) y los compradores siguen pagando con
+  la otra. Si es la única, elige «Deshabilitado».
+- **Publicar sin pasarela habilitada / cortar los cobros en caliente**: modo
+  «Deshabilitado» en el panel. La tienda muestra "compras deshabilitadas
+  temporalmente por problemas técnicos", el backend responde
+  `503 PAYMENT_DISABLED` y no retiene inventario. No hace falta reiniciar.
+  Los códigos de invitado (gratis) siguen funcionando. **Nunca** uses el
+  «Simulador» en producción: emitiría entradas sin cobrar.
 - **La API cae en la puerta**: el escáner exige red porque la validación es
   siempre en vivo (a propósito, ver §5.6 del plan) — no hay modo sin
   conexión en este MVP. Ten un plan B manual (lista impresa de compradores)

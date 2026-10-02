@@ -13,8 +13,9 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsCustomer, IsOrganizer
 from apps.common.errors import DomainError
 from apps.events.models import Event
-from apps.payments.gateways import PaymentUnavailable, get_gateway, payments_disabled
+from apps.payments.gateways import PaymentSession, PaymentUnavailable, get_gateway
 from apps.payments.models import PaymentEvent
+from apps.payments.providers import checkout_methods, method_label
 
 from .models import GuestCode, Order, Ticket
 from .serializers import (
@@ -32,6 +33,9 @@ from .serializers import (
     OrderRefundSerializer,
     OrderSerializer,
     OrderVoidSerializer,
+    PaymentMethodsSerializer,
+    PaymentSessionCreateSerializer,
+    PaymentSessionSerializer,
     TicketSerializer,
 )
 from .services.checkout import BuyerData, CartLine, create_order
@@ -44,6 +48,74 @@ from .services.guest_codes import (
 )
 from .services.tickets_email import resend_tickets_email
 from .services.void import mark_refunded, void_order, void_ticket
+
+
+def _methods_payload(methods: list[str]) -> list[dict]:
+    return [{"id": m, "label": method_label(m)} for m in methods]
+
+
+def _open_session(order: Order, method: str) -> PaymentSession:
+    """Abre (o reabre con otro medio) la sesión de pago de una orden pendiente."""
+    try:
+        session = get_gateway(method, for_checkout=True).create_session(order)
+    except PaymentUnavailable as exc:
+        raise DomainError("PAYMENT_UNAVAILABLE", str(exc)) from exc
+
+    order.gateway = session.gateway
+    order.gateway_order_id = session.provider_order_id
+    order.save(update_fields=["gateway", "gateway_order_id", "updated_at"])
+    PaymentEvent.objects.create(
+        order=order,
+        kind=PaymentEvent.Kind.SESSION_CREATED,
+        external_id=session.provider_order_id or None,
+        raw_payload={"gateway": session.gateway},
+    )
+    return session
+
+
+def _session_payload(session: PaymentSession) -> dict:
+    return {
+        "gateway": session.gateway,
+        "form_token": session.form_token,
+        "public_key": session.public_key,
+        "js_url": session.js_url,
+        "checkout_url": session.checkout_url,
+    }
+
+
+class PaymentMethodsView(APIView):
+    """Medios de pago habilitados ahora, para que la tienda ofrezca elegir."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "public"
+
+    @extend_schema(responses=PaymentMethodsSerializer)
+    def get(self, request):
+        return Response({"methods": _methods_payload(checkout_methods())})
+
+
+class PaymentSessionCreateView(APIView):
+    """Abre la sesión de pago con el medio que eligió el comprador, o la
+    cambia a otro medio si el primero le falló. La orden y su retención de
+    entradas no cambian; el código de la orden es la credencial, igual que
+    en la confirmación del pago."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "checkout"
+
+    @extend_schema(request=PaymentSessionCreateSerializer, responses=PaymentSessionSerializer)
+    def post(self, request, code: str):
+        serializer = PaymentSessionCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = get_object_or_404(Order, code=code)
+        if order.status == Order.Status.PAID:
+            raise DomainError("ORDER_ALREADY_PAID")
+        if order.status != Order.Status.PENDING:
+            raise DomainError("ORDER_EXPIRED")
+        session = _open_session(order, serializer.validated_data["method"])
+        return Response(_session_payload(session))
 
 
 class CheckoutCreateView(APIView):
@@ -60,7 +132,8 @@ class CheckoutCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        if payments_disabled():  # antes de retener inventario
+        methods = checkout_methods()
+        if not methods:  # antes de retener inventario
             raise DomainError("PAYMENT_DISABLED")
 
         event = get_object_or_404(Event, id=data["event_id"])
@@ -75,31 +148,15 @@ class CheckoutCreateView(APIView):
             terms_accepted=data["terms_accepted"],
         )
 
-        gateway = get_gateway()
-        try:
-            session = gateway.create_session(order)
-        except PaymentUnavailable as exc:
-            raise DomainError("PAYMENT_UNAVAILABLE", str(exc)) from exc
-
-        order.gateway = session.gateway
-        order.gateway_order_id = session.provider_order_id
-        order.save(update_fields=["gateway", "gateway_order_id"])
-        PaymentEvent.objects.create(
-            order=order,
-            kind=PaymentEvent.Kind.SESSION_CREATED,
-            external_id=session.provider_order_id or None,
-        )
+        # Un solo medio: la sesión se abre ya, como siempre. Varios: el
+        # comprador elige en la pantalla de pago (PaymentSessionCreateView).
+        session = _open_session(order, methods[0]) if len(methods) == 1 else None
 
         return Response(
             {
                 "order": OrderSerializer(order).data,
-                "payment": {
-                    "gateway": session.gateway,
-                    "form_token": session.form_token,
-                    "public_key": session.public_key,
-                    "js_url": session.js_url,
-                    "checkout_url": session.checkout_url,
-                },
+                "payment": _session_payload(session) if session else None,
+                "payment_methods": _methods_payload(methods),
             },
             status=status.HTTP_201_CREATED,
         )

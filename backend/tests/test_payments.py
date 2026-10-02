@@ -131,8 +131,10 @@ def test_checkout_view_ignores_client_supplied_price(client, published_event, ti
     assert response.json()["order"]["total"] == "50.00"
 
 
-def test_checkout_is_blocked_when_payments_are_disabled(client, published_event, ticket_type, settings):
-    settings.PAYMENT_GATEWAY = "disabled"
+def test_checkout_is_blocked_when_payments_are_disabled(
+    client, published_event, ticket_type, set_payment_mode
+):
+    set_payment_mode("disabled")
     response = client.post(
         "/api/checkout/orders/",
         data={
@@ -152,8 +154,8 @@ def test_checkout_is_blocked_when_payments_are_disabled(client, published_event,
     assert detail.json()["payments_disabled"] is True
 
 
-def test_confirm_and_ipn_fail_closed_when_payments_are_disabled(client, pending_order, settings):
-    settings.PAYMENT_GATEWAY = "disabled"
+def test_confirm_and_ipn_fail_closed_when_payments_are_disabled(client, pending_order, set_payment_mode):
+    set_payment_mode("disabled")
     confirm = client.post(
         f"/api/checkout/orders/{pending_order.code}/confirm/",
         data={"order_code": pending_order.code, "approved": True},

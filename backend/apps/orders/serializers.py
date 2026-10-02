@@ -204,9 +204,25 @@ class PaymentSessionSerializer(serializers.Serializer):
     checkout_url = serializers.CharField(allow_blank=True)
 
 
+class PaymentMethodSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    label = serializers.CharField()
+
+
+class PaymentMethodsSerializer(serializers.Serializer):
+    methods = PaymentMethodSerializer(many=True)
+
+
+class PaymentSessionCreateSerializer(serializers.Serializer):
+    method = serializers.CharField()
+
+
 class CheckoutCreateResponseSerializer(serializers.Serializer):
     order = OrderSerializer()
-    payment = PaymentSessionSerializer()
+    # Con un solo medio habilitado la sesión se abre de inmediato; con varios
+    # llega `null` y el comprador elige en la pantalla de pago.
+    payment = PaymentSessionSerializer(allow_null=True)
+    payment_methods = PaymentMethodSerializer(many=True)
 
 
 # ── Códigos de invitado ──────────────────────────────────────────────────────

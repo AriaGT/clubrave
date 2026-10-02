@@ -41,3 +41,32 @@ export function useConfirmPayment(code: string) {
     },
   });
 }
+
+/** Medios de pago habilitados ahora (panel › Medios de pago). */
+export function usePaymentMethods() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/checkout/payment-methods/");
+      if (error) throw error;
+      return data.methods;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** Abre la sesión de pago con el medio elegido, o la cambia a otro medio. */
+export function useOpenPaymentSession(code: string) {
+  const api = useApi();
+  return useMutation({
+    mutationFn: async (method: string) => {
+      const { data, error } = await api.POST("/api/checkout/orders/{code}/session/", {
+        params: { path: { code } },
+        body: { method },
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+}

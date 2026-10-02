@@ -1,5 +1,11 @@
 # Activar cobros reales con Izipay
 
+> **Actualización:** las credenciales ya no van en variables de entorno. Se
+> cargan, validan y guardan cifradas desde el panel (Ajustes › Configuración
+> avanzada › Medios de pago) — ver [`pagos.md`](./pagos.md). Donde esta guía
+> dice «variable de entorno», usa el campo equivalente del panel; las
+> variables solo sirven para la importación inicial.
+
 > Objetivo (§8 del plan): activar los cobros reales consiste en pedir cuatro
 > credenciales a Izipay, pegarlas en variables de entorno y dar de alta una
 > URL. **Ni una línea de código nueva.** Todo el flujo de compra ya está

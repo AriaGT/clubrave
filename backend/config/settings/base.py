@@ -209,12 +209,24 @@ RESEND_API_KEY = env("RESEND_API_KEY", default=env("EMAIL_HOST_PASSWORD", defaul
 FRONTEND_STORE_URL = env("FRONTEND_STORE_URL", default="http://localhost:3000")
 FRONTEND_PANEL_URL = env("FRONTEND_PANEL_URL", default="http://localhost:3001")
 
-# ── Pagos (nombres de variable tal cual §8.6 del plan) ─────────────────────
+# ── Pagos ──────────────────────────────────────────────────────────────────
+# Los medios de pago y sus credenciales se configuran desde el panel (Ajustes
+# › Medios de pago) y se guardan cifrados en la base de datos con esta clave.
+# Cualquier cadena larga y aleatoria sirve (se deriva una clave Fernet de
+# ella); si se pierde o cambia, las credenciales guardadas quedan ilegibles y
+# hay que volver a cargarlas desde el panel. Generar con:
+#   python -c "import secrets; print(secrets.token_urlsafe(48))"
+PAYMENT_CREDENTIALS_KEY = env("PAYMENT_CREDENTIALS_KEY", default="")
+
+# Variables heredadas: ya no se leen al cobrar. Solo sirven para la
+# importación única que ocurre la primera vez que se carga la configuración
+# de pagos (ver PaymentSettings.load). Después pueden borrarse del entorno.
 PAYMENT_GATEWAY = env("PAYMENT_GATEWAY", default="fake")
 IZIPAY_SHOP_ID = env("IZIPAY_SHOP_ID", default="")
 IZIPAY_REST_PASSWORD = env("IZIPAY_REST_PASSWORD", default="")
 IZIPAY_HMAC_SHA256_KEY = env("IZIPAY_HMAC_SHA256_KEY", default="")
 IZIPAY_PUBLIC_KEY = env("IZIPAY_PUBLIC_KEY", default="")
+# Constantes técnicas del proveedor (no son credenciales).
 IZIPAY_REST_URL = env("IZIPAY_REST_URL", default="https://api.micuentaweb.pe/api-payment/V4/Charge/CreatePayment")
 IZIPAY_JS_URL = env(
     "IZIPAY_JS_URL",

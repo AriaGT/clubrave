@@ -31,11 +31,12 @@ def client():
     return APIClient()
 
 
+MP_CREDS = {"access_token": "APP_USR-token-de-prueba", "webhook_secret": WEBHOOK_SECRET}
+
+
 @pytest.fixture(autouse=True)
-def mercadopago_settings(settings):
-    settings.PAYMENT_GATEWAY = "mercadopago"
-    settings.MERCADOPAGO_ACCESS_TOKEN = "APP_USR-token-de-prueba"
-    settings.MERCADOPAGO_WEBHOOK_SECRET = WEBHOOK_SECRET
+def mercadopago_settings(settings, configure_provider):
+    configure_provider("mercadopago", MP_CREDS)
     settings.MERCADOPAGO_API_BASE_URL = "https://api.mercadopago.com"
     settings.FRONTEND_STORE_URL = "https://clubrave.pe"
     return settings
@@ -158,9 +159,11 @@ def test_webhook_without_signature_header_is_rejected(client, pending_order, mp_
     assert pending_order.status == Order.Status.PENDING
 
 
-def test_webhook_is_rejected_when_the_secret_is_not_configured(client, pending_order, mp_api, settings):
+def test_webhook_is_rejected_when_the_secret_is_not_configured(
+    client, pending_order, mp_api, configure_provider
+):
     """Falla cerrado: sin clave secreta no se procesa nada."""
-    settings.MERCADOPAGO_WEBHOOK_SECRET = ""
+    configure_provider("mercadopago", {**MP_CREDS, "webhook_secret": ""})
     response = post_webhook(client, MP_ORDER_ID)
 
     assert response.status_code == 401
@@ -344,7 +347,7 @@ def test_items_sum_matches_the_order_total(published_event, ticket_type, mp_api)
         buyer=BUYER,
         terms_accepted=True,
     )
-    items = MercadoPagoGateway()._items(order)
+    items = MercadoPagoGateway(MP_CREDS)._items(order)
     total = sum(float(item["total_amount"]) for item in items)
     assert total == float(order.total)
 
@@ -419,7 +422,7 @@ def test_http_error_from_mercadopago_surfaces_as_an_error(mp_api):
     mp_api["responses"]["GET"] = FakeResponse({"message": "order not found"}, status_code=404)
 
     with pytest.raises(MercadoPagoError, match="order not found"):
-        MercadoPagoGateway().client.get_order("x")
+        MercadoPagoGateway(MP_CREDS).client.get_order("x")
 
 
 def test_error_list_shape_keeps_the_provider_message(mp_api):
@@ -431,4 +434,4 @@ def test_error_list_shape_keeps_the_provider_message(mp_api):
     )
 
     with pytest.raises(MercadoPagoError, match="invalid_credentials: Test credentials"):
-        MercadoPagoGateway().client.get_order("x")
+        MercadoPagoGateway(MP_CREDS).client.get_order("x")
