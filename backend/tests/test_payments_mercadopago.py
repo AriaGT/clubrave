@@ -435,3 +435,22 @@ def test_error_list_shape_keeps_the_provider_message(mp_api):
 
     with pytest.raises(MercadoPagoError, match="invalid_credentials: Test credentials"):
         MercadoPagoGateway(MP_CREDS).client.get_order("x")
+
+
+def test_error_details_name_the_rejected_field(mp_api):
+    """`unsupported_properties` sin el campo no dice qué corregir."""
+    mp_api["responses"]["GET"] = FakeResponse(
+        {
+            "errors": [
+                {
+                    "code": "unsupported_properties",
+                    "message": "Properties not supported",
+                    "details": ["config.online.auto_return"],
+                }
+            ]
+        },
+        status_code=400,
+    )
+
+    with pytest.raises(MercadoPagoError, match=r"unsupported_properties.*\[config\.online\.auto_return\]"):
+        MercadoPagoGateway(MP_CREDS).client.get_order("x")

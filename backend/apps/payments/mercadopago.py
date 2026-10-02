@@ -104,7 +104,15 @@ def _error_detail(data: dict) -> str:
         first = errors[0] if isinstance(errors[0], dict) else {}
         code = first.get("code")
         message = first.get("message") or ""
-        return f"{code}: {message}".strip(": ") if code else message or "sin detalle"
+        text = f"{code}: {message}".strip(": ") if code else message or "sin detalle"
+        # `details` nombra el campo concreto que se rechazó (p. ej. la
+        # propiedad no soportada): sin él, el error no dice qué corregir.
+        details = first.get("details")
+        if isinstance(details, list) and details:
+            text += f" [{', '.join(str(d) for d in details)}]"
+        elif isinstance(details, str) and details:
+            text += f" [{details}]"
+        return text
     return data.get("message") or data.get("error") or "sin detalle"
 
 
@@ -193,6 +201,16 @@ class MercadoPagoClient:
 
         if response.status_code >= 400:
             # Se expone el motivo pero nunca el cuerpo completo ni el token.
+            # Al log van las claves enviadas (no los valores: hay datos del
+            # comprador) y la respuesta de Mercado Pago, para diagnosticar.
+            logger.warning(
+                "Mercado Pago %s %s -> %s. Claves enviadas: %s. Respuesta: %s",
+                method,
+                path,
+                response.status_code,
+                sorted(json_body) if json_body else [],
+                data,
+            )
             raise MercadoPagoError(
                 f"Mercado Pago rechazó la solicitud ({response.status_code}): {_error_detail(data)}"
             )
