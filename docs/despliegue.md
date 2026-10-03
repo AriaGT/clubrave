@@ -54,7 +54,7 @@ evento y en la puerta — escalar es sumar workers, no rediseñar nada.
 | `TICKET_SIGNING_KEY_ID` | `k1` |
 | `ORDER_HOLD_MINUTES` | `15` (o el valor que se decida) |
 | `TERMS_VERSION` | Fecha de la versión vigente de términos |
-| `CHECKIN_WINDOW_HOURS_BEFORE_START` / `CHECKIN_WINDOW_HOURS_AFTER_END` | Opcional. Ventana del escáner del personal de Seguridad (por defecto `3` / `0`) |
+| `CHECKIN_WINDOW_HOURS_BEFORE_START` / `CHECKIN_WINDOW_HOURS_AFTER_END` | Opcional. Ventana del escáner del portero (por defecto `3` / `0`) |
 | `JWT_REFRESH_ROTATE_AFTER_SECONDS` / `JWT_REFRESH_REUSE_GRACE_SECONDS` | Opcional. Rotación del refresh token (por defecto `43200` / `120`, ver `apps/accounts/tokens.py`) |
 | `AWS_STORAGE_BUCKET_NAME` | Nombre del bucket R2 |
 | `AWS_S3_ENDPOINT_URL` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` (Cloudflare Dashboard → R2 → Overview, o al crear el API token) — **no** es el custom domain |
@@ -63,7 +63,7 @@ evento y en la puerta — escalar es sumar workers, no rediseñar nada.
 | `AWS_S3_CUSTOM_DOMAIN` | `cdn.clubrave.pe` — **sin** `https://` delante |
 | `DEFAULT_FROM_EMAIL`, `EMAIL_HOST*` | Del proveedor de email transaccional (Resend/Brevo por SMTP) |
 | `FRONTEND_STORE_URL` / `FRONTEND_PANEL_URL` | `https://clubrave.pe` / `https://panel.clubrave.pe` |
-| `PAYMENT_CREDENTIALS_KEY` | **Obligatoria.** Cifra las credenciales de las pasarelas en la base. Generar con `python -c "import secrets; print(secrets.token_urlsafe(48))"` y **no cambiarla** después. Los medios de pago y sus llaves se configuran desde el panel — ver [`pagos.md`](./pagos.md) |
+| `PAYMENT_CREDENTIALS_KEY` | **Obligatoria.** Cifra las credenciales de las pasarelas en la base. Generar con `python -c "import secrets; print(secrets.token_urlsafe(48))"` y **no cambiarla** después. Los medios de pago y sus llaves se configuran desde la consola de administración — ver [`pagos.md`](./pagos.md) |
 | `PAYMENT_GATEWAY`, `IZIPAY_*`, `MERCADOPAGO_*` (llaves y `_MODE`) | Heredadas: solo se importan una vez al primer arranque. Después se pueden borrar |
 | `SENTRY_DSN` | Del proyecto de Sentry (sección 6), opcional |
 
@@ -89,6 +89,21 @@ docker run -e DJANGO_SETTINGS_MODULE=config.settings.prod --env-file .env.prod -
 **Frontends** — build estándar de Next.js (`pnpm --filter @app/organizer build`,
 `pnpm --filter @app/store build`), desplegado en la plataforma elegida con
 las variables de la sección 3.
+
+**Administrador del sistema** — la consola `/admin` solo admite superusuarios
+de Django. Crea el primero una vez, con la API ya desplegada y migrada:
+
+```bash
+python manage.py createsuperuser   # email + contraseña
+```
+
+Si el hosting no da consola, agrega una sola vez `createsuperuser --noinput`
+al comando de arranque, con `DJANGO_SUPERUSER_EMAIL` y
+`DJANGO_SUPERUSER_PASSWORD` en el gestor de secretos, y quítalo después del
+primer despliegue. Desde `/admin` se crean organizaciones, organizadores y
+porteros. **Orden de despliegue de esta versión:** primero el frontend, después
+la API (la API retira `/api/org/employees/`, `/api/org/payments/` y
+`/api/org/site/`, que el frontend viejo todavía usa).
 
 **Tareas programadas** (cron o el scheduler del hosting):
 
@@ -146,7 +161,7 @@ real de §2.3.
 ## 8. Si algo sale mal el día del evento
 
 - **Una pasarela falla**: si hay otra activa, desactiva solo la que falla en
-  el panel (Ajustes › Medios de pago) y los compradores siguen pagando con
+  la consola (`/admin` › Pagos) y los compradores siguen pagando con
   la otra. Si es la única, elige «Deshabilitado».
 - **Publicar sin pasarela habilitada / cortar los cobros en caliente**: modo
   «Deshabilitado» en el panel. La tienda muestra "compras deshabilitadas

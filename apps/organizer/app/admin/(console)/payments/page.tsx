@@ -1,6 +1,6 @@
 "use client";
 
-import { PaymentSettingsView } from "@/features/payments/PaymentSettingsView";
+import { PaymentSettingsView } from "@/features/admin/PaymentSettingsView";
 import { PageHeader } from "@/features/admin/AdminShell";
 import { useAdminPaymentSettings, useUpdateAdminPaymentSettings } from "@/features/admin/hooks";
 

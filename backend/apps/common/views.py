@@ -2,7 +2,7 @@ from rest_framework import generics, permissions
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.throttling import ScopedRateThrottle
 
-from apps.accounts.permissions import IsOrganizationOwner, IsOrganizer, IsPlatformAdmin
+from apps.accounts.permissions import IsOrganizer, IsPlatformAdmin
 
 from .audit import record
 from .models import AuditLog, SiteSettings
@@ -32,22 +32,17 @@ class PublicSiteSettingsView(generics.RetrieveAPIView):
         return SiteSettings.load()
 
 
-class OrgSiteSettingsView(generics.RetrieveUpdateAPIView):
-    """Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma."""
+class AdminSiteSettingsView(generics.RetrieveUpdateAPIView):
+    """Módulo "Sitio web" de la consola del administrador. La marca de la
+    tienda es de toda la plataforma: el cambio se registra sin organización."""
 
     serializer_class = SiteSettingsSerializer
-    permission_classes = [IsOrganizationOwner]
+    permission_classes = [IsPlatformAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     http_method_names = ["get", "patch"]
 
     def get_object(self):
         return SiteSettings.load()
-
-    def audit_organization(self):
-        """Organización a la que se atribuye el cambio en la bitácora."""
-        from apps.accounts.models import Organization
-
-        return Organization.objects.get(pk=self.request.auth["organization_id"])
 
     def perform_update(self, serializer):
         changed = sorted(serializer.validated_data)
@@ -55,18 +50,8 @@ class OrgSiteSettingsView(generics.RetrieveUpdateAPIView):
         # El singleton no tiene UUID: queda sin `target`, con los campos tocados.
         record(
             actor=self.request.user,
-            organization=self.audit_organization(),
+            organization=None,
             action=AuditLog.Action.SITE_SETTINGS_UPDATED,
             target=None,
             metadata={"fields": changed},
         )
-
-
-class AdminSiteSettingsView(OrgSiteSettingsView):
-    """Mismo módulo, en la consola del administrador. La marca de la tienda
-    es de toda la plataforma: el cambio se registra sin organización."""
-
-    permission_classes = [IsPlatformAdmin]
-
-    def audit_organization(self):
-        return None

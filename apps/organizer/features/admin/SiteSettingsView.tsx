@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { apiErrorMessage } from "@/features/events/hooks";
-import type { SiteSettings, SiteSettingsPatch } from "@/features/site/hooks";
+import type { SiteSettings, SiteSettingsPatch } from "@/features/admin/hooks";
 
 /** URL vacía o de alguno de los dominios esperados (evita pegar el enlace de
  * Instagram en el campo de TikTok). */

@@ -1,6 +1,6 @@
 "use client";
 
-import { SiteSettingsView } from "@/features/site/SiteSettingsView";
+import { SiteSettingsView } from "@/features/admin/SiteSettingsView";
 import { PageHeader } from "@/features/admin/AdminShell";
 import {
   useAdminSiteSettings,

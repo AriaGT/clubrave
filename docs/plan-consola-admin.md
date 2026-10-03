@@ -1,8 +1,8 @@
 # Plan: consola de administración (`/admin`) y panel del organizador simplificado
 
-Estado: **fase 1 (backend) y fase 2 (consola `/admin`) implementadas**; las fases 3 y 4 siguen siendo
-propuesta. Este documento define el trabajo; el código del frontend todavía no
-existe salvo donde se indique ("ya existe").
+Estado: **fases 1 a 3 implementadas** (backend, consola `/admin`, retiro de los endpoints viejos y pantalla Cuenta); la fase 4 sigue siendo
+propuesta. Este documento conserva el diseño original; el código es la fuente
+de verdad donde difiera.
 
 Hoy el panel mezcla dos públicos. El organizador entra a crear eventos y
 vender, y en **Ajustes** se encuentra con credenciales de pasarelas, la marca

@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { fetchRefresh, msUntilRefresh, singleFlight, withCrossTabLock } from "./auth-refresh";
 import { decodeJwt, type OrgTokenClaims } from "./jwt";
 
-/** "owner": organizador (todo el panel). "security": empleado de seguridad
+/** "owner": organizador (todo el panel). "security": portero
  * (solo el escáner; el backend le responde 403 a todo lo demás). */
 export type PanelRole = "owner" | "security";
 

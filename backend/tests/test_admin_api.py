@@ -507,3 +507,14 @@ def test_overview_flags_a_live_gateway_that_was_never_verified(admin_client, con
     codes = {a["code"] for a in body["alerts"]}
     assert {"GATEWAY_UNVERIFIED", "GATEWAY_TEST_ENV"} <= codes
     assert body["payments"]["gateways"] == [{"id": "mercadopago", "environment": "test", "verified": False}]
+
+
+def test_org_me_names_the_user_and_the_organization(organizer_user, organization):
+    from apps.accounts import services
+
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {services.org_tokens_for_user(organizer_user)['access']}")
+    body = client.get("/api/org/me/").json()
+    assert body["email"] == organizer_user.email
+    assert body["organization_name"] == organization.name
+    assert client.get("/api/org/employees/").status_code == 404

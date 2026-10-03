@@ -1,8 +1,7 @@
 # Activar cobros reales con Mercado Pago (Checkout Pro)
 
 > **Actualización:** las credenciales ya no van en variables de entorno. Se
-> cargan, validan y guardan cifradas desde el panel (Ajustes › Configuración
-> avanzada › Medios de pago) — ver [`pagos.md`](./pagos.md). Donde esta guía
+> cargan, validan y guardan cifradas desde la consola de administración (Pagos) — ver [`pagos.md`](./pagos.md). Donde esta guía
 > dice «variable de entorno», usa el campo equivalente del panel; las
 > variables solo sirven para la importación inicial.
 

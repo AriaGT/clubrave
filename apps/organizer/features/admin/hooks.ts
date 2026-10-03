@@ -13,6 +13,13 @@ export type AdminUser = Schemas["AdminUser"];
 export type AdminUserCreateBody = Schemas["AdminUserCreate"];
 export type AdminUserUpdateBody = Schemas["PatchedAdminUserUpdate"];
 export type AdminAuditLog = Schemas["AdminAuditLog"];
+export type PaymentSettings = Schemas["PaymentSettingsState"];
+export type PaymentProviderState = Schemas["ProviderState"];
+export type PaymentSettingsPatch = Schemas["PatchedPaymentSettingsUpdate"];
+export type PaymentMode = PaymentSettings["mode"];
+export type PaymentEnvironment = PaymentProviderState["environment"];
+export type SiteSettings = Schemas["SiteSettings"];
+export type SiteSettingsPatch = Schemas["PatchedSiteSettings"];
 export type PanelRole = "OWNER" | "SECURITY";
 
 export interface AdminAlert {
@@ -224,7 +231,7 @@ export function useUpdateAdminPaymentSettings() {
   const api = useAdminApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Schemas["PatchedPaymentSettingsUpdate"]) => {
+    mutationFn: async (body: PaymentSettingsPatch) => {
       const { data, error } = await api.PATCH("/api/admin/payments/", { body });
       if (error) throw error;
       return data;
@@ -252,7 +259,7 @@ export function useUpdateAdminSiteSettings() {
   const api = useAdminApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: Omit<Schemas["PatchedSiteSettings"], "logo" | "updated_at">) => {
+    mutationFn: async (body: Omit<SiteSettingsPatch, "logo" | "updated_at">) => {
       const { data, error } = await api.PATCH("/api/admin/site/", { body });
       if (error) throw error;
       return data;

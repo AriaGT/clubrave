@@ -4,7 +4,7 @@
 
 ## Antes de que abra la puerta
 
-1. Entra al panel con tu usuario. Si eres **personal de Seguridad**, usa el
+1. Entra al panel con tu usuario. Si eres **portero**, usa el
    email y la contraseña que te dio el organizador: entras directo al
    escáner (es lo único que verás). Si eres el organizador, toca
    **Escanear** (ícono central de la barra inferior).
@@ -13,11 +13,11 @@
 3. Deja el teléfono con buena batería y, si puedes, conectado a un cargador
    portátil — la pantalla se queda encendida mientras escaneas.
 
-**¿Dice "El escáner se habilita el … a las …"?** Es normal: el personal de
-Seguridad solo puede escanear desde 3 horas antes del inicio hasta que
+**¿Dice "El escáner se habilita el … a las …"?** Es normal: el portero
+solo puede escanear desde 3 horas antes del inicio hasta que
 termina el evento. Espera a esa hora (la lista se actualiza sola) o pídele
 al organizador que escanee él. Si no ves el evento, pídele que te lo
-asigne en **Ajustes → Empleados**.
+asigne (lo configura el administrador).
 
 **Instálalo como app** (Safari → Compartir → "Agregar a inicio"; Chrome →
 "Instalar app"): la sesión se mantiene abierta aunque cierres la app o te
@@ -59,9 +59,9 @@ persona. La primera que se escanea entra; las demás copias de esa misma
 entrada van a salir en ámbar.
 
 **Batería al 2% o el teléfono se apagó** — Cualquier otro teléfono con
-sesión del organizador o de Seguridad puede seguir escaneando: el sistema
+sesión del organizador o de portero puede seguir escaneando: el sistema
 no depende de un solo dispositivo.
 
-**"Escaneé por error y ahora sale ámbar"** — El personal de Seguridad no
+**"Escaneé por error y ahora sale ámbar"** — El portero no
 puede deshacer ingresos; avísale al organizador, que lo hace en segundos
 desde su teléfono.

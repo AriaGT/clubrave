@@ -2,8 +2,9 @@
 
 Punto de entrada de todo lo relacionado con cobros. Los medios de pago se
 configuran **desde el panel**, sin tocar variables de entorno ni desplegar:
-**Ajustes › Configuración avanzada › Medios de pago** (solo el dueño de la
-organización).
+**Pagos** de la consola de administración (`/admin`, solo el administrador
+del sistema). El organizador ya no ve esta pantalla: los medios de pago son
+de toda la plataforma.
 
 ## Los tres modos de cobro
 

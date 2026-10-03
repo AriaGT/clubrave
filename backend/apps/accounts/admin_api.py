@@ -312,7 +312,9 @@ class AdminUserViewSet(
 
     @extend_schema(
         parameters=[
-            OpenApiParameter("role", str, enum=PANEL_ROLES, description="OWNER (organizador) o SECURITY (portero)"),
+            OpenApiParameter(
+                "role", str, enum=PANEL_ROLES, description="OWNER (organizador) o SECURITY (portero)"
+            ),
             OpenApiParameter("organization", str, description="uuid de la organización"),
             OpenApiParameter("is_active", bool, description="Solo activos (`true`) o inactivos (`false`)"),
             OpenApiParameter("q", str, description="Busca en email, nombre y organización"),

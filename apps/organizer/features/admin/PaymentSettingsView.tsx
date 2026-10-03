@@ -27,7 +27,7 @@ import type {
   PaymentProviderState,
   PaymentSettings,
   PaymentSettingsPatch,
-} from "@/features/payments/hooks";
+} from "@/features/admin/hooks";
 
 interface ProviderDraft {
   enabled: boolean;

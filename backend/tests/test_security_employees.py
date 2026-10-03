@@ -1,4 +1,4 @@
-"""Empleados de seguridad: gestión por el organizador, login único del panel,
+"""Empleados de seguridad: gestión por el administrador, login único del panel,
 acceso SOLO al escáner (revisado endpoint por endpoint), ventana horaria,
 aislamiento entre organizaciones y revocación de sesiones."""
 
@@ -12,7 +12,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.test import APIClient
 
 from apps.accounts import services
-from apps.accounts.models import Membership, Organization, User
+from apps.accounts.models import Organization
 from apps.common.models import AuditLog
 from apps.events.models import Event
 from apps.orders.services.checkout import BuyerData, CartLine, create_order
@@ -62,13 +62,6 @@ def org_b(db):
     return Organization.objects.create(name="Promotora B", slug="promotora-b", contact_email="b@test.pe")
 
 
-@pytest.fixture
-def owner_b_client(org_b):
-    user = User.objects.create_user(email="duenob@test.pe", password="x", role=User.Role.ORGANIZER)
-    Membership.objects.create(user=user, organization=org_b, role=Membership.Role.OWNER)
-    return _client(services.org_tokens_for_user(user)["access"])
-
-
 def _event(organization, *, starts_in: timedelta, hours: int = 6, title="Fiesta") -> Event:
     starts_at = timezone.now() + starts_in
     return Event.objects.create(
@@ -105,111 +98,6 @@ def _scan(client, ticket, event):
         {"qr_payload": sign_ticket_code(ticket.code), "event_id": str(event.id)},
         format="json",
     )
-
-
-# ── Gestión por el organizador ─────────────────────────────────────────────
-
-
-def test_owner_creates_security_employee(owner_client, organization):
-    res = owner_client.post(
-        "/api/org/employees/",
-        {"email": "Nuevo@Test.pe", "full_name": "Guardia Dos", "password": PASSWORD},
-        format="json",
-    )
-    assert res.status_code == 201, res.content
-    body = res.json()
-    assert body["email"] == "nuevo@test.pe"
-    assert body["role"] == "SECURITY"
-    assert body["is_active"] is True
-    assert body["all_events"] is True
-
-    user = User.objects.get(email="nuevo@test.pe")
-    assert user.role == User.Role.STAFF
-    assert user.check_password(PASSWORD)
-    assert Membership.objects.get(user=user).role == Membership.Role.SECURITY
-    assert AuditLog.objects.filter(
-        organization=organization, action=AuditLog.Action.EMPLOYEE_CREATED, target_id=user.id
-    ).exists()
-
-    listed = owner_client.get("/api/org/employees/").json()
-    assert [e["email"] for e in listed] == ["nuevo@test.pe"]
-
-
-def test_create_employee_rejects_weak_password_and_existing_email(owner_client, customer_user):
-    weak = owner_client.post(
-        "/api/org/employees/", {"email": "a@test.pe", "full_name": "A", "password": "123"}, format="json"
-    )
-    assert weak.status_code == 400
-    taken = owner_client.post(
-        "/api/org/employees/",
-        {"email": customer_user.email, "full_name": "A", "password": PASSWORD},
-        format="json",
-    )
-    assert taken.status_code == 400
-    assert not User.objects.filter(email="a@test.pe").exists()
-
-
-def test_owner_can_restrict_employee_to_specific_events(owner_client, employee, organization, org_b):
-    mine = _event(organization, starts_in=timedelta(days=1))
-    foreign = _event(org_b, starts_in=timedelta(days=1))
-
-    res = owner_client.patch(
-        f"/api/org/employees/{employee.id}/",
-        {"all_events": False, "event_ids": [str(foreign.id)]},
-        format="json",
-    )
-    assert res.status_code == 400  # un evento de otra organización no se puede asignar
-
-    res = owner_client.patch(
-        f"/api/org/employees/{employee.id}/",
-        {"all_events": False, "event_ids": [str(mine.id)]},
-        format="json",
-    )
-    assert res.status_code == 200
-    assert res.json()["all_events"] is False
-    assert [e["id"] for e in res.json()["events"]] == [str(mine.id)]
-
-
-def test_owner_deactivates_reactivates_resets_and_deletes(owner_client, employee, organization):
-    url = f"/api/org/employees/{employee.id}/"
-    assert owner_client.patch(url, {"is_active": False}, format="json").json()["is_active"] is False
-    assert owner_client.patch(url, {"is_active": True}, format="json").json()["is_active"] is True
-
-    res = owner_client.post(f"{url}reset-password/", {"password": "Otra-Clave-Nueva-9"}, format="json")
-    assert res.status_code == 204
-    employee.user.refresh_from_db()
-    assert employee.user.check_password("Otra-Clave-Nueva-9")
-
-    user_id = employee.user_id
-    assert owner_client.delete(url).status_code == 204
-    assert not User.objects.filter(id=user_id).exists()
-
-    actions = set(
-        AuditLog.objects.filter(organization=organization, target_id=user_id).values_list("action", flat=True)
-    )
-    assert {
-        "EMPLOYEE_CREATED",
-        "EMPLOYEE_DEACTIVATED",
-        "EMPLOYEE_REACTIVATED",
-        "EMPLOYEE_PASSWORD_RESET",
-        "EMPLOYEE_DELETED",
-    } <= actions
-
-
-# ── Aislamiento entre organizaciones ───────────────────────────────────────
-
-
-def test_other_organization_cannot_see_or_touch_employees(owner_b_client, employee):
-    assert owner_b_client.get("/api/org/employees/").json() == []
-    url = f"/api/org/employees/{employee.id}/"
-    assert owner_b_client.get(url).status_code == 404
-    assert owner_b_client.patch(url, {"is_active": False}, format="json").status_code == 404
-    assert (
-        owner_b_client.post(f"{url}reset-password/", {"password": PASSWORD}, format="json").status_code == 404
-    )
-    assert owner_b_client.delete(url).status_code == 404
-    employee.user.refresh_from_db()
-    assert employee.user.is_active
 
 
 def test_employee_cannot_scan_or_see_other_organization_events(door_client, org_b):
@@ -292,9 +180,8 @@ def test_employee_gets_403_on_every_non_scanner_endpoint(door_client):
     names = " ".join(checked)
     for expected in (
         "org-event-list",
-        "org-employee-list",
+        "org-me",
         "org-audit",
-        "org-site-settings",
         "org-password-change",
     ):
         assert expected in names, expected
@@ -376,11 +263,11 @@ def test_organizer_has_no_time_restriction(owner_client, organization):
     assert not AuditLog.objects.filter(action=AuditLog.Action.TICKET_CHECKED_IN).exists()
 
 
-def test_restricted_employee_only_scans_assigned_events(owner_client, door_client, employee, organization):
+def test_restricted_employee_only_scans_assigned_events(admin_client, door_client, employee, organization):
     assigned = _event(organization, starts_in=timedelta(hours=1), title="Asignado")
     other = _event(organization, starts_in=timedelta(hours=1), title="Otro")
-    owner_client.patch(
-        f"/api/org/employees/{employee.id}/",
+    admin_client.patch(
+        f"/api/admin/users/{employee.id}/",
         {"all_events": False, "event_ids": [str(assigned.id)]},
         format="json",
     )
@@ -392,8 +279,8 @@ def test_restricted_employee_only_scans_assigned_events(owner_client, door_clien
 # ── Empleado desactivado / eliminado / con contraseña reseteada ────────────
 
 
-def test_deactivated_employee_cannot_login_nor_use_tokens(client, owner_client, employee, door_tokens):
-    owner_client.patch(f"/api/org/employees/{employee.id}/", {"is_active": False}, format="json")
+def test_deactivated_employee_cannot_login_nor_use_tokens(client, admin_client, employee, door_tokens):
+    admin_client.patch(f"/api/admin/users/{employee.id}/", {"is_active": False}, format="json")
 
     login = client.post(
         "/api/auth/org/login/",
@@ -409,14 +296,14 @@ def test_deactivated_employee_cannot_login_nor_use_tokens(client, owner_client, 
     assert refresh.status_code == 401
 
 
-def test_deleted_employee_tokens_stop_working(owner_client, employee, door_tokens):
-    owner_client.delete(f"/api/org/employees/{employee.id}/")
+def test_deleted_employee_tokens_stop_working(admin_client, employee, door_tokens):
+    admin_client.delete(f"/api/admin/users/{employee.id}/")
     assert _client(door_tokens["access"]).get("/api/org/door/events/").status_code == 401
 
 
-def test_password_reset_closes_open_sessions(client, owner_client, employee, door_tokens):
-    owner_client.post(
-        f"/api/org/employees/{employee.id}/reset-password/", {"password": "Otra-Clave-Nueva-9"}, format="json"
+def test_password_reset_closes_open_sessions(client, admin_client, employee, door_tokens):
+    admin_client.post(
+        f"/api/admin/users/{employee.id}/reset-password/", {"password": "Otra-Clave-Nueva-9"}, format="json"
     )
     refresh = client.post(
         "/api/auth/org/refresh/", {"refresh": door_tokens["refresh"]}, content_type="application/json"
@@ -430,11 +317,11 @@ def test_password_reset_closes_open_sessions(client, owner_client, employee, doo
     assert login.status_code == 200
 
 
-def test_employee_cannot_manage_employees(door_client, employee):
-    assert door_client.get("/api/org/employees/").status_code == 403
+def test_employee_cannot_manage_users(door_client, employee):
+    assert door_client.get("/api/admin/users/").status_code == 403
     assert (
         door_client.post(
-            "/api/org/employees/",
+            "/api/admin/users/",
             {"email": "x@test.pe", "full_name": "X", "password": PASSWORD},
             format="json",
         ).status_code

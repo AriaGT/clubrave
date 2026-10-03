@@ -195,30 +195,29 @@ la marca *Invitado* y S/ 0; **nunca suma al recaudado** ni a "Vendidas" (el
 resumen muestra "+N invitados" aparte) y el CSV tiene la columna `invitado`.
 Si cancelas el evento, los códigos sin usar se anulan solos.
 
-### Empleados de Seguridad (quienes escanean por ti)
+### Porteros (quienes escanean por ti)
 
-En **Ajustes → Empleados** creas una cuenta por cada persona de la puerta:
-nombre, email (es su usuario) y una contraseña inicial de al menos 10
-caracteres que le entregas en persona.
+Las cuentas de portero **las crea el administrador de la plataforma**, no tú:
+pídele una por cada persona de la puerta, indicando si puede escanear todos
+tus eventos o solo algunos. Él les entrega el email (su usuario) y la
+contraseña inicial.
 
-- Entra en **el mismo panel** con su email y contraseña, pero **solo ve el
-  escáner**: no ve ventas, asistentes, eventos ni ajustes (el servidor le
-  rechaza todo lo demás, no solo se esconde en pantalla).
+- El portero entra en **el mismo panel** con su email y contraseña, pero
+  **solo ve el escáner**: no ve ventas, asistentes, eventos ni cuenta (el
+  servidor le rechaza todo lo demás, no solo se esconde en pantalla).
 - **Horario**: solo puede escanear desde 3 horas antes del inicio hasta el
   fin del evento (si el evento no tiene hora de fin, se toman 8 horas desde
   el inicio). Antes de eso ve "El escáner se habilita el … a las …". Tú, como
   organizador, no tienes esa restricción. La ventana se ajusta en el
   servidor con `CHECKIN_WINDOW_HOURS_BEFORE_START` y
   `CHECKIN_WINDOW_HOURS_AFTER_END`.
-- **Eventos**: por defecto puede escanear todos tus eventos publicados; en
-  **Editar** puedes apagar "todos los eventos" y marcar solo algunos.
 - No puede **deshacer ingresos**: si hace falta, lo haces tú.
-- **Desactivar** (el interruptor) le cierra la sesión al instante y no lo
-  deja volver a entrar hasta que lo reactives. **Contraseña** le pone una
-  nueva y cierra sus sesiones abiertas. **Eliminar** borra la cuenta.
-- Cada entrada que valida un empleado queda en **Actividad** ("Ingreso
-  validado por seguridad", con su email), igual que las altas, bajas y
-  cambios de empleados.
+- Para desactivar a un portero, cambiarle la contraseña, cerrarle las
+  sesiones o cambiar los eventos que puede escanear, pídeselo al
+  administrador: el cambio surte efecto al instante.
+- Cada entrada que valida un portero queda en **Actividad** ("Ingreso
+  validado por portero", con su email), igual que las altas y bajas que el
+  administrador hace sobre tus porteros.
 
 ## QR para la puerta
 
@@ -353,41 +352,13 @@ reenviar entradas.
 No se puede editar ni borrar. Si alguien de tu equipo anuló algo el viernes,
 aquí está.
 
-## Logo, contacto y redes de la tienda (Sitio web)
+## Sitio web y medios de pago
 
-En **Ajustes → Sitio web** configuras lo que aparece en la barra superior y
-el pie de todas las páginas de la tienda. Solo el dueño de la organización
-puede cambiarlo.
-
-- **Logo**: se muestra centrado en la barra superior y en el pie. Un PNG con
-  fondo transparente se ve mejor (mínimo 64 px por lado, máximo 4 MB). Si no
-  subes uno, aparece el texto "Club Rave".
-- **Contacto**: teléfono, WhatsApp (con código de país, p. ej. +51), correo y
-  dirección.
-- **Redes sociales**: Instagram, TikTok, Facebook y YouTube. Pega el enlace
-  completo del perfil; el panel te avisa si pegaste el de otra red.
-- **Libro de Reclamaciones**: el enlace a tu libro virtual.
-
-Lo que dejes en blanco no se muestra. Los cambios tardan hasta 5 minutos en
-verse en la tienda.
-
-## Medios de pago
-
-En **Ajustes → Configuración avanzada → Medios de pago** (solo el dueño)
-eliges cómo cobra la tienda:
-
-- **Pasarelas reales**: activa Izipay (tarjeta), Mercado Pago o ambas. Si hay
-  más de una, el comprador elige con cuál pagar y puede cambiar si una le
-  falla.
-- **Simulador**: solo para pruebas; aprueba sin cobrar. Nunca lo dejes en
-  producción.
-- **Deshabilitado**: corta las ventas al instante (la tienda avisa de un
-  problema técnico). Útil si algo falla con los cobros.
-
-Al activar una pasarela te pide sus credenciales (las sacas del panel del
-proveedor). Se validan con el proveedor al guardar y se guardan cifradas:
-después solo verás los últimos 4 caracteres. Copia la **URL de
-notificaciones** que muestra cada pasarela y regístrala en su panel.
+El logo, los datos de contacto y las redes de la tienda, y los medios de pago
+con sus credenciales, son **de toda la plataforma** y los administra el
+administrador del sistema desde su consola; no aparecen en tu panel. Si
+necesitas un cambio (otro logo, desactivar una pasarela), pídeselo. Los
+cambios de la tienda tardan hasta 5 minutos en verse.
 
 ## ¿Algo no cuadra?
 

@@ -7,8 +7,8 @@ import { useApi } from "@/lib/api";
 
 export type DoorEvent = ApiComponents["schemas"]["DoorEvent"];
 
-/** Eventos habilitados para escanear (organizador y seguridad). Para
- * seguridad incluye solo sus eventos asignados que aún no terminaron, con la
+/** Eventos habilitados para escanear (organizador y portero). Para
+ * el portero incluye solo sus eventos asignados que aún no terminaron, con la
  * ventana del escáner ya calculada por el backend. */
 export function useDoorEvents() {
   const api = useApi();
@@ -58,7 +58,7 @@ export function formatWhen(iso: string): string {
   return `el ${DATE_FORMAT.format(date)} a las ${TIME_FORMAT.format(date)}`;
 }
 
-/** Mensaje para el personal de seguridad cuando el escáner no está abierto. */
+/** Mensaje para el portero cuando el escáner no está abierto. */
 export function scannerClosedMessage(event: Pick<DoorEvent, "scanner_opens_at" | "scanner_closes_at">): string {
   if (Date.now() < new Date(event.scanner_opens_at).getTime()) {
     return `El escáner se habilita ${formatWhen(event.scanner_opens_at)}.`;

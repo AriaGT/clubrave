@@ -7,7 +7,7 @@ import { API_URL } from "@/lib/env";
  * Proxy de login: llama a Django, guarda el `refresh` en una cookie
  * `httpOnly` persistente y devuelve solo el `access` al navegador. El
  * refresh nunca toca JavaScript del cliente (ver §10.6 del plan). Mismo
- * login para el organizador y el personal de seguridad.
+ * login para el organizador y el portero.
  */
 export async function POST(request: Request) {
   const body = await request.json();

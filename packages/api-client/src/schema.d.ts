@@ -98,8 +98,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description Mismo módulo, en la consola del administrador. Los pagos son de toda
-         *     la plataforma: el cambio se registra sin organización.
+         * @description Módulo «Medios de pago» de la consola del administrador. Los pagos son
+         *     de toda la plataforma: el cambio se registra sin organización.
+         *
+         *     Las credenciales son de solo escritura: se envían al crear o
+         *     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
          */
         get: operations["admin_payments_retrieve"];
         put?: never;
@@ -108,8 +111,11 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * @description Mismo módulo, en la consola del administrador. Los pagos son de toda
-         *     la plataforma: el cambio se registra sin organización.
+         * @description Módulo «Medios de pago» de la consola del administrador. Los pagos son
+         *     de toda la plataforma: el cambio se registra sin organización.
+         *
+         *     Las credenciales son de solo escritura: se envían al crear o
+         *     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
          */
         patch: operations["admin_payments_partial_update"];
         trace?: never;
@@ -122,8 +128,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description Mismo módulo, en la consola del administrador. La marca de la tienda
-         *     es de toda la plataforma: el cambio se registra sin organización.
+         * @description Módulo "Sitio web" de la consola del administrador. La marca de la
+         *     tienda es de toda la plataforma: el cambio se registra sin organización.
          */
         get: operations["admin_site_retrieve"];
         put?: never;
@@ -132,8 +138,8 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * @description Mismo módulo, en la consola del administrador. La marca de la tienda
-         *     es de toda la plataforma: el cambio se registra sin organización.
+         * @description Módulo "Sitio web" de la consola del administrador. La marca de la
+         *     tienda es de toda la plataforma: el cambio se registra sin organización.
          */
         patch: operations["admin_site_partial_update"];
         trace?: never;
@@ -719,78 +725,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/org/employees/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        get: operations["org_employees_list"];
-        put?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        post: operations["org_employees_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/org/employees/{id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        get: operations["org_employees_retrieve"];
-        put?: never;
-        post?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        delete: operations["org_employees_destroy"];
-        options?: never;
-        head?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        patch: operations["org_employees_partial_update"];
-        trace?: never;
-    };
-    "/api/org/employees/{id}/reset-password/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * @description Empleados de seguridad. La organización sale del JWT (regla A6): un
-         *     id de otra organización responde 404, igual que uno inexistente.
-         */
-        post: operations["org_employees_reset_password_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/org/events/": {
         parameters: {
             query?: never;
@@ -1187,6 +1121,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/org/me/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Quién es el organizador con sesión y de qué organización: alimenta la
+         *     pantalla Cuenta del panel.
+         */
+        get: operations["org_me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/org/orders/{code}/mark-refunded/": {
         parameters: {
             query?: never;
@@ -1256,52 +1210,6 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
-        trace?: never;
-    };
-    "/api/org/payments/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description Módulo «Medios de pago» del panel (Ajustes › Configuración avanzada).
-         *
-         *     Solo dueños. Las credenciales son de solo escritura: se envían al crear o
-         *     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
-         */
-        get: operations["org_payments_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * @description Módulo «Medios de pago» del panel (Ajustes › Configuración avanzada).
-         *
-         *     Solo dueños. Las credenciales son de solo escritura: se envían al crear o
-         *     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
-         */
-        patch: operations["org_payments_partial_update"];
-        trace?: never;
-    };
-    "/api/org/site/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma. */
-        get: operations["org_site_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** @description Módulo "Sitio web" del panel. Solo dueños: es de toda la plataforma. */
-        patch: operations["org_site_partial_update"];
         trace?: never;
     };
     "/api/org/ticket-types/": {
@@ -1750,45 +1658,6 @@ export interface components {
             readonly scanner_is_open: boolean;
             readonly checked_in_count: number;
         };
-        Employee: {
-            /** Format: uuid */
-            readonly id: string;
-            /** Format: email */
-            readonly email: string;
-            readonly full_name: string;
-            readonly role: components["schemas"]["EmployeeRoleEnum"];
-            readonly is_active: boolean;
-            readonly all_events: boolean;
-            readonly events: components["schemas"]["EmployeeEvent"][];
-            /** Format: date-time */
-            readonly last_login: string | null;
-            /** Format: date-time */
-            readonly created_at: string;
-        };
-        EmployeeCreate: {
-            /** Format: email */
-            email: string;
-            full_name: string;
-            password: string;
-            /** @default true */
-            all_events?: boolean;
-            event_ids?: string[];
-        };
-        EmployeeEvent: {
-            /** Format: uuid */
-            id: string;
-            title: string;
-            /** Format: date-time */
-            starts_at: string;
-        };
-        EmployeePasswordReset: {
-            password: string;
-        };
-        /**
-         * @description * `SECURITY` - SECURITY
-         * @enum {string}
-         */
-        EmployeeRoleEnum: "SECURITY";
         /**
          * @description * `test` - Pruebas
          *     * `production` - Producción
@@ -2189,6 +2058,12 @@ export interface components {
             email: string;
             password: string;
         };
+        OrgMe: {
+            /** Format: email */
+            email: string;
+            full_name: string;
+            organization_name: string;
+        };
         Organization: {
             /** Format: uuid */
             readonly id: string;
@@ -2385,12 +2260,6 @@ export interface components {
             new_password: string;
         };
         PatchedAdminUserUpdate: {
-            full_name?: string;
-            is_active?: boolean;
-            all_events?: boolean;
-            event_ids?: string[];
-        };
-        PatchedEmployeeUpdate: {
             full_name?: string;
             is_active?: boolean;
             all_events?: boolean;
@@ -3935,144 +3804,6 @@ export interface operations {
             };
         };
     };
-    org_employees_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Employee"][];
-                };
-            };
-        };
-    };
-    org_employees_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EmployeeCreate"];
-                "application/x-www-form-urlencoded": components["schemas"]["EmployeeCreate"];
-                "multipart/form-data": components["schemas"]["EmployeeCreate"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Employee"];
-                };
-            };
-        };
-    };
-    org_employees_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Employee"];
-                };
-            };
-        };
-    };
-    org_employees_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    org_employees_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PatchedEmployeeUpdate"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedEmployeeUpdate"];
-                "multipart/form-data": components["schemas"]["PatchedEmployeeUpdate"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Employee"];
-                };
-            };
-        };
-    };
-    org_employees_reset_password_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EmployeePasswordReset"];
-                "application/x-www-form-urlencoded": components["schemas"]["EmployeePasswordReset"];
-                "multipart/form-data": components["schemas"]["EmployeePasswordReset"];
-            };
-        };
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     org_events_list: {
         parameters: {
             query?: {
@@ -4848,6 +4579,25 @@ export interface operations {
             };
         };
     };
+    org_me_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgMe"];
+                };
+            };
+        };
+    };
     org_orders_mark_refunded_create: {
         parameters: {
             query?: never;
@@ -4950,94 +4700,6 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
-                };
-            };
-        };
-    };
-    org_payments_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentSettingsState"];
-                };
-            };
-        };
-    };
-    org_payments_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": components["schemas"]["PatchedPaymentSettingsUpdate"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedPaymentSettingsUpdate"];
-                "multipart/form-data": components["schemas"]["PatchedPaymentSettingsUpdate"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentSettingsState"];
-                };
-            };
-        };
-    };
-    org_site_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
-                };
-            };
-        };
-    };
-    org_site_partial_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": components["schemas"]["PatchedSiteSettings"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteSettings"];
-                "application/json": components["schemas"]["PatchedSiteSettings"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
                 };
             };
         };

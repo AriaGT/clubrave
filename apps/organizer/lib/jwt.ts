@@ -1,5 +1,5 @@
 export interface OrgTokenClaims {
-  /** "org": organizador. "door": personal de seguridad (solo escáner). */
+  /** "org": organizador. "door": portero (solo escáner). */
   scope: "org" | "door";
   organization_id: string;
   user_id: string;
