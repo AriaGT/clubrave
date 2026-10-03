@@ -6,7 +6,7 @@ from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from . import employees
+from . import panel_users as employees
 from .models import Membership, Organization
 from .permissions import IsOrganizationOwner
 
@@ -114,7 +114,7 @@ class EmployeeViewSet(
         membership = self.get_object()
         serializer = EmployeePasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        employees.reset_employee_password(
+        employees.reset_member_password(
             membership=membership, actor=request.user, password=serializer.validated_data["password"]
         )
         return Response(status=status.HTTP_204_NO_CONTENT)

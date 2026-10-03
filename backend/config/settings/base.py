@@ -129,6 +129,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login_code": "5/hour",     # por email: código OTP del comprador
         "org_login": "30/hour",     # login del organizador (email + contraseña)
+        "admin_login": "10/hour",   # login de la consola del administrador
         "password_change": "10/hour",  # solicitar/confirmar cambio de contraseña
         # Por IP, y en Perú muchos compradores salen por la misma IP del
         # operador móvil (CGNAT): un límite bajo los bloquea entre ellos en

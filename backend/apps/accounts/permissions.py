@@ -14,15 +14,47 @@ def _scope(request) -> str | None:
 
 
 class IsOrganizer(BasePermission):
+    """Sesión de organizador. La membresía de dueño y que la organización
+    siga activa se re-verifican en cada petición (igual que `IsDoorStaff`):
+    desactivar la organización o quitarle el acceso al organizador surte
+    efecto de inmediato, sin esperar a que venza el access token."""
+
     message = "Esta acción requiere una sesión de organizador."
 
     def has_permission(self, request, view):
-        return bool(
+        if not (
             request.user
             and request.user.is_authenticated
             and _scope(request) == "org"
             and request.user.is_active
             and request.auth.get("organization_id")
+        ):
+            return False
+        from .models import Membership
+
+        return Membership.objects.filter(
+            user=request.user,
+            organization_id=request.auth.get("organization_id"),
+            organization__is_active=True,
+            role=Membership.Role.OWNER,
+        ).exists()
+
+
+class IsPlatformAdmin(BasePermission):
+    """Administrador del sistema: sesión con scope "admin" de un superusuario
+    activo. `request.user` se carga de la base en cada petición, así que
+    quitarle `is_superuser` a alguien invalida su token de inmediato. Es el
+    único permiso que abre `/api/admin/`; ningún otro scope entra ahí."""
+
+    message = "Esta acción requiere ser administrador del sistema."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and _scope(request) == "admin"
+            and request.user.is_active
+            and request.user.is_superuser
         )
 
 
@@ -64,22 +96,11 @@ class IsCustomerOwner(BasePermission):
 
 
 class IsOrganizationOwner(IsOrganizer):
-    """Organizador con rol OWNER en la organización del token. Para ajustes
-    que no son de un evento (p. ej. la configuración del sitio público): el
-    personal de puerta no debe poder cambiarlos."""
+    """Dueño de la organización del token. `IsOrganizer` ya exige la
+    membresía OWNER, así que hoy son equivalentes; se conserva el nombre para
+    los ajustes que no son de un evento hasta retirarlos (fase 3 del plan)."""
 
     message = "Esta acción requiere ser dueño de la organización."
-
-    def has_permission(self, request, view):
-        if not super().has_permission(request, view):
-            return False
-        from .models import Membership
-
-        return Membership.objects.filter(
-            user=request.user,
-            organization_id=request.auth.get("organization_id"),
-            role=Membership.Role.OWNER,
-        ).exists()
 
 
 def is_door_session(request) -> bool:

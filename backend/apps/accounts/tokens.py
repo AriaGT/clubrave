@@ -50,6 +50,15 @@ def _rotate_after_seconds() -> int:
 
 
 class GraceTokenRefreshSerializer(TokenRefreshSerializer):
+    # Qué scopes refresca este serializer y si rota el refresh. La sesión de
+    # la consola (scope "admin") tiene su propio endpoint: aquí no entra, y
+    # el suyo no acepta ningún otro scope.
+    refresh_lifetime = None  # None: el de `SIMPLE_JWT`
+    rotates = True
+
+    def accepts(self, refresh: RefreshToken, user: User) -> bool:
+        return refresh.get("scope") != "admin"
+
     def _token_within_grace(self, raw: str, original: TokenError) -> RefreshToken:
         """Un token rechazado solo por estar en lista negra se acepta si fue
         *rotado* hace menos de la ventana de gracia. Firma y vencimiento se
@@ -80,14 +89,18 @@ class GraceTokenRefreshSerializer(TokenRefreshSerializer):
 
         user_id = refresh.payload.get(api_settings.USER_ID_CLAIM)
         user = User.objects.filter(**{api_settings.USER_ID_FIELD: user_id}).first() if user_id else None
-        if user is None or not api_settings.USER_AUTHENTICATION_RULE(user):
+        if (
+            user is None
+            or not api_settings.USER_AUTHENTICATION_RULE(user)
+            or not self.accepts(refresh, user)
+        ):
             raise AuthenticationFailed(self.error_messages["no_active_account"], "no_active_account")
 
         data = {"access": str(refresh.access_token)}
 
         issued_at = refresh.payload.get("iat")
         age = timezone.now().timestamp() - issued_at if issued_at else None
-        must_rotate = reused or age is None or age >= _rotate_after_seconds()
+        must_rotate = self.rotates and (reused or age is None or age >= _rotate_after_seconds())
         if not must_rotate:
             return data
 
@@ -104,7 +117,7 @@ class GraceTokenRefreshSerializer(TokenRefreshSerializer):
             ).delete()
 
         refresh.set_jti()
-        refresh.set_exp()
+        refresh.set_exp(lifetime=self.refresh_lifetime)
         refresh.set_iat()
         refresh.outstand()
         data["refresh"] = str(refresh)
@@ -113,3 +126,18 @@ class GraceTokenRefreshSerializer(TokenRefreshSerializer):
 
 class GraceTokenRefreshView(TokenRefreshView):
     serializer_class = GraceTokenRefreshSerializer
+
+
+class AdminTokenRefreshSerializer(GraceTokenRefreshSerializer):
+    """Refresh de la consola: solo tokens con scope "admin" de un
+    superusuario activo. Sesión absoluta de 12 h: no se rota el refresh, así
+    que al vencer hay que volver a iniciar sesión."""
+
+    rotates = False
+
+    def accepts(self, refresh: RefreshToken, user: User) -> bool:
+        return refresh.get("scope") == "admin" and user.is_superuser
+
+
+class AdminTokenRefreshView(TokenRefreshView):
+    serializer_class = AdminTokenRefreshSerializer

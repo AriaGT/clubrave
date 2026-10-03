@@ -1,7 +1,8 @@
 # Plan: consola de administración (`/admin`) y panel del organizador simplificado
 
-Estado: **propuesta**, no implementado. Este documento define el trabajo; el
-código todavía no existe salvo donde se indique ("ya existe").
+Estado: **fase 1 (backend aditivo) implementada**; las fases 2 a 4 siguen siendo
+propuesta. Este documento define el trabajo; el código del frontend todavía no
+existe salvo donde se indique ("ya existe").
 
 Hoy el panel mezcla dos públicos. El organizador entra a crear eventos y
 vender, y en **Ajustes** se encuentra con credenciales de pasarelas, la marca

@@ -170,3 +170,37 @@ def test_org_b_cannot_see_org_a_attendees(client_b, published_event, ticket_type
     response = client_b.get(f"/api/org/events/{published_event.id}/attendees/")
     assert response.status_code == 200
     assert response.json()["results"] == []
+
+
+# ── Sesión de organizador: se re-verifica en cada petición ───────────────────
+# Antes `IsOrganizer` solo leía los claims del JWT: desactivar la organización
+# o quitarle la membresía al organizador no surtía efecto hasta que vencía el
+# access token (30 min).
+
+
+def test_removing_the_membership_cuts_an_already_issued_token(client_a, organizer_user, organization):
+    assert client_a.get("/api/org/events/").status_code == 200
+    Membership.objects.filter(user=organizer_user, organization=organization).delete()
+    assert client_a.get("/api/org/events/").status_code == 403
+
+
+def test_deactivating_the_organization_cuts_an_already_issued_token(client_a, organization):
+    assert client_a.get("/api/org/events/").status_code == 200
+    Organization.objects.filter(pk=organization.pk).update(is_active=False)
+    assert client_a.get("/api/org/events/").status_code == 403
+
+
+def test_a_token_naming_an_organization_the_user_does_not_own_is_rejected(organizer_user, org_b):
+    forged = APIClient()
+    forged.credentials(HTTP_AUTHORIZATION=f"Bearer {_org_token(organizer_user, org_b.id)}")
+    assert forged.get("/api/org/events/").status_code == 403
+
+
+def test_organizer_login_is_refused_for_an_inactive_organization(client, organizer_user, organization):
+    Organization.objects.filter(pk=organization.pk).update(is_active=False)
+    res = client.post(
+        "/api/auth/org/login/",
+        {"email": organizer_user.email, "password": "clave12345"},
+        content_type="application/json",
+    )
+    assert res.status_code in (400, 403)

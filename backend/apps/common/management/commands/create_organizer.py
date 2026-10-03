@@ -1,13 +1,11 @@
-import secrets
-
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.text import slugify
 
-from apps.accounts.models import Membership, Organization, User
+from apps.accounts import panel_users
+from apps.common.errors import DomainError
 
 
 class Command(BaseCommand):
-    help = "Alta de un organizador con contraseña temporal."
+    help = "Alta de un organizador con contraseña temporal (misma lógica que la consola /admin)."
 
     def add_arguments(self, parser):
         parser.add_argument("email")
@@ -16,34 +14,19 @@ class Command(BaseCommand):
         parser.add_argument("--password", default=None)
 
     def handle(self, *args, **options):
-        email = options["email"].strip().lower()
-        if User.objects.filter(email=email).exists():
-            raise CommandError(f"Ya existe un usuario con el email {email}.")
+        password = options["password"] or panel_users.generate_password()
+        try:
+            membership = panel_users.create_organizer(
+                actor=None,
+                email=options["email"],
+                full_name=options["full_name"],
+                password=password,
+                organization_name=options["organization_name"],
+            )
+        except DomainError as exc:
+            raise CommandError(exc.message) from exc
 
-        password = options["password"] or secrets.token_urlsafe(12)
-
-        user = User.objects.create_user(
-            email=email,
-            password=password,
-            role=User.Role.ORGANIZER,
-            full_name=options["full_name"],
-        )
-
-        slug_base = slugify(options["organization_name"])[:40] or "organizacion"
-        slug = slug_base
-        counter = 2
-        while Organization.objects.filter(slug=slug).exists():
-            slug = f"{slug_base}-{counter}"
-            counter += 1
-
-        organization = Organization.objects.create(
-            name=options["organization_name"],
-            slug=slug,
-            contact_email=email,
-        )
-        Membership.objects.create(user=user, organization=organization, role=Membership.Role.OWNER)
-
-        self.stdout.write(self.style.SUCCESS(f"Organizador creado: {email}"))
-        self.stdout.write(f"Organización: {organization.name} ({organization.slug})")
+        self.stdout.write(self.style.SUCCESS(f"Organizador creado: {membership.user.email}"))
+        self.stdout.write(f"Organización: {membership.organization.name} ({membership.organization.slug})")
         if not options["password"]:
             self.stdout.write(self.style.WARNING(f"Contraseña temporal: {password}"))

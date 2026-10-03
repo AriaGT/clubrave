@@ -62,8 +62,10 @@ def _hash(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
 
 
-def _tokens_for(user: User, *, scope: str, organization_id=None) -> dict:
+def _tokens_for(user: User, *, scope: str, organization_id=None, refresh_lifetime=None) -> dict:
     refresh = RefreshToken.for_user(user)
+    if refresh_lifetime is not None:
+        refresh.set_exp(lifetime=refresh_lifetime)
     refresh["scope"] = scope
     if organization_id is not None:
         refresh["organization_id"] = str(organization_id)
@@ -76,7 +78,7 @@ def _tokens_for(user: User, *, scope: str, organization_id=None) -> dict:
 
 def org_tokens_for_user(user: User) -> dict:
     membership = (
-        Membership.objects.filter(user=user, role=Membership.Role.OWNER)
+        Membership.objects.filter(user=user, role=Membership.Role.OWNER, organization__is_active=True)
         .select_related("organization")
         .first()
     )
@@ -107,6 +109,19 @@ def panel_tokens_for_user(user: User) -> dict:
     if user.role == User.Role.STAFF:
         return door_tokens_for_user(user)
     raise DomainError("VALIDATION_ERROR", "Email o contraseña incorrectos.")
+
+
+# La consola maneja las llaves de las pasarelas: su sesión no debe quedar
+# abierta un mes como la del panel. Es absoluta (el refresh no se rota).
+ADMIN_SESSION_LIFETIME = timedelta(hours=12)
+
+
+def admin_tokens_for_user(user: User) -> dict:
+    """Administrador del sistema: scope "admin", sin organización. Solo
+    para superusuarios; `IsPlatformAdmin` es el único permiso que lo acepta."""
+    if not (user.is_superuser and user.is_active):
+        raise DomainError("VALIDATION_ERROR", "Email o contraseña incorrectos.")
+    return _tokens_for(user, scope="admin", refresh_lifetime=ADMIN_SESSION_LIFETIME)
 
 
 def revoke_all_sessions(user: User) -> None:

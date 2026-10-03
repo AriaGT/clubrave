@@ -24,6 +24,31 @@ def organizer_user(db, organization):
     return user
 
 
+ADMIN_PASSWORD = "Admin-Segura-2026"
+
+
+@pytest.fixture
+def admin_user(db):
+    """Administrador del sistema: superusuario de Django."""
+    return User.objects.create_superuser(email="admin@test.pe", password=ADMIN_PASSWORD)
+
+
+@pytest.fixture
+def admin_tokens(admin_user):
+    from apps.accounts import services
+
+    return services.admin_tokens_for_user(admin_user)
+
+
+@pytest.fixture
+def admin_client(admin_tokens):
+    from rest_framework.test import APIClient
+
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {admin_tokens['access']}")
+    return client
+
+
 @pytest.fixture
 def customer_user(db):
     return User.objects.create_user(email="comprador@test.pe", role=User.Role.CUSTOMER)

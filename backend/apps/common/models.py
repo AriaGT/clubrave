@@ -53,11 +53,24 @@ class AuditLog(models.Model):
         EMPLOYEE_PASSWORD_RESET = "EMPLOYEE_PASSWORD_RESET"
         EMPLOYEE_DELETED = "EMPLOYEE_DELETED"
         TICKET_CHECKED_IN = "TICKET_CHECKED_IN"
+        # Consola de administración (/api/admin/): organizaciones y usuarios.
+        ORGANIZATION_CREATED = "ORGANIZATION_CREATED"
+        ORGANIZATION_UPDATED = "ORGANIZATION_UPDATED"
+        ORGANIZATION_DEACTIVATED = "ORGANIZATION_DEACTIVATED"
+        ORGANIZATION_REACTIVATED = "ORGANIZATION_REACTIVATED"
+        ORGANIZER_CREATED = "ORGANIZER_CREATED"
+        ORGANIZER_UPDATED = "ORGANIZER_UPDATED"
+        ORGANIZER_DEACTIVATED = "ORGANIZER_DEACTIVATED"
+        ORGANIZER_REACTIVATED = "ORGANIZER_REACTIVATED"
+        ORGANIZER_PASSWORD_RESET = "ORGANIZER_PASSWORD_RESET"
+        SESSIONS_REVOKED = "SESSIONS_REVOKED"
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now, db_index=True)
+    # Vacía en las acciones de plataforma (pagos, sitio web): no pertenecen a
+    # ninguna organización y no deben aparecer en la bitácora de ninguna.
     organization = models.ForeignKey(
-        "accounts.Organization", on_delete=models.CASCADE, related_name="audit_logs"
+        "accounts.Organization", on_delete=models.CASCADE, null=True, blank=True, related_name="audit_logs"
     )
     actor = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="audit_logs"

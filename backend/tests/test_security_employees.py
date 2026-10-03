@@ -36,7 +36,7 @@ def owner_client(organizer_user):
 
 @pytest.fixture
 def employee(organization, organizer_user):
-    from apps.accounts.employees import create_employee
+    from apps.accounts.panel_users import create_employee
 
     return create_employee(
         organization=organization,

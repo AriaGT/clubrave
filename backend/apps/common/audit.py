@@ -17,6 +17,7 @@ _LABELS = {
     "tickettype": lambda obj: obj.name,
     "guestcode": lambda obj: obj.code,
     "user": lambda obj: obj.full_name or obj.email,
+    "organization": lambda obj: obj.name,
 }
 
 
