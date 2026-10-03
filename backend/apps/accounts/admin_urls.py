@@ -14,6 +14,7 @@ router.register("users", admin_api.AdminUserViewSet, basename="admin-user")
 
 urlpatterns = [
     path("overview/", admin_api.AdminOverviewView.as_view(), name="admin-overview"),
+    path("system/", admin_api.AdminSystemView.as_view(), name="admin-system"),
     path("payments/", AdminPaymentSettingsView.as_view(), name="admin-payment-settings"),
     path("site/", AdminSiteSettingsView.as_view(), name="admin-site-settings"),
     path("audit/", admin_api.AdminAuditLogListView.as_view(), name="admin-audit"),

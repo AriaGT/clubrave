@@ -1,14 +1,14 @@
 "use client";
 
 import { AppShell, AppShellContent, BottomNav, LoadingState } from "@repo/ui";
-import { Calendar, Home, QrCode, Settings } from "lucide-react";
+import { Calendar, Home, QrCode, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { useSession } from "@/lib/session";
 
-/** El personal de seguridad solo tiene el escáner (el backend además le
+/** El portero solo tiene el escáner (el backend además le
  * responde 403 a cualquier otro endpoint). */
 function isSecurityPath(pathname: string) {
   return pathname === "/scan" || pathname.startsWith("/scan/");
@@ -52,11 +52,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     },
     { key: "scan", label: "Escanear", href: "/scan", icon: <QrCode className="h-5 w-5" />, accent: true },
     {
-      key: "settings",
-      label: "Ajustes",
-      href: "/settings",
-      icon: <Settings className="h-5 w-5" />,
-      active: pathname.startsWith("/settings"),
+      key: "account",
+      label: "Cuenta",
+      href: "/account",
+      icon: <User className="h-5 w-5" />,
+      active: pathname.startsWith("/account"),
     },
   ];
 

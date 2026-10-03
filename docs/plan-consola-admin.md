@@ -1,8 +1,7 @@
 # Plan: consola de administración (`/admin`) y panel del organizador simplificado
 
-Estado: **fase 1 (backend aditivo) implementada**; las fases 2 a 4 siguen siendo
-propuesta. Este documento define el trabajo; el código del frontend todavía no
-existe salvo donde se indique ("ya existe").
+Estado: **las cuatro fases están implementadas** (backend, consola `/admin`, retiro de los endpoints viejos y pantalla Cuenta, sección Sistema con `DJANGO_ADMIN_PATH`). Este documento conserva el diseño original; el código es la fuente
+de verdad donde difiera.
 
 Hoy el panel mezcla dos públicos. El organizador entra a crear eventos y
 vender, y en **Ajustes** se encuentra con credenciales de pasarelas, la marca

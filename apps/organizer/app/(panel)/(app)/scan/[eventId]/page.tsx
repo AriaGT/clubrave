@@ -43,13 +43,13 @@ const UNDO_REASONS: { value: UndoCheckInReasonCode; label: string }[] = [
 export default function ScannerPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const router = useRouter();
-  // Endpoint del escáner (no /org/events/): también lo puede leer seguridad.
+  // Endpoint del escáner (no /org/events/): también lo puede leer el portero.
   const { data: event, refetch: refetchEvent } = useDoorEvent(eventId);
   const { role } = useSession();
   const isSecurity = role === "security";
-  // Seguridad fuera de horario: pantalla de "escáner cerrado", sin cámara.
+  // Portero fuera de horario: pantalla de "escáner cerrado", sin cámara.
   const scannerClosed = isSecurity && !!event && !event.scanner_is_open;
-  // Para seguridad la cámara no arranca hasta confirmar que el escáner está abierto.
+  // Para el portero la cámara no arranca hasta confirmar que el escáner está abierto.
   const cameraAllowed = !isSecurity || !!event?.scanner_is_open;
   const checkIn = useCheckIn();
   const undoCheckIn = useUndoCheckIn();

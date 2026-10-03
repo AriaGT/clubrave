@@ -27,7 +27,7 @@ function FooterHeading({ children }: { children: ReactNode }) {
 const linkClass =
   "inline-flex items-center gap-2.5 text-[var(--color-text-muted)] transition-colors duration-[var(--duration-fast)] hover:text-[var(--color-text)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] rounded-[var(--radius-sm)]";
 
-/** Pie global de la tienda. Todo sale del panel (Ajustes → Sitio web): lo que
+/** Pie global de la tienda. Todo sale de la consola de administración (Sitio web): lo que
  * está en blanco no se muestra, así que nunca hay enlaces rotos. */
 export function SiteFooter({ settings }: { settings: SiteSettings | null }) {
   const socials = SOCIALS.filter((s) => settings?.[s.key]);

@@ -1,11 +1,7 @@
 from django.urls import path
-from rest_framework.routers import SimpleRouter
 
-from . import admin_api, employee_views, views
+from . import admin_api, views
 from .tokens import AdminTokenRefreshView, GraceTokenRefreshView
-
-router = SimpleRouter()
-router.register("org/employees", employee_views.EmployeeViewSet, basename="org-employee")
 
 urlpatterns = [
     path("auth/org/login/", views.OrgLoginView.as_view(), name="org-login"),
@@ -28,7 +24,6 @@ urlpatterns = [
         views.PasswordChangeConfirmView.as_view(),
         name="org-password-change-confirm",
     ),
+    path("org/me/", views.OrgMeView.as_view(), name="org-me"),
     path("me/", views.MeView.as_view(), name="me"),
 ]
-
-urlpatterns += router.urls

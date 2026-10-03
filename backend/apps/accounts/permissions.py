@@ -95,14 +95,6 @@ class IsCustomerOwner(BasePermission):
         return str(customer_id) == str(request.user.id)
 
 
-class IsOrganizationOwner(IsOrganizer):
-    """Dueño de la organización del token. `IsOrganizer` ya exige la
-    membresía OWNER, así que hoy son equivalentes; se conserva el nombre para
-    los ajustes que no son de un evento hasta retirarlos (fase 3 del plan)."""
-
-    message = "Esta acción requiere ser dueño de la organización."
-
-
 def is_door_session(request) -> bool:
     """Sesión de personal de seguridad (scope "door"): solo escáner."""
     return _scope(request) == "door"

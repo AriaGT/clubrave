@@ -24,10 +24,14 @@ export type RefreshOutcome =
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-export async function fetchRefresh(fetchImpl: FetchLike = fetch): Promise<RefreshOutcome> {
+/** `url` distingue la sesión del panel (por defecto) de la de la consola. */
+export async function fetchRefresh(
+  fetchImpl: FetchLike = fetch,
+  url = "/api/auth/refresh"
+): Promise<RefreshOutcome> {
   let res: Response;
   try {
-    res = await fetchImpl("/api/auth/refresh", {
+    res = await fetchImpl(url, {
       method: "POST",
       credentials: "same-origin",
       cache: "no-store",

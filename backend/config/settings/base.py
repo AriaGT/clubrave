@@ -207,6 +207,12 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="entradas@ticketera.pe")
 # valor que EMAIL_HOST_PASSWORD: si ya usas Resend por SMTP, no hace falta
 # declarar esta variable aparte — la API key es la misma.
 RESEND_API_KEY = env("RESEND_API_KEY", default=env("EMAIL_HOST_PASSWORD", default=""))
+# Versión desplegada, para la sección «Sistema» de la consola: el commit que
+# el hosting expone (Render) o un valor propio.
+APP_VERSION = env("APP_VERSION", default=env("RENDER_GIT_COMMIT", default=""))
+# Ruta del admin de Django. Cambiarla (p. ej. "gestion-9f3k/") lo saca de las
+# listas de rutas que los bots prueban; debe terminar en "/".
+DJANGO_ADMIN_PATH = env("DJANGO_ADMIN_PATH", default="admin/")
 FRONTEND_STORE_URL = env("FRONTEND_STORE_URL", default="http://localhost:3000")
 FRONTEND_PANEL_URL = env("FRONTEND_PANEL_URL", default="http://localhost:3001")
 

@@ -47,9 +47,9 @@ def test_public_endpoint_returns_blank_settings_on_first_read(db):
     assert response.json()["instagram_url"] == ""
 
 
-def test_owner_updates_contact_and_socials_and_it_is_audited(owner_client, organization):
-    response = owner_client.patch(
-        "/api/org/site/",
+def test_admin_updates_contact_and_socials_and_it_is_audited(admin_client):
+    response = admin_client.patch(
+        "/api/admin/site/",
         {
             "contact_phone": "+51 987 654 321",
             "whatsapp": "+51 987 654 321",
@@ -63,41 +63,42 @@ def test_owner_updates_contact_and_socials_and_it_is_audited(owner_client, organ
     assert public["tiktok_url"] == "https://www.tiktok.com/@clubrave"
 
     entry = AuditLog.objects.get(action=AuditLog.Action.SITE_SETTINGS_UPDATED)
-    assert entry.organization == organization
+    assert entry.organization is None
     assert "instagram_url" in entry.metadata["fields"]
 
 
-def test_logo_upload_keeps_transparency_and_can_be_removed(owner_client):
-    response = owner_client.patch("/api/org/site/", {"logo": _png()}, format="multipart")
+def test_logo_upload_keeps_transparency_and_can_be_removed(admin_client):
+    response = admin_client.patch("/api/admin/site/", {"logo": _png()}, format="multipart")
     assert response.status_code == 200
     settings_obj = SiteSettings.load()
     assert settings_obj.logo.name.endswith(".webp")
     with settings_obj.logo.open() as f:
         assert Image.open(f).mode == "RGBA"
 
-    response = owner_client.patch("/api/org/site/", {"logo": None}, format="json")
+    response = admin_client.patch("/api/admin/site/", {"logo": None}, format="json")
     assert response.status_code == 200
     assert response.json()["logo"] is None
 
 
-def test_tiny_logo_is_rejected(owner_client):
-    response = owner_client.patch("/api/org/site/", {"logo": _png(size=(40, 40))}, format="multipart")
+def test_tiny_logo_is_rejected(admin_client):
+    response = admin_client.patch("/api/admin/site/", {"logo": _png(size=(40, 40))}, format="multipart")
     assert response.status_code == 400
 
 
-def test_invalid_whatsapp_is_rejected(owner_client):
-    response = owner_client.patch("/api/org/site/", {"whatsapp": "123"}, format="json")
+def test_invalid_whatsapp_is_rejected(admin_client):
+    response = admin_client.patch("/api/admin/site/", {"whatsapp": "123"}, format="json")
     assert response.status_code == 400
 
 
-def test_staff_member_cannot_edit_site_settings(staff_client):
-    response = staff_client.patch("/api/org/site/", {"tagline": "Hackeado"}, format="json")
+def test_staff_and_owner_cannot_edit_site_settings(staff_client, owner_client):
+    assert owner_client.patch("/api/admin/site/", {"tagline": "Hackeado"}, format="json").status_code == 403
+    response = staff_client.patch("/api/admin/site/", {"tagline": "Hackeado"}, format="json")
     assert response.status_code == 403
     assert SiteSettings.load().tagline == ""
 
 
 def test_anonymous_cannot_edit_site_settings(db):
-    response = APIClient().patch("/api/org/site/", {"tagline": "X"}, format="json")
+    response = APIClient().patch("/api/admin/site/", {"tagline": "X"}, format="json")
     assert response.status_code in (401, 403)
 
 

@@ -2,6 +2,7 @@
 panel (organizadores y porteros), pagos, sitio web, bitácora global y
 resumen. La seguridad de las rutas (scopes) está en test_admin_auth.py."""
 
+import json
 import uuid
 from datetime import timedelta
 
@@ -507,3 +508,45 @@ def test_overview_flags_a_live_gateway_that_was_never_verified(admin_client, con
     codes = {a["code"] for a in body["alerts"]}
     assert {"GATEWAY_UNVERIFIED", "GATEWAY_TEST_ENV"} <= codes
     assert body["payments"]["gateways"] == [{"id": "mercadopago", "environment": "test", "verified": False}]
+
+
+def test_org_me_names_the_user_and_the_organization(organizer_user, organization):
+    from apps.accounts import services
+
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {services.org_tokens_for_user(organizer_user)['access']}")
+    body = client.get("/api/org/me/").json()
+    assert body["email"] == organizer_user.email
+    assert body["organization_name"] == organization.name
+    assert client.get("/api/org/employees/").status_code == 404
+
+
+def test_system_lists_webhooks_and_checks_without_leaking_secrets(admin_client, settings):
+    settings.PAYMENT_CREDENTIALS_KEY = ""
+    settings.RESEND_API_KEY = "re_SECRET_VALUE"
+    settings.APP_VERSION = "abc1234"
+    body = admin_client.get("/api/admin/system/").json()
+    assert body["version"] == "abc1234"
+    checks = {c["code"]: c for c in body["checks"]}
+    assert checks["PAYMENT_CREDENTIALS_KEY"]["status"] == "error"
+    assert checks["EMAIL"]["status"] == "ok"
+    assert {w["provider"] for w in body["webhooks"]} == {"izipay", "mercadopago"}
+    assert all(w["url"].startswith("http") and "/webhooks/" in w["url"] for w in body["webhooks"])
+    assert "re_SECRET_VALUE" not in json.dumps(body)
+
+
+def test_system_warns_about_production_defaults(admin_client, settings):
+    settings.DEBUG = False
+    settings.FRONTEND_STORE_URL = "http://localhost:3000"
+    codes = {c["code"]: c["status"] for c in admin_client.get("/api/admin/system/").json()["checks"]}
+    assert codes["FRONTEND_STORE_URL"] == "warning"
+    assert codes["DJANGO_ADMIN_PATH"] == "warning"
+    assert codes["STORAGE"] == "error"
+
+
+def test_organizer_cannot_read_system(organizer_user, organization):
+    from apps.accounts import services
+
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {services.org_tokens_for_user(organizer_user)['access']}")
+    assert client.get("/api/admin/system/").status_code == 403

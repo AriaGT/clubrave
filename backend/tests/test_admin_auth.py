@@ -184,9 +184,6 @@ def test_only_the_admin_scope_opens_api_admin(other_scope_clients, admin_client,
 
 ORG_ENDPOINTS = [
     "/api/org/events/",
-    "/api/org/employees/",
-    "/api/org/payments/",
-    "/api/org/site/",
     "/api/org/audit/",
 ]
 

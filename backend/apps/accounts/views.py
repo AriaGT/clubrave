@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from apps.common.errors import DomainError
 
 from . import services
-from .models import User
+from .models import Organization, User
 from .permissions import IsCustomer, IsOrganizer
 from .serializers import (
     MeSerializer,
@@ -95,6 +95,31 @@ class MeView(generics.RetrieveUpdateDestroyAPIView):
         contable (ver `services.anonymize_account`)."""
         services.anonymize_account(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class OrgMeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    full_name = serializers.CharField()
+    organization_name = serializers.CharField()
+
+
+class OrgMeView(APIView):
+    """Quién es el organizador con sesión y de qué organización: alimenta la
+    pantalla Cuenta del panel."""
+
+    permission_classes = [IsOrganizer]
+
+    @extend_schema(responses=OrgMeSerializer)
+    def get(self, request: Request):
+        # `IsOrganizer` ya verificó y dejó la organización vigente en el request.
+        organization = Organization.objects.get(pk=request.auth["organization_id"])
+        return Response(
+            {
+                "email": request.user.email,
+                "full_name": request.user.full_name,
+                "organization_name": organization.name,
+            }
+        )
 
 
 class PasswordChangeRequestView(APIView):

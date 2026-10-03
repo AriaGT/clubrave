@@ -103,5 +103,7 @@ def send(
     (apunta al `contact_email` de la organización).
     """
     if getattr(settings, "RESEND_API_KEY", ""):
-        return _send_via_resend_api(to=to, subject=subject, html=html, attachments=attachments, reply_to=reply_to)
+        return _send_via_resend_api(
+            to=to, subject=subject, html=html, attachments=attachments, reply_to=reply_to
+        )
     return _send_via_smtp(to=to, subject=subject, html=html, attachments=attachments, reply_to=reply_to)

@@ -1,16 +1,16 @@
 "use client";
 
 import { isApiError } from "@repo/api-client";
-import { Button, Card, CardContent, EmptyState, FieldError, Img, Input, Label, Skeleton, TopBar } from "@repo/ui";
+import { Button, Card, CardContent, EmptyState, FieldError, Img, Input, Label, Skeleton } from "@repo/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImagePlus, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { apiErrorMessage } from "@/features/events/hooks";
-import { type SiteSettings, useSetSiteLogo, useSiteSettings, useUpdateSiteSettings } from "@/features/site/hooks";
+import type { SiteSettings, SiteSettingsPatch } from "@/features/admin/hooks";
 
 /** URL vacía o de alguno de los dominios esperados (evita pegar el enlace de
  * Instagram en el campo de TikTok). */
@@ -76,11 +76,23 @@ function Section({ title, description, children }: { title: string; description:
   );
 }
 
-export default function SiteSettingsPage() {
-  const router = useRouter();
-  const { data, error, isLoading } = useSiteSettings();
-  const update = useUpdateSiteSettings();
-  const setLogo = useSetSiteLogo();
+/** La misma pantalla sirve al panel del organizador y a la consola: cada una
+ * le pasa sus propios hooks (cada sesión tiene su cliente y su token). */
+export interface SiteSettingsController {
+  query: UseQueryResult<SiteSettings, Error>;
+  update: UseMutationResult<SiteSettings, Error, Omit<SiteSettingsPatch, "logo" | "updated_at">>;
+  setLogo: UseMutationResult<SiteSettings, Error, File | null>;
+}
+
+export function SiteSettingsView({
+  query: { data, error, isLoading },
+  update,
+  setLogo,
+  saveBarBottom = "calc(var(--density-row, 44px) + 20px + env(safe-area-inset-bottom))",
+}: SiteSettingsController & {
+  /** Posición de la barra de guardado: sobre la barra inferior del panel, o 0 en la consola. */
+  saveBarBottom?: string;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [saved, setSaved] = useState(false);
 
@@ -125,14 +137,13 @@ export default function SiteSettingsPage() {
 
   return (
     <>
-      <TopBar title="Sitio web" onBack={() => router.push("/settings")} />
-      <div className="flex flex-col gap-4 p-[var(--space-4)] pb-28">
+      <div className="flex flex-col gap-4 pb-28">
         {isLoading && <Skeleton className="h-64" />}
 
         {error && (
           <EmptyState
-            title={forbidden ? "Solo el dueño puede editar el sitio" : "No pudimos cargar la configuración"}
-            description={forbidden ? "Pídele acceso a quien administra la organización." : apiErrorMessage(error)}
+            title={forbidden ? "No tienes acceso a esta configuración" : "No pudimos cargar la configuración"}
+            description={apiErrorMessage(error)}
           />
         )}
 
@@ -220,7 +231,7 @@ export default function SiteSettingsPage() {
             </form>
 
             <div
-              style={{ bottom: "calc(var(--density-row, 44px) + 20px + env(safe-area-inset-bottom))" }}
+              style={{ bottom: saveBarBottom }}
               className="fixed inset-x-0 z-20 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-[var(--space-3)]">
               <div className="mx-auto flex max-w-[var(--container-max)] items-center justify-end gap-3">
                 <span className="text-sm text-[var(--color-text-muted)]" aria-live="polite">

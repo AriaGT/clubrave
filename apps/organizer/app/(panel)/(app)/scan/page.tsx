@@ -35,7 +35,7 @@ export default function ScanEventSelectPage() {
         {isSecurity && (
           <p className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
             <ShieldCheck className="h-4 w-4 text-[var(--color-accent)]" />
-            Sesión de seguridad · elige el evento de hoy para empezar a escanear.
+            Sesión de portero · elige el evento de hoy para empezar a escanear.
           </p>
         )}
         {isLoading && (
@@ -110,7 +110,7 @@ function DoorEventCard({ event, restricted }: { event: DoorEvent; restricted: bo
     "flex min-h-24 items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-[var(--space-4)]";
 
   if (!open) {
-    // Seguridad fuera de horario: la tarjeta informa pero no abre el escáner.
+    // Portero fuera de horario: la tarjeta informa pero no abre el escáner.
     return (
       <div className={`${className} opacity-80`} aria-disabled>
         {body}

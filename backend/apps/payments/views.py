@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsOrganizationOwner, IsPlatformAdmin
+from apps.accounts.permissions import IsPlatformAdmin
 from apps.common.audit import record
 from apps.common.errors import DomainError
 from apps.common.models import AuditLog
@@ -221,20 +221,15 @@ def confirm_from_browser(request, code: str):
     return Response({"status": order.status})
 
 
-class OrgPaymentSettingsView(APIView):
-    """Módulo «Medios de pago» del panel (Ajustes › Configuración avanzada).
+class AdminPaymentSettingsView(APIView):
+    """Módulo «Medios de pago» de la consola del administrador. Los pagos son
+    de toda la plataforma: el cambio se registra sin organización.
 
-    Solo dueños. Las credenciales son de solo escritura: se envían al crear o
+    Las credenciales son de solo escritura: se envían al crear o
     reemplazar y nunca vuelven en la respuesta (ver `ProviderStateSerializer`).
     """
 
-    permission_classes = [IsOrganizationOwner]
-
-    def audit_organization(self, request):
-        """Organización a la que se atribuye el cambio en la bitácora."""
-        from apps.accounts.models import Organization
-
-        return Organization.objects.get(pk=request.auth["organization_id"])
+    permission_classes = [IsPlatformAdmin]
 
     def _state(self, request) -> dict:
         config = PaymentSettings.load()
@@ -256,19 +251,9 @@ class OrgPaymentSettingsView(APIView):
         summary = update_payment_settings(serializer.validated_data)
         record(
             actor=request.user,
-            organization=self.audit_organization(request),
+            organization=None,
             action=AuditLog.Action.PAYMENT_SETTINGS_UPDATED,
             target=None,
             metadata=summary,  # modo, medios activos y cuáles cambiaron llaves; nunca valores
         )
         return Response(self._state(request))
-
-
-class AdminPaymentSettingsView(OrgPaymentSettingsView):
-    """Mismo módulo, en la consola del administrador. Los pagos son de toda
-    la plataforma: el cambio se registra sin organización."""
-
-    permission_classes = [IsPlatformAdmin]
-
-    def audit_organization(self, request):
-        return None

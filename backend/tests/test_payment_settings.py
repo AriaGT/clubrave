@@ -108,14 +108,16 @@ def test_import_runs_only_once(db, settings):
 # ── API del panel ────────────────────────────────────────────────────────────
 
 
-def test_only_owners_can_read_payment_settings(staff_client):
-    assert staff_client.get("/api/org/payments/").status_code == 403
+def test_only_the_platform_admin_can_read_payment_settings(staff_client, owner_client):
+    assert staff_client.get("/api/admin/payments/").status_code == 403
+    assert owner_client.get("/api/admin/payments/").status_code == 403
+    assert owner_client.get("/api/org/payments/").status_code == 404
 
 
-def test_saving_credentials_validates_them_and_never_returns_them(owner_client):
+def test_saving_credentials_validates_them_and_never_returns_them(admin_client):
     with _sdk_test_ok() as sdk_test:
-        response = owner_client.patch(
-            "/api/org/payments/",
+        response = admin_client.patch(
+            "/api/admin/payments/",
             {"mode": "live", "providers": {"izipay": {"enabled": True, "credentials": IZIPAY_TEST}}},
             format="json",
         )
@@ -136,7 +138,7 @@ def test_saving_credentials_validates_them_and_never_returns_them(owner_client):
     assert izipay["webhook_url"].endswith("/api/webhooks/izipay/")
 
     # Ni la lectura posterior ni la base guardan nada en claro.
-    assert all(s not in json.dumps(owner_client.get("/api/org/payments/").json()) for s in SECRETS)
+    assert all(s not in json.dumps(admin_client.get("/api/admin/payments/").json()) for s in SECRETS)
     assert "testpassword_SECRET9876" not in PaymentProvider.objects.get(provider="izipay").credentials
 
     log = AuditLog.objects.get(action=AuditLog.Action.PAYMENT_SETTINGS_UPDATED)
@@ -151,10 +153,10 @@ IZIPAY_PROD = {
 }
 
 
-def test_production_credentials_are_accepted_in_production(owner_client):
+def test_production_credentials_are_accepted_in_production(admin_client):
     with _sdk_test_ok() as sdk_test:
-        response = owner_client.patch(
-            "/api/org/payments/",
+        response = admin_client.patch(
+            "/api/admin/payments/",
             {
                 "mode": "live",
                 "providers": {
@@ -168,13 +170,13 @@ def test_production_credentials_are_accepted_in_production(owner_client):
     assert PaymentProvider.objects.get(provider="izipay").environment == "production"
 
 
-def test_izipay_decides_whether_the_credentials_are_valid(owner_client):
+def test_izipay_decides_whether_the_credentials_are_valid(admin_client):
     """Sin reglas de formato propias: lo que Izipay rechaza, se rechaza con su mensaje."""
     refused = Mock()
     refused.json.return_value = {"status": "ERROR", "answer": {"errorMessage": "Authentication failed"}}
     with patch("apps.payments.providers.requests.post", return_value=refused):
-        response = owner_client.patch(
-            "/api/org/payments/",
+        response = admin_client.patch(
+            "/api/admin/payments/",
             {"mode": "live", "providers": {"izipay": {"enabled": True, "credentials": IZIPAY_TEST}}},
             format="json",
         )
@@ -183,10 +185,10 @@ def test_izipay_decides_whether_the_credentials_are_valid(owner_client):
     assert not PaymentProvider.objects.exists()
 
 
-def test_nothing_is_saved_when_one_provider_rejects_its_credentials(owner_client):
+def test_nothing_is_saved_when_one_provider_rejects_its_credentials(admin_client):
     with _sdk_test_ok(), _mp_users_me(status_code=401):
-        response = owner_client.patch(
-            "/api/org/payments/",
+        response = admin_client.patch(
+            "/api/admin/payments/",
             {
                 "mode": "live",
                 "providers": {
@@ -202,17 +204,17 @@ def test_nothing_is_saved_when_one_provider_rejects_its_credentials(owner_client
     assert PaymentSettings.load().mode == PaymentSettings.Mode.FAKE
 
 
-def test_live_mode_needs_at_least_one_enabled_provider(owner_client):
-    response = owner_client.patch("/api/org/payments/", {"mode": "live"}, format="json")
+def test_live_mode_needs_at_least_one_enabled_provider(admin_client):
+    response = admin_client.patch("/api/admin/payments/", {"mode": "live"}, format="json")
     assert response.status_code == 400
 
 
-def test_blank_secret_fields_keep_the_stored_value(owner_client, configure_provider):
+def test_blank_secret_fields_keep_the_stored_value(admin_client, configure_provider):
     configure_provider("izipay", IZIPAY_TEST)
     PaymentProvider.objects.filter(provider="izipay").update(verified_at="2026-01-01T00:00:00Z")
     with _sdk_test_ok():
-        response = owner_client.patch(
-            "/api/org/payments/",
+        response = admin_client.patch(
+            "/api/admin/payments/",
             {"providers": {"izipay": {"credentials": {"hmac_key": "NUEVAHMAC7777", "rest_password": ""}}}},
             format="json",
         )
@@ -221,10 +223,10 @@ def test_blank_secret_fields_keep_the_stored_value(owner_client, configure_provi
     assert stored == {**IZIPAY_TEST, "hmac_key": "NUEVAHMAC7777"}
 
 
-def test_switching_environment_requires_all_credentials_again(owner_client, configure_provider):
+def test_switching_environment_requires_all_credentials_again(admin_client, configure_provider):
     configure_provider("izipay", IZIPAY_TEST)
-    response = owner_client.patch(
-        "/api/org/payments/",
+    response = admin_client.patch(
+        "/api/admin/payments/",
         {"providers": {"izipay": {"environment": "production"}}},
         format="json",
     )
