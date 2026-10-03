@@ -64,6 +64,8 @@ evento y en la puerta — escalar es sumar workers, no rediseñar nada.
 | `DEFAULT_FROM_EMAIL`, `EMAIL_HOST*` | Del proveedor de email transaccional (Resend/Brevo por SMTP) |
 | `FRONTEND_STORE_URL` / `FRONTEND_PANEL_URL` | `https://clubrave.pe` / `https://panel.clubrave.pe` |
 | `PAYMENT_CREDENTIALS_KEY` | **Obligatoria.** Cifra las credenciales de las pasarelas en la base. Generar con `python -c "import secrets; print(secrets.token_urlsafe(48))"` y **no cambiarla** después. Los medios de pago y sus llaves se configuran desde la consola de administración — ver [`pagos.md`](./pagos.md) |
+| `DJANGO_ADMIN_PATH` | Opcional. Ruta del admin de Django (por defecto `admin/`; debe terminar en `/`). Cámbiala, p. ej. `gestion-9f3k/`, para sacarla de las rutas que prueban los bots |
+| `APP_VERSION` | Opcional. Versión que muestra la consola › Sistema; si no se define usa `RENDER_GIT_COMMIT` |
 | `PAYMENT_GATEWAY`, `IZIPAY_*`, `MERCADOPAGO_*` (llaves y `_MODE`) | Heredadas: solo se importan una vez al primer arranque. Después se pueden borrar |
 | `SENTRY_DSN` | Del proyecto de Sentry (sección 6), opcional |
 

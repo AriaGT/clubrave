@@ -11,6 +11,7 @@ lo que el panel conoce, y cada cuenta tiene una sola. `id` es el de la
 membresía; `user_id`, el del usuario.
 """
 
+import os
 import zoneinfo
 from datetime import date, timedelta
 from uuid import UUID
@@ -536,5 +537,108 @@ class AdminOverviewView(APIView):
                     ],
                 },
                 "alerts": alerts,
+            }
+        )
+
+
+# ── Sistema ──────────────────────────────────────────────────────────────────
+
+
+class AdminSystemView(APIView):
+    """Versión desplegada, chequeos de entorno y URL de los webhooks que hay
+    que registrar en cada pasarela. Solo informa si algo está configurado:
+    nunca devuelve valores secretos."""
+
+    permission_classes = [IsPlatformAdmin]
+
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
+    def get(self, request):
+        from django.db import connection
+        from django.urls import reverse
+
+        from apps.payments.providers import PROVIDERS
+
+        s = django_settings
+        checks: list[dict] = []
+
+        def check(code: str, label: str, level: str, detail: str) -> None:
+            checks.append({"code": code, "label": label, "status": level, "detail": detail})
+
+        try:
+            connection.ensure_connection()
+            check("DATABASE", "Base de datos", "ok", "Conectada.")
+        except Exception:
+            check("DATABASE", "Base de datos", "error", "No responde.")
+
+        if s.PAYMENT_CREDENTIALS_KEY:
+            check("PAYMENT_CREDENTIALS_KEY", "Clave de cifrado de pagos", "ok", "Configurada.")
+        else:
+            check(
+                "PAYMENT_CREDENTIALS_KEY",
+                "Clave de cifrado de pagos",
+                "error",
+                "Falta PAYMENT_CREDENTIALS_KEY: no se pueden guardar credenciales.",
+            )
+
+        if s.RESEND_API_KEY:
+            check("EMAIL", "Correo", "ok", "Resend (API HTTP).")
+        elif getattr(s, "EMAIL_HOST", ""):
+            check("EMAIL", "Correo", "ok", f"SMTP en {s.EMAIL_HOST}.")
+        else:
+            check("EMAIL", "Correo", "error", "Sin proveedor: las entradas no se envían por email.")
+
+        if s.AWS_STORAGE_BUCKET_NAME:
+            check("STORAGE", "Archivos (imágenes y logo)", "ok", "Bucket S3/R2 configurado.")
+        elif s.DEBUG:
+            check("STORAGE", "Archivos (imágenes y logo)", "ok", "Disco local (desarrollo).")
+        else:
+            check(
+                "STORAGE",
+                "Archivos (imágenes y logo)",
+                "error",
+                "Sin bucket: las imágenes se pierden al reiniciar el servidor.",
+            )
+
+        for code, label, url in (
+            ("FRONTEND_STORE_URL", "URL de la tienda", s.FRONTEND_STORE_URL),
+            ("FRONTEND_PANEL_URL", "URL del panel", s.FRONTEND_PANEL_URL),
+        ):
+            if not s.DEBUG and ("localhost" in url or "127.0.0.1" in url):
+                check(code, label, "warning", f"Apunta a {url}: los enlaces de los emails no servirán.")
+            else:
+                check(code, label, "ok", url)
+
+        if not s.DEBUG:
+            if getattr(s, "SENTRY_DSN", ""):
+                check("SENTRY", "Alertas de errores (Sentry)", "ok", "Configurado.")
+            else:
+                check(
+                    "SENTRY",
+                    "Alertas de errores (Sentry)",
+                    "warning",
+                    "Sin SENTRY_DSN: nadie se entera de los errores.",
+                )
+
+        if s.DJANGO_ADMIN_PATH == "admin/" and not s.DEBUG:
+            check(
+                "DJANGO_ADMIN_PATH",
+                "Ruta del admin de Django",
+                "warning",
+                "Usa la ruta por defecto /admin/. Cámbiala con DJANGO_ADMIN_PATH.",
+            )
+
+        return Response(
+            {
+                "version": s.APP_VERSION,
+                "environment": os.environ.get("DJANGO_SETTINGS_MODULE", "").rsplit(".", 1)[-1],
+                "debug": s.DEBUG,
+                "checks": checks,
+                "webhooks": [
+                    {
+                        "provider": provider_id,
+                        "url": request.build_absolute_uri(reverse(spec.webhook_url_name)),
+                    }
+                    for provider_id, spec in PROVIDERS.items()
+                ],
             }
         )

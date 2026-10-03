@@ -144,6 +144,27 @@ export interface paths {
         patch: operations["admin_site_partial_update"];
         trace?: never;
     };
+    "/api/admin/system/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Versión desplegada, chequeos de entorno y URL de los webhooks que hay
+         *     que registrar en cada pasarela. Solo informa si algo está configurado:
+         *     nunca devuelve valores secretos.
+         */
+        get: operations["admin_system_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/users/": {
         parameters: {
             query?: never;
@@ -2884,6 +2905,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+        };
+    };
+    admin_system_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

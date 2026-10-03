@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Logo, Sheet, SheetContent, cn } from "@repo/ui";
-import { Building2, LayoutDashboard, LogOut, Menu, ScrollText, Globe, CreditCard, Users } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Menu, ScrollText, Globe, CreditCard, Users, Server } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,7 @@ const NAV = [
   { href: "/admin/payments", label: "Pagos", icon: CreditCard },
   { href: "/admin/site", label: "Sitio web", icon: Globe },
   { href: "/admin/audit", label: "Bitácora", icon: ScrollText },
+  { href: "/admin/system", label: "Sistema", icon: Server },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

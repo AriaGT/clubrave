@@ -1,7 +1,6 @@
 # Plan: consola de administración (`/admin`) y panel del organizador simplificado
 
-Estado: **fases 1 a 3 implementadas** (backend, consola `/admin`, retiro de los endpoints viejos y pantalla Cuenta); la fase 4 sigue siendo
-propuesta. Este documento conserva el diseño original; el código es la fuente
+Estado: **las cuatro fases están implementadas** (backend, consola `/admin`, retiro de los endpoints viejos y pantalla Cuenta, sección Sistema con `DJANGO_ADMIN_PATH`). Este documento conserva el diseño original; el código es la fuente
 de verdad donde difiera.
 
 Hoy el panel mezcla dos públicos. El organizador entra a crear eventos y

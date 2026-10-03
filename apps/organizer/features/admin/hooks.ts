@@ -38,6 +38,15 @@ export interface AdminOverview {
   alerts: AdminAlert[];
 }
 
+/** `/api/admin/system/` tampoco tiene serializer: contrato que arma la vista. */
+export interface AdminSystem {
+  version: string;
+  environment: string;
+  debug: boolean;
+  checks: { code: string; label: string; status: "ok" | "warning" | "error"; detail: string }[];
+  webhooks: { provider: string; url: string }[];
+}
+
 export const ROLE_LABELS: Record<string, string> = { OWNER: "Organizador", SECURITY: "Portero" };
 
 export function useAdminOverview() {
@@ -48,6 +57,18 @@ export function useAdminOverview() {
       const { data, error } = await api.GET("/api/admin/overview/");
       if (error) throw error;
       return data as unknown as AdminOverview;
+    },
+  });
+}
+
+export function useAdminSystem() {
+  const api = useAdminApi();
+  return useQuery({
+    queryKey: ["admin", "system"],
+    queryFn: async () => {
+      const { data, error } = await api.GET("/api/admin/system/");
+      if (error) throw error;
+      return data as unknown as AdminSystem;
     },
   });
 }
