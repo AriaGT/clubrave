@@ -37,7 +37,7 @@ jobs:
           pip install "Django>=5.1,<6" "djangorestframework>=3.15" "djangorestframework-simplejwt>=5.3" \
             "django-cors-headers>=4.4" "django-filter>=24.3" "drf-spectacular>=0.27" "psycopg[binary]>=3.2" \
             "django-environ>=0.11" "django-storages[s3]>=1.14" "Pillow>=10.4" "segno>=1.6" "requests>=2.32" \
-            "gunicorn>=23.0" "whitenoise>=6.7" "argon2-cffi>=23.1" "sentry-sdk>=2.14" \
+            "gunicorn>=23.0" "whitenoise>=6.7" "argon2-cffi>=23.1" "sentry-sdk>=2.14" "cryptography>=43" \
             pytest pytest-django pytest-cov factory-boy freezegun ruff pip-audit
 
       # §15.2: ruff + pytest con Postgres real en servicio.
