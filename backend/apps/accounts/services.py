@@ -263,6 +263,9 @@ def confirm_password_change(*, token: str) -> User:
     send_email(
         to=user.email,
         subject="Tu contraseña fue cambiada",
-        html="<p>La contraseña de tu cuenta de Club Rave acaba de cambiar. Si no fuiste tú, contáctanos de inmediato.</p>",
+        html=(
+            "<p>La contraseña de tu cuenta de Club Rave acaba de cambiar. "
+            "Si no fuiste tú, contáctanos de inmediato.</p>"
+        ),
     )
     return user
