@@ -10,6 +10,7 @@ import QRCode from "qrcode";
 import { useMyOrder } from "@/features/account/hooks";
 import { CheckoutShell } from "@/features/checkout/CheckoutShell";
 import { CheckoutSteps } from "@/features/checkout/CheckoutSteps";
+import { usePaymentMethods } from "@/features/checkout/pay-hooks";
 
 export default function CheckoutSuccessPage() {
   const { orderCode } = useParams<{ orderCode: string }>();
@@ -27,7 +28,9 @@ export default function CheckoutSuccessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.tickets]);
 
-  const steps = <CheckoutSteps current={3} complete />;
+  // Mismo criterio que la pantalla de pago: sin elección de medio no hay pasos.
+  const { data: methods } = usePaymentMethods();
+  const steps = (methods?.length ?? 0) > 1 ? <CheckoutSteps current={3} complete /> : undefined;
 
   if (isLoading) {
     return (

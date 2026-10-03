@@ -146,6 +146,9 @@ function PayScreen() {
   // medios aún no haya llegado; con un solo medio, se abre sola.
   const showPicker = isPending && !submitted && (choosing || !paymentSession);
   const step = showPicker ? 1 : 2;
+  // Con un solo medio no hay nada que elegir: el paso 1 no existiría para el
+  // comprador, así que el indicador solo aparece si hay varios.
+  const hasChoice = (methods?.length ?? 0) > 1;
 
   const summary = (
     <SummaryCard title="Resumen de tu compra">
@@ -158,7 +161,7 @@ function PayScreen() {
   );
 
   return (
-    <CheckoutShell header={<CheckoutSteps current={step} />} aside={summary}>
+    <CheckoutShell header={hasChoice ? <CheckoutSteps current={step} /> : undefined} aside={summary}>
       <h1 className="font-display text-2xl font-bold">
         {showPicker ? "¿Cómo quieres pagar?" : isPending ? "Completa tu pago" : "Estado de tu pago"}
       </h1>
