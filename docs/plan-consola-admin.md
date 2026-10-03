@@ -1,6 +1,6 @@
 # Plan: consola de administración (`/admin`) y panel del organizador simplificado
 
-Estado: **fase 1 (backend aditivo) implementada**; las fases 2 a 4 siguen siendo
+Estado: **fase 1 (backend) y fase 2 (consola `/admin`) implementadas**; las fases 3 y 4 siguen siendo
 propuesta. Este documento define el trabajo; el código del frontend todavía no
 existe salvo donde se indique ("ya existe").
 

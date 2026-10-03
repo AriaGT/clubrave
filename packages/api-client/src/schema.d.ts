@@ -4,6 +4,245 @@
  */
 
 export interface paths {
+    "/api/admin/audit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Todas las organizaciones más las acciones de plataforma. Filtros:
+         *     `organization` (uuid o `platform`), `action`, `date_from`, `date_to`.
+         */
+        get: operations["admin_audit_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/organizations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_organizations_list"];
+        put?: never;
+        post: operations["admin_organizations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/organizations/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_organizations_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["admin_organizations_partial_update"];
+        trace?: never;
+    };
+    "/api/admin/organizations/{id}/events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Eventos de la organización, para asignárselos a un portero. */
+        get: operations["admin_organizations_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/overview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Contadores y alertas de configuración para la pantalla Resumen. */
+        get: operations["admin_overview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/payments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Mismo módulo, en la consola del administrador. Los pagos son de toda
+         *     la plataforma: el cambio se registra sin organización.
+         */
+        get: operations["admin_payments_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Mismo módulo, en la consola del administrador. Los pagos son de toda
+         *     la plataforma: el cambio se registra sin organización.
+         */
+        patch: operations["admin_payments_partial_update"];
+        trace?: never;
+    };
+    "/api/admin/site/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Mismo módulo, en la consola del administrador. La marca de la tienda
+         *     es de toda la plataforma: el cambio se registra sin organización.
+         */
+        get: operations["admin_site_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Mismo módulo, en la consola del administrador. La marca de la tienda
+         *     es de toda la plataforma: el cambio se registra sin organización.
+         */
+        patch: operations["admin_site_partial_update"];
+        trace?: never;
+    };
+    "/api/admin/users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_users_list"];
+        put?: never;
+        post: operations["admin_users_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_users_retrieve"];
+        put?: never;
+        post?: never;
+        delete: operations["admin_users_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["admin_users_partial_update"];
+        trace?: never;
+    };
+    "/api/admin/users/{id}/reset-password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin_users_reset_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}/revoke-sessions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["admin_users_revoke_sessions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/admin/login/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Login de la consola. Cualquier fallo (cuenta inexistente, contraseña
+         *     errónea, no es superusuario) responde igual: no se revela qué cuentas
+         *     son de administrador.
+         */
+        post: operations["auth_admin_login_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/admin/refresh/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Takes a refresh type JSON web token and returns an access type JSON web
+         *     token if the refresh token is valid.
+         */
+        post: operations["auth_admin_refresh_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/customer/refresh/": {
         parameters: {
             query?: never;
@@ -1255,9 +1494,124 @@ export interface components {
          *     * `EMPLOYEE_PASSWORD_RESET` - Employee Password Reset
          *     * `EMPLOYEE_DELETED` - Employee Deleted
          *     * `TICKET_CHECKED_IN` - Ticket Checked In
+         *     * `ORGANIZATION_CREATED` - Organization Created
+         *     * `ORGANIZATION_UPDATED` - Organization Updated
+         *     * `ORGANIZATION_DEACTIVATED` - Organization Deactivated
+         *     * `ORGANIZATION_REACTIVATED` - Organization Reactivated
+         *     * `ORGANIZER_CREATED` - Organizer Created
+         *     * `ORGANIZER_UPDATED` - Organizer Updated
+         *     * `ORGANIZER_DEACTIVATED` - Organizer Deactivated
+         *     * `ORGANIZER_REACTIVATED` - Organizer Reactivated
+         *     * `ORGANIZER_PASSWORD_RESET` - Organizer Password Reset
+         *     * `SESSIONS_REVOKED` - Sessions Revoked
          * @enum {string}
          */
-        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "PAYMENT_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "ORDER_MANUAL_SALE" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN";
+        ActionEnum: "EVENT_PUBLISHED" | "EVENT_UNPUBLISHED" | "EVENT_UPDATED" | "EVENT_CANCELLED" | "EVENT_DELETED" | "EVENT_SALES_PAUSED" | "EVENT_SALES_RESUMED" | "EVENT_ANNOUNCED" | "IMAGE_DELETED" | "SITE_SETTINGS_UPDATED" | "PAYMENT_SETTINGS_UPDATED" | "ORDER_VOIDED" | "ORDER_REFUND_MARKED" | "ORDER_MANUAL_SALE" | "TICKETS_RESENT" | "TICKET_VOIDED" | "CHECKIN_UNDONE" | "GUEST_CODES_GENERATED" | "GUEST_CODE_VOIDED" | "GUEST_CODE_REDEEMED" | "EMPLOYEE_CREATED" | "EMPLOYEE_UPDATED" | "EMPLOYEE_DEACTIVATED" | "EMPLOYEE_REACTIVATED" | "EMPLOYEE_PASSWORD_RESET" | "EMPLOYEE_DELETED" | "TICKET_CHECKED_IN" | "ORGANIZATION_CREATED" | "ORGANIZATION_UPDATED" | "ORGANIZATION_DEACTIVATED" | "ORGANIZATION_REACTIVATED" | "ORGANIZER_CREATED" | "ORGANIZER_UPDATED" | "ORGANIZER_DEACTIVATED" | "ORGANIZER_REACTIVATED" | "ORGANIZER_PASSWORD_RESET" | "SESSIONS_REVOKED";
+        AdminAuditLog: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: uuid */
+            readonly organization_id: string | null;
+            readonly organization_name: string;
+            readonly actor_email: string;
+            readonly action: components["schemas"]["ActionEnum"];
+            readonly target_type: string;
+            /** Format: uuid */
+            readonly target_id: string | null;
+            readonly target_label: string;
+            /** Format: uuid */
+            readonly event: string | null;
+            readonly reason: string;
+            readonly metadata: unknown;
+        };
+        AdminPasswordReset: {
+            password?: string;
+        };
+        AdminPasswordResetResult: {
+            password?: string;
+        };
+        /**
+         * @description Refresh de la consola: solo tokens con scope "admin" de un
+         *     superusuario activo. Sesión absoluta de 12 h: no se rota el refresh, así
+         *     que al vencer hay que volver a iniciar sesión.
+         */
+        AdminTokenRefresh: {
+            refresh: string;
+            readonly access: string;
+        };
+        AdminUser: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly user_id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly full_name: string;
+            readonly role: components["schemas"]["Role27cEnum"];
+            readonly is_active: boolean;
+            /** Format: uuid */
+            readonly organization_id: string;
+            readonly organization_name: string;
+            readonly all_events: boolean;
+            readonly events: components["schemas"]["AdminUserEvent"][];
+            /** Format: date-time */
+            readonly last_login: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AdminUserCreate: {
+            role: components["schemas"]["AdminUserCreateRoleEnum"];
+            /** Format: email */
+            email: string;
+            full_name: string;
+            password?: string;
+            /** Format: uuid */
+            organization_id?: string;
+            organization_name?: string;
+            /** @default true */
+            all_events?: boolean;
+            event_ids?: string[];
+        };
+        /**
+         * @description * `OWNER` - OWNER
+         *     * `SECURITY` - SECURITY
+         * @enum {string}
+         */
+        AdminUserCreateRoleEnum: "OWNER" | "SECURITY";
+        /**
+         * @description Respuesta del alta: trae la contraseña inicial solo si la generó el
+         *     servidor (no se vuelve a poder consultar).
+         */
+        AdminUserCreated: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly user_id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly full_name: string;
+            readonly role: components["schemas"]["Role27cEnum"];
+            readonly is_active: boolean;
+            /** Format: uuid */
+            readonly organization_id: string;
+            readonly organization_name: string;
+            readonly all_events: boolean;
+            readonly events: components["schemas"]["AdminUserEvent"][];
+            /** Format: date-time */
+            readonly last_login: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly initial_password: string;
+        };
+        AdminUserEvent: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            starts_at: string;
+        };
         Announce: {
             subject: string;
             message: string;
@@ -1402,7 +1756,7 @@ export interface components {
             /** Format: email */
             readonly email: string;
             readonly full_name: string;
-            readonly role: components["schemas"]["RoleEnum"];
+            readonly role: components["schemas"]["EmployeeRoleEnum"];
             readonly is_active: boolean;
             readonly all_events: boolean;
             readonly events: components["schemas"]["EmployeeEvent"][];
@@ -1431,6 +1785,11 @@ export interface components {
             password: string;
         };
         /**
+         * @description * `SECURITY` - SECURITY
+         * @enum {string}
+         */
+        EmployeeRoleEnum: "SECURITY";
+        /**
          * @description * `test` - Pruebas
          *     * `production` - Producción
          * @enum {string}
@@ -1446,6 +1805,7 @@ export interface components {
             /** Format: uri */
             image: string;
             alt?: string;
+            /** Format: int64 */
             position?: number;
             /** @default false */
             is_cover?: boolean;
@@ -1465,6 +1825,7 @@ export interface components {
             address?: string;
             city?: string;
             maps_url?: string;
+            /** Format: int64 */
             min_age?: number;
             currency?: string;
             /** Format: date-time */
@@ -1495,6 +1856,7 @@ export interface components {
             address?: string;
             city?: string;
             maps_url?: string;
+            /** Format: int64 */
             min_age?: number;
             currency?: string;
             readonly images: components["schemas"]["EventImage"][];
@@ -1513,6 +1875,7 @@ export interface components {
             ends_at?: string | null;
             city?: string;
             venue_name?: string;
+            /** Format: int64 */
             min_age?: number;
             currency?: string;
             readonly cover_image: string | null;
@@ -1754,6 +2117,7 @@ export interface components {
             ticket_type_name: string;
             /** Format: decimal */
             unit_price: string;
+            /** Format: int64 */
             quantity: number;
             /** Format: decimal */
             subtotal: string;
@@ -1824,6 +2188,66 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+        };
+        Organization: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly name: string;
+            readonly slug: string;
+            /** Format: email */
+            readonly contact_email: string;
+            readonly timezone: string;
+            readonly is_active: boolean;
+            readonly organizers_count: number;
+            readonly porters_count: number;
+            readonly events_count: number;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        OrganizationEvent: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date-time */
+            starts_at: string;
+            status: string;
+        };
+        OrganizationWrite: {
+            name: string;
+            /** Format: email */
+            contact_email: string;
+            timezone?: string;
+            is_active?: boolean;
+        };
+        PaginatedAdminAuditLogList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminAuditLog"][];
+        };
+        PaginatedAdminUserList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminUser"][];
         };
         PaginatedAuditLogList: {
             /** @example 123 */
@@ -1908,6 +2332,21 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Order"][];
         };
+        PaginatedOrganizationList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Organization"][];
+        };
         PaginatedTicketList: {
             /** @example 123 */
             count: number;
@@ -1945,6 +2384,12 @@ export interface components {
             current_password: string;
             new_password: string;
         };
+        PatchedAdminUserUpdate: {
+            full_name?: string;
+            is_active?: boolean;
+            all_events?: boolean;
+            event_ids?: string[];
+        };
         PatchedEmployeeUpdate: {
             full_name?: string;
             is_active?: boolean;
@@ -1961,6 +2406,7 @@ export interface components {
             /** Format: uri */
             image?: string;
             alt?: string;
+            /** Format: int64 */
             position?: number;
             /** @default false */
             is_cover?: boolean;
@@ -1980,6 +2426,7 @@ export interface components {
             address?: string;
             city?: string;
             maps_url?: string;
+            /** Format: int64 */
             min_age?: number;
             currency?: string;
             /** Format: date-time */
@@ -2006,6 +2453,13 @@ export interface components {
             document_type?: components["schemas"]["DocumentTypeEnum"] | components["schemas"]["BlankEnum"];
             document_id?: string;
             marketing_consent?: boolean;
+        };
+        PatchedOrganizationWrite: {
+            name?: string;
+            /** Format: email */
+            contact_email?: string;
+            timezone?: string;
+            is_active?: boolean;
         };
         PatchedPaymentSettingsUpdate: {
             mode?: components["schemas"]["ModeEnum"];
@@ -2042,16 +2496,19 @@ export interface components {
             description?: string;
             /** Format: decimal */
             price?: string;
+            /** Format: int64 */
             quantity_total?: number;
             readonly quantity_sold?: number;
             readonly quantity_reserved?: number;
             readonly available?: number;
+            /** Format: int64 */
             max_per_order?: number;
             /** Format: date-time */
             sales_start_at?: string | null;
             /** Format: date-time */
             sales_end_at?: string | null;
             is_active?: boolean;
+            /** Format: int64 */
             position?: number;
             /** Format: date-time */
             readonly created_at?: string;
@@ -2130,10 +2587,12 @@ export interface components {
             orders_paid: number;
         };
         /**
-         * @description * `SECURITY` - SECURITY
+         * @description * `OWNER` - Dueño
+         *     * `STAFF` - Personal
+         *     * `SECURITY` - Seguridad
          * @enum {string}
          */
-        RoleEnum: "SECURITY";
+        Role27cEnum: "OWNER" | "STAFF" | "SECURITY";
         /**
          * @description Lectura pública y edición desde el panel. `logo` acepta un archivo
          *     (multipart) o `null` para quitarlo.
@@ -2215,16 +2674,19 @@ export interface components {
             description?: string;
             /** Format: decimal */
             price: string;
+            /** Format: int64 */
             quantity_total: number;
             readonly quantity_sold: number;
             readonly quantity_reserved: number;
             readonly available: number;
+            /** Format: int64 */
             max_per_order?: number;
             /** Format: date-time */
             sales_start_at?: string | null;
             /** Format: date-time */
             sales_end_at?: string | null;
             is_active?: boolean;
+            /** Format: int64 */
             position?: number;
             /** Format: date-time */
             readonly created_at: string;
@@ -2238,6 +2700,7 @@ export interface components {
             description?: string;
             /** Format: decimal */
             price: string;
+            /** Format: int64 */
             max_per_order?: number;
             readonly available: number;
             /** Format: date-time */
@@ -2291,6 +2754,498 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    admin_audit_list: {
+        parameters: {
+            query?: {
+                action?: string;
+                /** @description AAAA-MM-DD */
+                date_from?: string;
+                /** @description AAAA-MM-DD */
+                date_to?: string;
+                /** @description uuid de la organización o `platform` */
+                organization?: string;
+                /** @description Un número de página dentro del conjunto de resultados paginado. */
+                page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminAuditLogList"];
+                };
+            };
+        };
+    };
+    admin_organizations_list: {
+        parameters: {
+            query?: {
+                /** @description Solo activas (`true`) o inactivas (`false`) */
+                is_active?: boolean;
+                /** @description Un número de página dentro del conjunto de resultados paginado. */
+                page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
+                /** @description Busca en nombre, email de contacto y slug */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedOrganizationList"];
+                };
+            };
+        };
+    };
+    admin_organizations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrganizationWrite"];
+                "multipart/form-data": components["schemas"]["OrganizationWrite"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+        };
+    };
+    admin_organizations_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este organization. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+        };
+    };
+    admin_organizations_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este organization. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedOrganizationWrite"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOrganizationWrite"];
+                "multipart/form-data": components["schemas"]["PatchedOrganizationWrite"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organization"];
+                };
+            };
+        };
+    };
+    admin_organizations_events_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este organization. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationEvent"][];
+                };
+            };
+        };
+    };
+    admin_overview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    admin_payments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsState"];
+                };
+            };
+        };
+    };
+    admin_payments_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPaymentSettingsUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedPaymentSettingsUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedPaymentSettingsUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsState"];
+                };
+            };
+        };
+    };
+    admin_site_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+        };
+    };
+    admin_site_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["PatchedSiteSettings"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedSiteSettings"];
+                "application/json": components["schemas"]["PatchedSiteSettings"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+        };
+    };
+    admin_users_list: {
+        parameters: {
+            query?: {
+                /** @description Solo activos (`true`) o inactivos (`false`) */
+                is_active?: boolean;
+                /** @description uuid de la organización */
+                organization?: string;
+                /** @description Un número de página dentro del conjunto de resultados paginado. */
+                page?: number;
+                /** @description Número de resultados a devolver por página. */
+                page_size?: number;
+                /** @description Busca en email, nombre y organización */
+                q?: string;
+                /** @description OWNER (organizador) o SECURITY (portero) */
+                role?: "OWNER" | "SECURITY";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminUserList"];
+                };
+            };
+        };
+    };
+    admin_users_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserCreate"];
+                "application/x-www-form-urlencoded": components["schemas"]["AdminUserCreate"];
+                "multipart/form-data": components["schemas"]["AdminUserCreate"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserCreated"];
+                };
+            };
+        };
+    };
+    admin_users_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este membership. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    admin_users_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este membership. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_users_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este membership. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAdminUserUpdate"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAdminUserUpdate"];
+                "multipart/form-data": components["schemas"]["PatchedAdminUserUpdate"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+        };
+    };
+    admin_users_reset_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este membership. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AdminPasswordReset"];
+                "application/x-www-form-urlencoded": components["schemas"]["AdminPasswordReset"];
+                "multipart/form-data": components["schemas"]["AdminPasswordReset"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminPasswordResetResult"];
+                };
+            };
+        };
+    };
+    admin_users_revoke_sessions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Un Cadena UUID que identifique este membership. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_admin_login_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrgLogin"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrgLogin"];
+                "multipart/form-data": components["schemas"]["OrgLogin"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenPair"];
+                };
+            };
+        };
+    };
+    auth_admin_refresh_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminTokenRefresh"];
+                "application/x-www-form-urlencoded": components["schemas"]["AdminTokenRefresh"];
+                "multipart/form-data": components["schemas"]["AdminTokenRefresh"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTokenRefresh"];
+                };
+            };
+        };
+    };
     auth_customer_refresh_create: {
         parameters: {
             query?: never;

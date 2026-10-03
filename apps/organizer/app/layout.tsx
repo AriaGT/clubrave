@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { QueryProvider } from "@/lib/query-provider";
-import { SessionProvider } from "@/lib/session";
 
 import "./globals.css";
 
@@ -16,9 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" data-app="organizer">
       <body>
-        <QueryProvider>
-          <SessionProvider>{children}</SessionProvider>
-        </QueryProvider>
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

@@ -149,6 +149,15 @@ class OrganizationViewSet(
             qs = qs.filter(Q(name__icontains=q) | Q(contact_email__icontains=q) | Q(slug__icontains=q))
         return qs
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("is_active", bool, description="Solo activas (`true`) o inactivas (`false`)"),
+            OpenApiParameter("q", str, description="Busca en nombre, email de contacto y slug"),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
     @extend_schema(request=OrganizationWriteSerializer, responses={201: OrganizationSerializer})
     def create(self, request):
         serializer = OrganizationWriteSerializer(data=request.data)
@@ -300,6 +309,17 @@ class AdminUserViewSet(
 
     def _fresh(self, membership: Membership) -> Membership:
         return self.get_queryset().get(pk=membership.pk)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("role", str, enum=PANEL_ROLES, description="OWNER (organizador) o SECURITY (portero)"),
+            OpenApiParameter("organization", str, description="uuid de la organización"),
+            OpenApiParameter("is_active", bool, description="Solo activos (`true`) o inactivos (`false`)"),
+            OpenApiParameter("q", str, description="Busca en email, nombre y organización"),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     @extend_schema(request=AdminUserCreateSerializer, responses={201: AdminUserCreatedSerializer})
     def create(self, request):
