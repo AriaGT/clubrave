@@ -14,22 +14,19 @@ import {
   RadioGroupItem,
   Skeleton,
   Switch,
-  TopBar,
   cn,
 } from "@repo/ui";
 import { AlertTriangle, Check, Copy, Eye, EyeOff, KeyRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { apiErrorMessage } from "@/features/events/hooks";
-import {
-  type PaymentEnvironment,
-  type PaymentMode,
-  type PaymentProviderState,
-  type PaymentSettings,
-  type PaymentSettingsPatch,
-  usePaymentSettings,
-  useUpdatePaymentSettings,
+import type {
+  PaymentEnvironment,
+  PaymentMode,
+  PaymentProviderState,
+  PaymentSettings,
+  PaymentSettingsPatch,
 } from "@/features/payments/hooks";
 
 interface ProviderDraft {
@@ -288,10 +285,21 @@ function ProviderCard({
   );
 }
 
-export default function PaymentSettingsPage() {
-  const router = useRouter();
-  const { data, error, isLoading } = usePaymentSettings();
-  const update = useUpdatePaymentSettings();
+/** La misma pantalla sirve al panel del organizador y a la consola: cada una
+ * le pasa sus propios hooks (cada sesión tiene su cliente y su token). */
+export interface PaymentSettingsController {
+  query: UseQueryResult<PaymentSettings, Error>;
+  update: UseMutationResult<PaymentSettings, Error, PaymentSettingsPatch>;
+}
+
+export function PaymentSettingsView({
+  query: { data, error, isLoading },
+  update,
+  saveBarBottom = "calc(var(--density-row, 44px) + 20px + env(safe-area-inset-bottom))",
+}: PaymentSettingsController & {
+  /** Posición de la barra de guardado: sobre la barra inferior del panel, o 0 en la consola. */
+  saveBarBottom?: string;
+}) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -338,14 +346,13 @@ export default function PaymentSettingsPage() {
 
   return (
     <>
-      <TopBar title="Medios de pago" onBack={() => router.push("/settings")} />
-      <div className="flex flex-col gap-4 p-[var(--space-4)] pb-28">
+      <div className="flex flex-col gap-4 pb-28">
         {isLoading && <Skeleton className="h-64" />}
 
         {error && (
           <EmptyState
-            title={forbidden ? "Solo el dueño puede configurar los pagos" : "No pudimos cargar la configuración"}
-            description={forbidden ? "Pídele acceso a quien administra la organización." : apiErrorMessage(error)}
+            title={forbidden ? "No tienes acceso a esta configuración" : "No pudimos cargar la configuración"}
+            description={apiErrorMessage(error)}
           />
         )}
 
@@ -407,7 +414,7 @@ export default function PaymentSettingsPage() {
             ))}
 
             <div
-              style={{ bottom: "calc(var(--density-row, 44px) + 20px + env(safe-area-inset-bottom))" }}
+              style={{ bottom: saveBarBottom }}
               className="fixed inset-x-0 z-20 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-[var(--space-3)]"
             >
               <div className="mx-auto flex max-w-[var(--container-max)] items-center justify-end gap-3">

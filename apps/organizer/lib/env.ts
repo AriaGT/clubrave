@@ -8,3 +8,7 @@ export const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localho
 export const PUBLIC_STORE_URL = process.env.NEXT_PUBLIC_STORE_URL ?? "http://localhost:3000";
 
 export const REFRESH_COOKIE = "org_refresh_token";
+
+/** Cookie de la consola de administración: independiente de la del panel, para
+ * poder tener las dos sesiones abiertas en el mismo navegador. */
+export const ADMIN_REFRESH_COOKIE = "admin_refresh_token";
